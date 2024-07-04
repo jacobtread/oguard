@@ -7,6 +7,7 @@ use tokio::time::sleep;
 use ups::{QueryDeviceBattery, UPSExecutor};
 use watcher::UPSWatcher;
 
+pub mod config;
 pub mod ups;
 pub mod watcher;
 
