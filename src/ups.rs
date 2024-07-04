@@ -1,52 +1,28 @@
-// 3s
-
-use std::{sync::Arc, time::Duration};
-
 use anyhow::Context;
-use futures::channel::oneshot;
 use hidapi::{HidApi, HidDevice};
-use tokio::{
-    select,
-    sync::{broadcast, mpsc, Mutex},
-    task::spawn_blocking,
-};
+use tokio::sync::{mpsc, oneshot};
 
 /// HID Device Vendor ID
 const VENDOR_ID: u16 = 0x0665;
 /// HID Device Product ID
 const PRODUCT_ID: u16 = 0x5161;
 
-/// Interval between each device state poll
-const POLL_INTERVAL: Duration = Duration::from_secs(1);
-
-/// Messages from the UPS for state events
-#[derive(Debug, Clone)]
-pub enum UPSMessage {
-    /// Event encountered
-    Event(UPSEvent),
-}
-
-/// Requests for the UPS to fulfill
+/// Requests for the UPS executor to fulfill
 #[derive(Debug)]
 pub enum UPSRequest {
+    DeviceState(oneshot::Sender<anyhow::Result<DeviceState>>),
     DeviceBattery(oneshot::Sender<anyhow::Result<DeviceBattery>>),
 }
 
-pub struct UPSDevice {
-    /// The HID device for the UPS
-    device: Arc<Mutex<HidDevice>>,
-
-    /// Receiver for requests to send
+/// Executor for running the synchronous requests over the USB HID
+pub struct UPSExecutor {
+    device: HidDevice,
     rx: mpsc::Receiver<UPSRequest>,
-
-    /// Broadcast sender for events
-    tx: broadcast::Sender<UPSMessage>,
 }
 
-impl UPSDevice {
-    pub fn start() -> anyhow::Result<UPSDeviceHandle> {
+impl UPSExecutor {
+    pub fn start() -> anyhow::Result<UPSExecutorHandle> {
         let (tx, rx) = mpsc::channel(8);
-        let (tx_broad, rx_broad) = broadcast::channel(8);
 
         let api = HidApi::new().context("Failed to create HID API")?;
 
@@ -54,123 +30,52 @@ impl UPSDevice {
             .open(VENDOR_ID, PRODUCT_ID)
             .expect("Failed to open device");
 
-        let handle = UPSDeviceHandle { tx, rx: rx_broad };
+        let executor = UPSExecutor { device, rx };
 
-        let ups_device = UPSDevice {
-            device: Arc::new(Mutex::new(device)),
-            rx,
-            tx: tx_broad,
-        };
+        std::thread::spawn(move || executor.process());
 
-        tokio::spawn(async move {
-            let mut ups_device = ups_device;
-            if let Err(err) = ups_device.process().await {
-                eprintln!("UPS process error: {}", err);
-            }
-        });
-
-        Ok(handle)
+        Ok(UPSExecutorHandle { tx })
     }
 
-    /// Handle processing queue messages from the receiver
-    async fn process_messages(&mut self) -> anyhow::Result<()> {
-        while let Some(request) = self.rx.recv().await {
-            let device = self.device.clone();
-
-            spawn_blocking(move || {
-                let device = &mut *device.blocking_lock();
-
-                match request {
-                    UPSRequest::DeviceBattery(tx) => {
-                        let result = query_device_battery(device);
-                        _ = tx.send(result);
-                    }
-                };
-            })
-            .await?;
-        }
-
-        Ok(())
-    }
-
-    /// Handles the loop for polling the device and processing messages
-    async fn process(&mut self) -> anyhow::Result<()> {
-        let mut last_device_state: Option<DeviceState> = None;
-
-        while !self.rx.is_closed() {
-            let device = self.device.clone();
-
-            println!("REQUESTING DEVICE STATE");
-
-            // TODO: Handle error locally
-            let device_state = spawn_blocking(move || {
-                let device = &mut *device.blocking_lock();
-                query_device_state(device)
-            })
-            .await
-            .context("Failed to join blocking query response")??;
-
-            let Some(last_state) = last_device_state.as_ref() else {
-                last_device_state = Some(device_state);
-                continue;
-            };
-
-            // Self test has finished
-            if last_state.battery_self_test && !device_state.battery_self_test {
-                // END SELF TEST EVENT
+    pub fn process(mut self) {
+        while let Some(msg) = self.rx.blocking_recv() {
+            match msg {
+                UPSRequest::DeviceState(tx) => {
+                    let result = query_device_state(&mut self.device);
+                    _ = tx.send(result);
+                }
+                UPSRequest::DeviceBattery(tx) => {
+                    let result = query_device_battery(&mut self.device);
+                    _ = tx.send(result);
+                }
             }
-
-            match (
-                device_state.device_power_state,
-                last_state.device_power_state,
-            ) {
-                (DevicePowerState::Utility, DevicePowerState::Battery) => {
-                    println!("AC RECOVERY");
-
-                    _ = self.tx.send(UPSMessage::Event(UPSEvent::ACRecovery));
-                }
-                (DevicePowerState::Battery, DevicePowerState::Utility) => {
-                    println!("AC FAILURE");
-
-                    _ = self.tx.send(UPSMessage::Event(UPSEvent::ACFailure));
-                }
-
-                _ => {
-                    // No power event has occurred
-                }
-            };
-
-            last_device_state = Some(device_state);
-
-            let sleep_future = tokio::time::sleep(POLL_INTERVAL);
-            let messages_future = self.process_messages();
-
-            select! {
-                _ = sleep_future => {}
-                _ = messages_future => {}
-            };
         }
-
-        Ok(())
     }
 }
 
-/// Handle to send requests to the UPS
-pub struct UPSDeviceHandle {
+#[derive(Clone)]
+pub struct UPSExecutorHandle {
     tx: mpsc::Sender<UPSRequest>,
-    pub rx: broadcast::Receiver<UPSMessage>,
 }
 
-impl UPSDeviceHandle {
-    pub fn duplicate(&self) -> Self {
-        Self {
-            tx: self.tx.clone(),
-            rx: self.rx.resubscribe(),
-        }
+impl UPSExecutorHandle {
+    pub fn is_open(&self) -> bool {
+        !self.tx.is_closed()
     }
 
     /// Request the device battery details
-    pub async fn query_device_battery(&self) -> anyhow::Result<DeviceBattery> {
+    pub async fn device_state(&self) -> anyhow::Result<DeviceState> {
+        let (tx, rx) = oneshot::channel();
+        self.tx
+            .send(UPSRequest::DeviceState(tx))
+            .await
+            .context("UPS device channel was closed")?;
+        let value = rx.await.context("Failed to recv device state")??;
+        Ok(value)
+    }
+
+    /// Request the device battery details
+    pub async fn device_battery(&self) -> anyhow::Result<DeviceBattery> {
         let (tx, rx) = oneshot::channel();
         self.tx
             .send(UPSRequest::DeviceBattery(tx))
@@ -179,17 +84,6 @@ impl UPSDeviceHandle {
         let value = rx.await.context("Failed to recv device battery")??;
         Ok(value)
     }
-}
-
-/// Events that could be encountered while processing state updates
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum UPSEvent {
-    /// AC Power has been lost
-    ACFailure,
-    /// AC Power has been recovered
-    ACRecovery,
-    /// UPS has encountered a fault
-    UPSFault,
 }
 
 /// UPS device line type

@@ -2,26 +2,34 @@
 
 use std::time::Duration;
 
+use log::debug;
 use tokio::time::sleep;
-use ups::UPSDevice;
+use ups::UPSExecutor;
+use watcher::UPSWatcher;
 
 pub mod ups;
+pub mod watcher;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let handle = UPSDevice::start()?;
+    dotenvy::dotenv()?;
+    env_logger::init();
 
-    let mut listener_handle = handle.duplicate();
+    // Start the executor
+    let executor = UPSExecutor::start()?;
+
+    // Start a watcher
+    let mut watcher_handle = UPSWatcher::start(executor.clone());
 
     tokio::spawn(async move {
-        while let Ok(value) = listener_handle.rx.recv().await {
-            println!("UPS EVENT {:#?}", value);
+        while let Some(value) = watcher_handle.next().await {
+            debug!("UPS EVENT {:#?}", value);
         }
     });
 
     loop {
-        let battery = handle.query_device_battery().await?;
-        println!("Obtained device battery: {:#?}", battery);
+        let battery = executor.device_battery().await?;
+        debug!("Obtained device battery: {:#?}", battery);
         sleep(Duration::from_secs(5)).await;
     }
 }
