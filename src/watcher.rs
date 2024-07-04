@@ -49,6 +49,8 @@ pub enum UPSEvent {
     ACRecovery,
     /// UPS has encountered a fault
     UPSFault,
+    /// UPS has low battery
+    LowBatteryMode,
 }
 
 impl UPSWatcher {
@@ -82,6 +84,15 @@ impl UPSWatcher {
             // Self test has finished
             if last_state.battery_self_test && !device_state.battery_self_test {
                 // END SELF TEST EVENT
+            }
+
+            // Entered low battery mode
+            if !last_state.battery_low && device_state.battery_low {
+                info!("Device has entered low power mode");
+
+                _ = self
+                    .tx
+                    .send(UPSWatcherMessage::Event(UPSEvent::LowBatteryMode));
             }
 
             match (
