@@ -9,9 +9,9 @@ readme = "README.md"
 description = "OGuard"
 
 [dependencies]
+anyhow = "1.0.86"
 futures = "0.3.30"
-nusb = "0.1.9"
-serde = { version = "1.0.203", features = ["derive"] }
-serde_json = "1.0.120"
-tokio = { version = "1.38.0", features = ["full"] }
-tokio-modbus = "0.13.1"
+hidapi = "2.6.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
