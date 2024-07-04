@@ -169,7 +169,7 @@ impl DeviceState {
             return WorkMode::Fault;
         }
 
-        if self.input_voltage < 20.0 {
+        if self.output_voltage < 20.0 {
             return WorkMode::Standby;
         }
 
