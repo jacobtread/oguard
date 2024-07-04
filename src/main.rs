@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use log::debug;
 use tokio::time::sleep;
-use ups::UPSExecutor;
+use ups::{QueryDeviceBattery, UPSExecutor};
 use watcher::UPSWatcher;
 
 pub mod ups;
@@ -28,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
     });
 
     loop {
-        let battery = executor.device_battery().await?;
+        let battery = executor.request(QueryDeviceBattery).await?;
         debug!("Obtained device battery: {:#?}", battery);
         sleep(Duration::from_secs(5)).await;
     }

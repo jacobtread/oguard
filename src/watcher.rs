@@ -1,9 +1,8 @@
-use std::time::Duration;
-
+use crate::ups::{DevicePowerState, DeviceState, QueryDeviceState, UPSExecutorHandle};
 use log::{error, info, warn};
+use std::time::Duration;
 use tokio::{sync::broadcast, time::sleep};
 
-use crate::ups::{DevicePowerState, DeviceState, UPSExecutorHandle};
 /// Interval between each device state poll
 const POLL_INTERVAL: Duration = Duration::from_secs(1);
 
@@ -68,7 +67,7 @@ impl UPSWatcher {
 
     pub async fn process(mut self) {
         while self.tx.receiver_count() > 0 && self.executor.is_open() {
-            let device_state = match self.executor.device_state().await {
+            let device_state = match self.executor.request(QueryDeviceState).await {
                 Ok(value) => value,
                 Err(err) => {
                     error!("Error while requesting UPS state: {err:?}");

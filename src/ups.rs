@@ -7,12 +7,8 @@ const VENDOR_ID: u16 = 0x0665;
 /// HID Device Product ID
 const PRODUCT_ID: u16 = 0x5161;
 
-/// Requests for the UPS executor to fulfill
-#[derive(Debug)]
-pub enum UPSRequest {
-    DeviceState(oneshot::Sender<anyhow::Result<DeviceState>>),
-    DeviceBattery(oneshot::Sender<anyhow::Result<DeviceBattery>>),
-}
+/// Dynamic requests
+type UPSRequest = Box<dyn DeviceRequestProxy>;
 
 /// Executor for running the synchronous requests over the USB HID
 pub struct UPSExecutor {
@@ -38,17 +34,8 @@ impl UPSExecutor {
     }
 
     pub fn process(mut self) {
-        while let Some(msg) = self.rx.blocking_recv() {
-            match msg {
-                UPSRequest::DeviceState(tx) => {
-                    let result = query_device_state(&mut self.device);
-                    _ = tx.send(result);
-                }
-                UPSRequest::DeviceBattery(tx) => {
-                    let result = query_device_battery(&mut self.device);
-                    _ = tx.send(result);
-                }
-            }
+        while let Some(mut msg) = self.rx.blocking_recv() {
+            msg.handle(&mut self.device);
         }
     }
 }
@@ -63,25 +50,22 @@ impl UPSExecutorHandle {
         !self.tx.is_closed()
     }
 
-    /// Request the device battery details
-    pub async fn device_state(&self) -> anyhow::Result<DeviceState> {
+    pub async fn request<C>(&self, command: C) -> anyhow::Result<C::Response>
+    where
+        C: DeviceCommand,
+    {
         let (tx, rx) = oneshot::channel();
-        self.tx
-            .send(UPSRequest::DeviceState(tx))
-            .await
-            .context("UPS device channel was closed")?;
-        let value = rx.await.context("Failed to recv device state")??;
-        Ok(value)
-    }
 
-    /// Request the device battery details
-    pub async fn device_battery(&self) -> anyhow::Result<DeviceBattery> {
-        let (tx, rx) = oneshot::channel();
-        self.tx
-            .send(UPSRequest::DeviceBattery(tx))
-            .await
-            .context("UPS device channel was closed")?;
-        let value = rx.await.context("Failed to recv device battery")??;
+        let msg = DeviceRequest {
+            command: Box::new(command),
+            tx: Some(tx),
+        };
+
+        if self.tx.send(Box::new(msg)).await.is_err() {
+            return Err(anyhow::anyhow!("device channel closed"));
+        }
+
+        let value = rx.await.context("Failed to recv device state")??;
         Ok(value)
     }
 }
@@ -229,18 +213,63 @@ fn read_response(device: &mut HidDevice) -> anyhow::Result<String> {
     }
 }
 
-/// Queries the device for its current battery state
-fn query_device_battery(device: &mut HidDevice) -> anyhow::Result<DeviceBattery> {
+/// Request for a device to execute
+pub struct DeviceRequest<T> {
+    /// The command to execute
+    command: Box<dyn DeviceCommand<Response = T>>,
+    /// Channel to send the response to
+    tx: Option<oneshot::Sender<anyhow::Result<T>>>,
+}
+
+/// Trait for commands that can be executed
+pub trait DeviceCommand: Send + 'static {
+    /// The device response
+    type Response: Send + 'static;
+
+    /// Executes the command on the device returning the response
+    fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response>;
+}
+
+/// Type erased proxy over [DeviceRequest] to allow them to
+/// be handled and send their response in a dynamic context
+pub trait DeviceRequestProxy: Send + 'static {
+    /// Handle the request
+    fn handle(&mut self, device: &mut HidDevice);
+}
+
+impl<T: Send + 'static> DeviceRequestProxy for DeviceRequest<T> {
+    fn handle(&mut self, device: &mut HidDevice) {
+        // Execute the command
+        let result = self.command.execute(device);
+
+        // Send the response
+        if let Some(tx) = self.tx.take() {
+            _ = tx.send(result);
+        }
+    }
+}
+
+/// Query command to load the device battery
+pub struct QueryDeviceBattery;
+
+impl DeviceCommand for QueryDeviceBattery {
+    type Response = DeviceBattery;
+
+    fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
+        execute_command(device, "QI").context("write device battery request")?;
+        let response = read_response(device).context("read device battery response")?;
+        parse_device_battery(&response).context("parse device battery response")
+    }
+}
+
+/// Parses a device battery response
+fn parse_device_battery(msg: &str) -> anyhow::Result<DeviceBattery> {
     // 100 02832 50.0 000.5 175 290 0 0000020000112000
-
-    execute_command(device, "QI")?;
-    let response = read_response(device)?;
-
-    let response = response
+    let msg: &str = msg
         .strip_prefix('(')
         .context("Missing device battery response prefix")?;
 
-    let mut parts = response.split(' ');
+    let mut parts = msg.split(' ');
 
     let capacity_str = parts.next().context("Missing capacity value")?;
     let remaining_str = parts.next().context("Missing battery remaining value")?;
@@ -256,18 +285,28 @@ fn query_device_battery(device: &mut HidDevice) -> anyhow::Result<DeviceBattery>
     })
 }
 
-/// Queries the current state of the UPS device
-fn query_device_state(device: &mut HidDevice) -> anyhow::Result<DeviceState> {
+/// Query command to load the device state
+pub struct QueryDeviceState;
+
+impl DeviceCommand for QueryDeviceState {
+    type Response = DeviceState;
+
+    fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
+        execute_command(device, "QS").context("write device state request")?;
+        let response = read_response(device).context("read device state response")?;
+        parse_device_state(&response).context("parse device state response")
+    }
+}
+
+/// Parses the device state response
+fn parse_device_state(msg: &str) -> anyhow::Result<DeviceState> {
     // (237.1 237.1 237.1 008 50.1 27.1 --.- 00001001
 
-    execute_command(device, "QS")?;
-
-    let response = read_response(device)?;
-    let response = response
+    let msg = msg
         .strip_prefix('(')
         .context("Missing device battery response prefix")?;
 
-    let mut parts = response.split(' ');
+    let mut parts = msg.split(' ');
 
     let input_voltage: f64 = parts
         .next()
