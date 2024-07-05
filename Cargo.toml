@@ -37,3 +37,17 @@ anyhow = "1"
 tokio = { version = "1", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["sync", "full"] }
 futures = "0.3.30"
+chrono = { version = "0.4.38", features = ["serde"] }
+
+
+# SeaORM 
+[dependencies.sea-orm]
+version = "^0"
+default-features = false
+features = ["runtime-tokio-rustls", "macros", "with-chrono", "sqlx-sqlite"]
+
+# SeaORM Migration 
+[dependencies.sea-orm-migration]
+version = "^0"
+default-features = false
+features = ["runtime-tokio-rustls", "sqlx-sqlite"]

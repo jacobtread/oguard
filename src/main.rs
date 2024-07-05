@@ -6,6 +6,7 @@ use ups::UPSExecutor;
 use watcher::{UPSWatcher, UPSWatcherHandle};
 
 pub mod config;
+pub mod database;
 pub mod http;
 pub mod ups;
 pub mod watcher;
