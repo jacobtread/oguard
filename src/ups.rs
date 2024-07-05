@@ -1,5 +1,6 @@
 use anyhow::Context;
 use hidapi::{HidApi, HidDevice};
+use log::info;
 use tokio::sync::{mpsc, oneshot};
 
 /// HID Device Vendor ID
@@ -256,9 +257,9 @@ impl DeviceCommand for QueryDeviceBattery {
     type Response = DeviceBattery;
 
     fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
-        execute_command(device, "QI").context("write device battery request")?;
-        let response = read_response(device).context("read device battery response")?;
-        parse_device_battery(&response).context("parse device battery response")
+        execute_command(device, "QI").context("write request")?;
+        let response = read_response(device).context("read response")?;
+        parse_device_battery(&response).context("parse response")
     }
 }
 
@@ -292,9 +293,9 @@ impl DeviceCommand for QueryDeviceState {
     type Response = DeviceState;
 
     fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
-        execute_command(device, "QS").context("write device state request")?;
-        let response = read_response(device).context("read device state response")?;
-        parse_device_state(&response).context("parse device state response")
+        execute_command(device, "QS").context("write request")?;
+        let response = read_response(device).context("read response")?;
+        parse_device_state(&response).context("parse response")
     }
 }
 
@@ -394,9 +395,47 @@ fn parse_device_state(msg: &str) -> anyhow::Result<DeviceState> {
     })
 }
 
+/// Command to cancel a battery test
+pub struct CancelBatteryTest;
+
+impl DeviceCommand for CancelBatteryTest {
+    type Response = ExecuteResponse;
+
+    fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
+        execute_command(device, "CT").context("write request")?;
+        let response = read_response(device).context("read response")?;
+        parse_execute_response(&response).context("parse response")
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum ExecuteResponse {
+    Success,
+    Failure,
+}
+
+/// Parses a device battery response
+fn parse_execute_response(msg: &str) -> anyhow::Result<ExecuteResponse> {
+    // 100 02832 50.0 000.5 175 290 0 0000020000112000
+    let msg: &str = msg
+        .strip_prefix('(')
+        .context("Missing execute response prefix")?;
+
+    if msg == "ACK" {
+        return Ok(ExecuteResponse::Success);
+    }
+
+    Ok(ExecuteResponse::Failure)
+}
 #[cfg(test)]
 mod test {
-    use crate::ups::{DeviceLineType, DevicePowerState, DeviceState};
+    use anyhow::Context;
+    use hidapi::HidDevice;
+
+    use crate::ups::{
+        execute_command, read_response, CancelBatteryTest, DeviceCommand, DeviceLineType,
+        DevicePowerState, DeviceState, UPSExecutor,
+    };
 
     use super::{parse_device_battery, parse_device_state, DeviceBattery};
 
@@ -457,4 +496,30 @@ mod test {
         let value = "(A B 237.1 008 50.1 27.1 --.- 00001001";
         parse_device_state(value).expect_err("Battery should fail parsing");
     }
+
+    // #[tokio::test]
+    // async fn test_new_query() {
+    //     dotenvy::dotenv().unwrap();
+    //     env_logger::init();
+
+    //     // Start the executor
+    //     let executor = UPSExecutor::start().unwrap();
+
+    //     struct TestQuery;
+
+    //     impl DeviceCommand for TestQuery {
+    //         type Response = ();
+
+    //         fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
+    //             execute_command(device, "QBID").context("write device state request")?;
+    //             let response = read_response(device).context("read device state response")?;
+
+    //             dbg!(response);
+
+    //             Ok(())
+    //         }
+    //     }
+
+    //     executor.request(TestQuery).await.unwrap();
+    // }
 }
