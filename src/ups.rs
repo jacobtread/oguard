@@ -1,6 +1,5 @@
 use anyhow::Context;
 use hidapi::{HidApi, HidDevice};
-use log::info;
 use tokio::sync::{mpsc, oneshot};
 
 /// HID Device Vendor ID
@@ -427,14 +426,30 @@ fn parse_execute_response(msg: &str) -> anyhow::Result<ExecuteResponse> {
 
     Ok(ExecuteResponse::Failure)
 }
+
+/// Runs a 10s battery test
+pub struct BatteryTest;
+
+impl DeviceCommand for BatteryTest {
+    type Response = ();
+
+    fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
+        execute_command(device, "T").context("write request")?;
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
+
     use anyhow::Context;
     use hidapi::HidDevice;
+    use tokio::time::sleep;
 
     use crate::ups::{
-        execute_command, read_response, CancelBatteryTest, DeviceCommand, DeviceLineType,
-        DevicePowerState, DeviceState, UPSExecutor,
+        execute_command, BatteryTest, DeviceCommand, DeviceLineType, DevicePowerState, DeviceState,
+        QueryDeviceState, UPSExecutor,
     };
 
     use super::{parse_device_battery, parse_device_state, DeviceBattery};
@@ -497,29 +512,46 @@ mod test {
         parse_device_state(value).expect_err("Battery should fail parsing");
     }
 
-    // #[tokio::test]
-    // async fn test_new_query() {
-    //     dotenvy::dotenv().unwrap();
-    //     env_logger::init();
+    /// Run battery self test
+    #[tokio::test]
+    #[ignore]
+    async fn test_battery_test() {
+        // Start the executor
+        let executor = UPSExecutor::start().unwrap();
+        executor.request(BatteryTest).await.unwrap();
 
-    //     // Start the executor
-    //     let executor = UPSExecutor::start().unwrap();
+        sleep(Duration::from_secs(1)).await;
 
-    //     struct TestQuery;
+        let device_state = executor.request(QueryDeviceState).await.unwrap();
+        assert!(device_state.battery_self_test);
 
-    //     impl DeviceCommand for TestQuery {
-    //         type Response = ();
+        sleep(Duration::from_secs(11)).await;
 
-    //         fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
-    //             execute_command(device, "QBID").context("write device state request")?;
-    //             let response = read_response(device).context("read device state response")?;
+        let device_state = executor.request(QueryDeviceState).await.unwrap();
+        assert!(!device_state.battery_self_test);
+    }
 
-    //             dbg!(response);
+    #[tokio::test]
+    #[ignore]
+    async fn test_new_query() {
+        dotenvy::dotenv().unwrap();
+        env_logger::init();
 
-    //             Ok(())
-    //         }
-    //     }
+        // Start the executor
+        let executor = UPSExecutor::start().unwrap();
 
-    //     executor.request(TestQuery).await.unwrap();
-    // }
+        struct TestQuery;
+
+        impl DeviceCommand for TestQuery {
+            type Response = ();
+
+            fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
+                execute_command(device, "").context("write device state request")?;
+
+                Ok(())
+            }
+        }
+
+        executor.request(TestQuery).await.unwrap();
+    }
 }
