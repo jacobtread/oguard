@@ -4,7 +4,7 @@ use std::time::Duration;
 use tokio::{sync::broadcast, time::sleep};
 
 /// Interval between each device state poll
-const POLL_INTERVAL: Duration = Duration::from_secs(1);
+const POLL_INTERVAL: Duration = Duration::from_secs(3);
 
 /// Watcher that polls a UPS executor at fixed intervals
 /// to handle changes in the state
@@ -48,8 +48,14 @@ pub enum UPSEvent {
     ACRecovery,
     /// UPS has encountered a fault
     UPSFault,
-    /// UPS has low battery
-    LowBatteryMode,
+    /// UPS has entered low battery mode
+    LowBatteryModeStart,
+    /// UPS has left low power mode
+    LowBatteryModeEnd,
+    /// UPS Battery test has started
+    BatteryTestStart,
+    /// UPS Battery test has ended
+    BatteryTestEnd,
 }
 
 impl UPSWatcher {
@@ -80,20 +86,45 @@ impl UPSWatcher {
                 continue;
             };
 
-            // Self test has finished
-            if last_state.battery_self_test && !device_state.battery_self_test {
-                // END SELF TEST EVENT
+            // Battery self tests
+            match (last_state.battery_self_test, device_state.battery_self_test) {
+                (false, true) => {
+                    info!("Device has started self test");
+
+                    _ = self
+                        .tx
+                        .send(UPSWatcherMessage::Event(UPSEvent::BatteryTestStart));
+                }
+                (true, false) => {
+                    info!("Device has finished self test");
+
+                    _ = self
+                        .tx
+                        .send(UPSWatcherMessage::Event(UPSEvent::BatteryTestEnd));
+                }
+                _ => {}
             }
 
-            // Entered low battery mode
-            if !last_state.battery_low && device_state.battery_low {
-                info!("Device has entered low power mode");
+            // Low battery
+            match (last_state.battery_low, device_state.battery_low) {
+                (false, true) => {
+                    info!("Device is running low on battery");
 
-                _ = self
-                    .tx
-                    .send(UPSWatcherMessage::Event(UPSEvent::LowBatteryMode));
+                    _ = self
+                        .tx
+                        .send(UPSWatcherMessage::Event(UPSEvent::LowBatteryModeStart));
+                }
+                (true, false) => {
+                    info!("Device is no longer low on battery");
+
+                    _ = self
+                        .tx
+                        .send(UPSWatcherMessage::Event(UPSEvent::LowBatteryModeEnd));
+                }
+                _ => {}
             }
 
+            // Power transitions
             match (
                 device_state.device_power_state,
                 last_state.device_power_state,
@@ -108,10 +139,7 @@ impl UPSWatcher {
 
                     _ = self.tx.send(UPSWatcherMessage::Event(UPSEvent::ACFailure));
                 }
-
-                _ => {
-                    // No power event has occurred
-                }
+                _ => {}
             };
 
             self.last_device_state = Some(device_state);
