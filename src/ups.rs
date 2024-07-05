@@ -1,5 +1,6 @@
 use anyhow::Context;
 use hidapi::{HidApi, HidDevice};
+use serde::Serialize;
 use tokio::sync::{mpsc, oneshot};
 
 /// HID Device Vendor ID
@@ -71,7 +72,7 @@ impl UPSExecutorHandle {
 }
 
 /// UPS device line type
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize)]
 pub enum DeviceLineType {
     /// Device is line interactive
     LineInteractive,
@@ -80,7 +81,7 @@ pub enum DeviceLineType {
 }
 
 /// Current source of power for the UPS
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize)]
 pub enum DevicePowerState {
     /// Device is being powered from a socket, battery is not used
     Utility,
@@ -89,7 +90,7 @@ pub enum DevicePowerState {
 }
 
 /// Response from a device battery query
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct DeviceBattery {
     /// Capacity of the battery as a percentage 0-100
     pub capacity: u8,
@@ -98,7 +99,7 @@ pub struct DeviceBattery {
 }
 
 /// "Work mode" - Possible current states the UPS is in
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize)]
 pub enum WorkMode {
     /// UPS is in standby mode, running with less than
     /// 20v on input
@@ -120,7 +121,7 @@ impl WorkMode {
 }
 
 /// Current device state
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct DeviceState {
     /// Voltage going into the UPS (Power coming from wall)
     pub input_voltage: f64,

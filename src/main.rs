@@ -1,14 +1,12 @@
-//! Name reserved for project    
-
-use std::time::Duration;
-
+use axum::Extension;
+use http::router;
 use log::debug;
 use notify_rust::Notification;
-use tokio::time::sleep;
-use ups::{QueryDeviceBattery, UPSExecutor};
-use watcher::UPSWatcher;
+use ups::UPSExecutor;
+use watcher::{UPSWatcher, UPSWatcherHandle};
 
 pub mod config;
+pub mod http;
 pub mod ups;
 pub mod watcher;
 
@@ -21,13 +19,29 @@ async fn main() -> anyhow::Result<()> {
     let executor = UPSExecutor::start()?;
 
     // Start a watcher
-    let mut watcher_handle = UPSWatcher::start(executor.clone());
+    let watcher_handle = UPSWatcher::start(executor.clone());
 
+    spawn_tray_listener(watcher_handle.clone());
+
+    // build our application with a single route
+    let app = router()
+        .layer(Extension(executor))
+        .layer(Extension(watcher_handle));
+
+    // run our app with hyper, listening globally on port 3000
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+/// Spawns an event listener for publishing notifications when the
+/// watcher detects a change in state
+fn spawn_tray_listener(mut watcher_handle: UPSWatcherHandle) {
     tokio::spawn(async move {
-        while let Some(value) = watcher_handle.next().await {
-            debug!("UPS EVENT {:#?}", value);
+        while let Some(event) = watcher_handle.next().await {
+            debug!("UPS EVENT {:#?}", event);
 
-            let watcher::UPSWatcherMessage::Event(event) = value;
             match event {
                 watcher::UPSEvent::ACFailure => {
                     _ = Notification::new()
@@ -81,10 +95,4 @@ async fn main() -> anyhow::Result<()> {
             }
         }
     });
-
-    loop {
-        let battery = executor.request(QueryDeviceBattery).await?;
-        debug!("Obtained device battery: {:#?}", battery);
-        sleep(Duration::from_secs(5)).await;
-    }
 }

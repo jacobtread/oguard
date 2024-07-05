@@ -1,7 +1,9 @@
 use crate::ups::{DevicePowerState, DeviceState, QueryDeviceState, UPSExecutorHandle};
 use log::{error, info, warn};
+use serde::Serialize;
 use std::time::Duration;
 use tokio::{sync::broadcast, time::sleep};
+use tokio_stream::wrappers::BroadcastStream;
 
 /// Interval between each device state poll
 const POLL_INTERVAL: Duration = Duration::from_secs(3);
@@ -10,13 +12,13 @@ const POLL_INTERVAL: Duration = Duration::from_secs(3);
 /// to handle changes in the state
 pub struct UPSWatcher {
     executor: UPSExecutorHandle,
-    tx: broadcast::Sender<UPSWatcherMessage>,
+    tx: broadcast::Sender<UPSEvent>,
     last_device_state: Option<DeviceState>,
 }
 
 /// Handle to a [UPSWatcher] to receive messages/events
 pub struct UPSWatcherHandle {
-    rx: broadcast::Receiver<UPSWatcherMessage>,
+    rx: broadcast::Receiver<UPSEvent>,
 }
 
 impl Clone for UPSWatcherHandle {
@@ -28,19 +30,19 @@ impl Clone for UPSWatcherHandle {
 }
 
 impl UPSWatcherHandle {
+    pub fn into_stream(self) -> BroadcastStream<UPSEvent> {
+        BroadcastStream::new(self.rx)
+    }
+
     /// Receive the next watcher message
-    pub async fn next(&mut self) -> Option<UPSWatcherMessage> {
+    pub async fn next(&mut self) -> Option<UPSEvent> {
         self.rx.recv().await.ok()
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum UPSWatcherMessage {
-    Event(UPSEvent),
-}
-
 /// Events that could be encountered while processing state updates
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize)]
+#[serde(tag = "type")]
 pub enum UPSEvent {
     /// AC Power has been lost
     ACFailure,
@@ -91,16 +93,12 @@ impl UPSWatcher {
                 (false, true) => {
                     info!("Device has started self test");
 
-                    _ = self
-                        .tx
-                        .send(UPSWatcherMessage::Event(UPSEvent::BatteryTestStart));
+                    _ = self.tx.send(UPSEvent::BatteryTestStart);
                 }
                 (true, false) => {
                     info!("Device has finished self test");
 
-                    _ = self
-                        .tx
-                        .send(UPSWatcherMessage::Event(UPSEvent::BatteryTestEnd));
+                    _ = self.tx.send(UPSEvent::BatteryTestEnd);
                 }
                 _ => {}
             }
@@ -110,16 +108,12 @@ impl UPSWatcher {
                 (false, true) => {
                     info!("Device is running low on battery");
 
-                    _ = self
-                        .tx
-                        .send(UPSWatcherMessage::Event(UPSEvent::LowBatteryModeStart));
+                    _ = self.tx.send(UPSEvent::LowBatteryModeStart);
                 }
                 (true, false) => {
                     info!("Device is no longer low on battery");
 
-                    _ = self
-                        .tx
-                        .send(UPSWatcherMessage::Event(UPSEvent::LowBatteryModeEnd));
+                    _ = self.tx.send(UPSEvent::LowBatteryModeEnd);
                 }
                 _ => {}
             }
@@ -132,12 +126,12 @@ impl UPSWatcher {
                 (DevicePowerState::Utility, DevicePowerState::Battery) => {
                     info!("AC RECOVERY");
 
-                    _ = self.tx.send(UPSWatcherMessage::Event(UPSEvent::ACRecovery));
+                    _ = self.tx.send(UPSEvent::ACRecovery);
                 }
                 (DevicePowerState::Battery, DevicePowerState::Utility) => {
                     warn!("AC FAILURE");
 
-                    _ = self.tx.send(UPSWatcherMessage::Event(UPSEvent::ACFailure));
+                    _ = self.tx.send(UPSEvent::ACFailure);
                 }
                 _ => {}
             };
