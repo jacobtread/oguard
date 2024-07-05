@@ -1,3 +1,6 @@
+
+<img src="./assets/oguard.svg" width="128px" alt="OGuard Logo">
+
 # OGuard
 
 > Work in progress 
