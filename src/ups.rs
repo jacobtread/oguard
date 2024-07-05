@@ -393,3 +393,68 @@ fn parse_device_state(msg: &str) -> anyhow::Result<DeviceState> {
         buzzer_control,
     })
 }
+
+#[cfg(test)]
+mod test {
+    use crate::ups::{DeviceLineType, DevicePowerState, DeviceState};
+
+    use super::{parse_device_battery, parse_device_state, DeviceBattery};
+
+    /// Should parse a valid device battery state
+    #[test]
+    fn test_parse_device_battery() {
+        let value = "(100 02832 50.0 000.5 175 290 0 0000020000112000";
+        let battery = parse_device_battery(value).expect("Battery should parse successfully");
+        let expected = DeviceBattery {
+            capacity: 100,
+            remaining_time: 2832,
+        };
+        assert_eq!(battery.capacity, expected.capacity);
+        assert_eq!(battery.remaining_time, expected.remaining_time);
+    }
+
+    /// Should fail on a malformed response
+    #[test]
+    fn test_fail_parse_device_battery() {
+        let value = "(A B 50.0 000.5 175 290 0 0000020000112000";
+        parse_device_battery(value).expect_err("Battery should fail parsing");
+    }
+
+    /// Should parse a valid device state
+    #[test]
+    fn test_parse_device_state() {
+        let value = "(237.1 237.1 237.1 008 50.1 27.1 --.- 00001001";
+        let battery = parse_device_state(value).expect("Battery should parse successfully");
+        let expected = DeviceState {
+            input_voltage: 237.1,
+            output_voltage: 237.1,
+            output_load_percent: 8,
+            output_frequency: 50.1,
+            battery_voltage: 27.1,
+            device_power_state: DevicePowerState::Utility,
+            battery_low: false,
+            fault_mode: false,
+            device_line_type: DeviceLineType::LineInteractive,
+            battery_self_test: false,
+            buzzer_control: true,
+        };
+        assert_eq!(battery.input_voltage, expected.input_voltage);
+        assert_eq!(battery.output_voltage, expected.output_voltage);
+        assert_eq!(battery.output_load_percent, expected.output_load_percent);
+        assert_eq!(battery.output_frequency, expected.output_frequency);
+        assert_eq!(battery.battery_voltage, expected.battery_voltage);
+        assert_eq!(battery.device_power_state, expected.device_power_state);
+        assert_eq!(battery.battery_low, expected.battery_low);
+        assert_eq!(battery.fault_mode, expected.fault_mode);
+        assert_eq!(battery.device_line_type, expected.device_line_type);
+        assert_eq!(battery.battery_self_test, expected.battery_self_test);
+        assert_eq!(battery.buzzer_control, expected.buzzer_control);
+    }
+
+    /// Should fail on a malformed response
+    #[test]
+    fn test_fail_parse_device_state() {
+        let value = "(A B 237.1 008 50.1 27.1 --.- 00001001";
+        parse_device_state(value).expect_err("Battery should fail parsing");
+    }
+}
