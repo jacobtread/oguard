@@ -26,28 +26,38 @@
 </script>
 
 <div class="card output-card">
-	<div class="output">
-		<div class="output-level-wrapper">
-			<div class={getLevelClass(load)} style="width:{load}%;"></div>
+	<div class="output-header">
+		<div class="output">
+			<div class="output-level-wrapper">
+				<div class={getLevelClass(load)} style="width:{load}%;"></div>
+			</div>
 		</div>
+
+		<p class="output-capacity"><span class="output-capacity__value">{load}%</span> Load</p>
+		<p class="output-remaining">
+			<SolarBoltCircleBoldDuotone /> Input: {inputVoltage}V <SolarBoltCircleBoldDuotone />Output {outputVoltage}V
+		</p>
 	</div>
 
-	<p class="output-capacity"><span class="output-capacity__value">{load}%</span> Load</p>
+	<div class="card-content">
+		<p class="output-last-fetched">Last fetched {lastUpdatedFormatted}</p>
 
-	<p class="output-remaining">
-		<SolarBoltCircleBoldDuotone /> Input: {inputVoltage}V <SolarBoltCircleBoldDuotone />Output {outputVoltage}V
-	</p>
-
-	<p class="output-last-fetched">Last fetched {lastUpdatedFormatted}</p>
-
-	{#if refreshing}
-		<div class="refresh">
-			<SolarRefreshLineDuotone /> Refreshing
-		</div>
-	{/if}
+		{#if refreshing}
+			<div class="refresh">
+				<SolarRefreshLineDuotone /> Refreshing
+			</div>
+		{/if}
+	</div>
 </div>
 
 <style lang="scss">
+	.output-header {
+		display: block;
+		width: 100%;
+		background-color: #34495e;
+		padding: 1rem;
+	}
+
 	.refresh {
 		position: absolute;
 		right: 0.5rem;
@@ -71,36 +81,34 @@
 	}
 
 	.output-capacity {
-		color: #111;
+		color: #fff;
 		font-weight: bold;
+		margin-top: 0.75em;
 		margin-bottom: 0.5em;
 
 		&__value {
-			color: #555;
+			color: #fff;
 		}
 	}
 
 	.output-remaining {
-		color: #222;
 		font-size: 0.9rem;
-		margin-bottom: 1em;
 		display: flex;
 
 		gap: 0.5rem;
-		color: #777;
+		color: #ccc;
 	}
 
 	.output {
+		background-color: #293746;
 		display: block;
-		border: 1px solid #ccc;
+		border: 0.15rem solid #43576d;
 		width: 100%;
 		height: 3rem;
-		border-radius: 0.2rem;
+		border-radius: 0.25rem;
 		position: relative;
-		padding: 0.1rem;
+		padding: 0.2rem;
 		box-shadow: 0.25rem 0.25rem 2px rgba(0, 0, 0, 0.1);
-
-		margin-bottom: 0.5rem;
 	}
 
 	.output-level-wrapper {
@@ -116,6 +124,7 @@
 		left: 0;
 		right: 0;
 		height: 100%;
+		border-radius: 0.125rem;
 
 		background: linear-gradient(90deg, #30b455 25%, #3b8650 50%, #30b455 75%);
 		background-size: 200% 100%;

@@ -24,26 +24,39 @@
 </script>
 
 <div class="card battery-card">
-	<div class="battery">
-		<div class="battery-level-wrapper">
-			<div class={getBatteryLevelClass(capacity)} style="width:{capacity}%;"></div>
+	<div class="battery-header">
+		<div class="battery">
+			<div class="battery-level-wrapper">
+				<div class={getBatteryLevelClass(capacity)} style="width:{capacity}%;"></div>
+			</div>
 		</div>
+
+		<p class="battery-capacity">
+			<span class="battery-capacity__value">{capacity}%</span> Capacity
+		</p>
+
+		<p class="battery-remaining">Remaining: {remainingTimeFormatted}</p>
 	</div>
 
-	<p class="battery-capacity"><span class="battery-capacity__value">{capacity}%</span> Capacity</p>
+	<div class="card-content">
+		<p class="battery-last-fetched">Last fetched {lastUpdatedFormatted}</p>
 
-	<p class="battery-remaining">Remaining: {remainingTimeFormatted}</p>
-
-	<p class="battery-last-fetched">Last fetched {lastUpdatedFormatted}</p>
-
-	{#if refreshing}
-		<div class="refresh">
-			<SolarRefreshLineDuotone /> Refreshing
-		</div>
-	{/if}
+		{#if refreshing}
+			<div class="refresh">
+				<SolarRefreshLineDuotone /> Refreshing
+			</div>
+		{/if}
+	</div>
 </div>
 
 <style lang="scss">
+	.battery-header {
+		display: block;
+		width: 100%;
+		background-color: #34495e;
+		padding: 1rem;
+	}
+
 	.refresh {
 		position: absolute;
 		right: 0.5rem;
@@ -67,33 +80,32 @@
 	}
 
 	.battery-capacity {
-		color: #111;
+		color: #fff;
 		font-weight: bold;
+		margin-top: 0.75em;
 		margin-bottom: 0.5em;
 
 		&__value {
-			color: #555;
+			color: #fff;
 		}
 	}
 
 	.battery-remaining {
-		color: #222;
-		font-style: italic;
 		font-size: 0.9rem;
-		margin-bottom: 1em;
+		gap: 0.5rem;
+		color: #ccc;
 	}
 
 	.battery {
+		background-color: #293746;
 		display: block;
-		border: 1px solid #ccc;
+		border: 0.15rem solid #43576d;
 		width: 100%;
 		height: 3rem;
-		border-radius: 0.2rem;
+		border-radius: 0.25rem;
 		position: relative;
-		padding: 0.1rem;
+		padding: 0.2rem;
 		box-shadow: 0.25rem 0.25rem 2px rgba(0, 0, 0, 0.1);
-
-		margin-bottom: 0.5rem;
 	}
 
 	.battery-level-wrapper {
@@ -109,6 +121,7 @@
 		left: 0;
 		right: 0;
 		height: 100%;
+		border-radius: 0.125rem;
 
 		background: linear-gradient(90deg, #30b455 25%, #3b8650 50%, #30b455 75%);
 		background-size: 200% 100%;
