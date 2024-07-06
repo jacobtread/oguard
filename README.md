@@ -1,5 +1,6 @@
 
-<img src="./assets/oguard.svg" width="128px" alt="OGuard Logo">
+
+![Banner](assets/banner.jpg)
 
 # OGuard
 
@@ -8,6 +9,7 @@
 **OGuard** is an open source alternative to the [NetGuard](https://powershield.com.au/support-menu/download-area/netguard-software-downloads/) software used by Dynamix UPSs. This is only intended to support 
 the "Dynamix UPSD2000 Defender" as this is the only model I own so I won't be implementing the protocols 
 for other UPS devices
+
 
 ## Stack
 
@@ -24,8 +26,11 @@ So far I've implemented the basic USB HID protocol and can pull the battery and 
 - Keeps track of a history of the battery and device state (Tracked every minute and stored in the database)
 - Basic API, allows querying the current device and battery state, has SSE endpoint that emits events when they happen
 
+<img src="./assets/oguard.svg" width="32px" alt="OGuard Logo">
+
+
 ## WebUI
 
 Below is a screenshot of the WIP web UI for the app to monitor the capacity and load:
 
-![alt text](assets/webui.png)
+![Web UI screenshot](assets/webui.png)
