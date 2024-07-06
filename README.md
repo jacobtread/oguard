@@ -9,6 +9,10 @@
 the "Dynamix UPSD2000 Defender" as this is the only model I own so I won't be implementing the protocols 
 for other UPS devices
 
+## Stack
+
+* Monitor (Rust) - Software that tracks the state changes, interacts with the UPS, stores the data, exposes an HTTP API
+* Webapp (Svelte, Typescript) - Web application for viewing the app information, state, graphs etc
 
 ## Implemented 
 
