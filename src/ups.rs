@@ -3,7 +3,10 @@ use hidapi::{HidApi, HidDevice};
 use ordered_float::OrderedFloat;
 use sea_orm::FromJsonQueryResult;
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc, oneshot};
+use tokio::{
+    sync::{mpsc, oneshot},
+    time::timeout,
+};
 
 /// HID Device Vendor ID
 const VENDOR_ID: u16 = 0x0665;
@@ -191,7 +194,7 @@ fn read_response(device: &mut HidDevice) -> anyhow::Result<String> {
     // TODO: Read timeout of 3000ms
     loop {
         let count = device
-            .read(&mut buffer)
+            .read_timeout(&mut buffer, 3000)
             .context("Failed to read response")?;
 
         if count == 0 {
