@@ -26,3 +26,15 @@ export interface DeviceState {
 	battery_self_test: boolean;
 	buzzer_control: boolean;
 }
+
+export interface DeviceStateHistory {
+	id: number;
+	state: DeviceState;
+	created_at: string;
+}
+
+export interface DeviceBatteryHistory {
+	id: number;
+	state: DeviceBattery;
+	created_at: string;
+}

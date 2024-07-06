@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '@fontsource-variable/inter';
 	import '$lib/styles/global.scss';
+	import '@carbon/charts-svelte/styles.css';
 	import { browser } from '$app/environment';
 	import { QueryClientProvider, QueryClient } from '@tanstack/svelte-query';
 	import { SvelteQueryDevtools } from '@tanstack/svelte-query-devtools';
@@ -9,6 +10,7 @@
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	import localizedFormat from 'dayjs/plugin/localizedFormat';
 	import updateLocale from 'dayjs/plugin/updateLocale';
+	import utc from 'dayjs/plugin/utc';
 
 	const queryClient = new QueryClient({
 		defaultOptions: {
@@ -37,6 +39,7 @@
 	});
 	dayjs.extend(localizedFormat);
 	dayjs.extend(updateLocale);
+	dayjs.extend(utc);
 
 	dayjs.updateLocale('en', {
 		relativeTime: {

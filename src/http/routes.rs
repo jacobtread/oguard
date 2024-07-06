@@ -56,7 +56,7 @@ pub async fn battery_state_history(
 }
 /// GET /api/history/device-state
 ///
-/// Requests the battery state history for the provided range
+/// Requests the device state history for the provided range
 pub async fn device_state_history(
     Extension(db): Extension<DatabaseConnection>,
     Query(RangeQuery { start, end }): Query<RangeQuery>,
