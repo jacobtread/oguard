@@ -1,40 +1,44 @@
 <script lang="ts">
-	import dayjs from 'dayjs';
+	import SolarBoltCircleBoldDuotone from '~icons/solar/bolt-circle-bold-duotone';
 	import SolarRefreshLineDuotone from '~icons/solar/refresh-line-duotone';
 
-	// The current capacity % of the battery
-	export let capacity: number;
+	import dayjs from 'dayjs';
 
-	// Remaining time in seconds the battery has left
-	export let remainingTime: number;
+	// The current capacity % of load on the battery
+	export let load: number;
+
+	export let inputVoltage: number;
+
+	export let refreshing: boolean;
+
+	export let outputVoltage: number;
 
 	// When the device battery was last updated
 	export let lastUpdated: number;
 
-	export let refreshing: boolean;
-
-	const remainingTimeFormatted = dayjs.duration(remainingTime, 'seconds').humanize();
 	const lastUpdatedFormatted = dayjs(lastUpdated).format('LT');
 
-	function getBatteryLevelClass(capacity: number) {
-		if (capacity < 15) return 'battery-level alert';
-		if (capacity < 30) return 'battery-level warn';
-		return 'battery-level';
+	function getLevelClass(capacity: number) {
+		if (capacity > 85) return 'output-level alert';
+		if (capacity > 70) return 'output-level warn';
+		return 'output-level';
 	}
 </script>
 
-<div class="card battery-card">
-	<div class="battery">
-		<div class="battery-level-wrapper">
-			<div class={getBatteryLevelClass(capacity)} style="width:{capacity}%;"></div>
+<div class="card output-card">
+	<div class="output">
+		<div class="output-level-wrapper">
+			<div class={getLevelClass(load)} style="width:{load}%;"></div>
 		</div>
 	</div>
 
-	<p class="battery-capacity"><span class="battery-capacity__value">{capacity}%</span> Capacity</p>
+	<p class="output-capacity"><span class="output-capacity__value">{load}%</span> Load</p>
 
-	<p class="battery-remaining">Remaining: {remainingTimeFormatted}</p>
+	<p class="output-remaining">
+		<SolarBoltCircleBoldDuotone /> Input: {inputVoltage}V <SolarBoltCircleBoldDuotone />Output {outputVoltage}V
+	</p>
 
-	<p class="battery-last-fetched">Last fetched {lastUpdatedFormatted}</p>
+	<p class="output-last-fetched">Last fetched {lastUpdatedFormatted}</p>
 
 	{#if refreshing}
 		<div class="refresh">
@@ -59,14 +63,14 @@
 		gap: 0.5rem;
 	}
 
-	.battery-card {
+	.output-card {
 		position: relative;
 		display: inline-block;
 
 		min-width: 300px;
 	}
 
-	.battery-capacity {
+	.output-capacity {
 		color: #111;
 		font-weight: bold;
 		margin-bottom: 0.5em;
@@ -76,14 +80,17 @@
 		}
 	}
 
-	.battery-remaining {
+	.output-remaining {
 		color: #222;
-		font-style: italic;
 		font-size: 0.9rem;
 		margin-bottom: 1em;
+		display: flex;
+
+		gap: 0.5rem;
+		color: #777;
 	}
 
-	.battery {
+	.output {
 		display: block;
 		border: 1px solid #ccc;
 		width: 100%;
@@ -96,14 +103,14 @@
 		margin-bottom: 0.5rem;
 	}
 
-	.battery-level-wrapper {
+	.output-level-wrapper {
 		display: block;
 		width: 100%;
 		height: 100%;
 		position: relative;
 	}
 
-	.battery-level {
+	.output-level {
 		position: absolute;
 		bottom: 0;
 		left: 0;
@@ -139,7 +146,7 @@
 		}
 	}
 
-	.battery-last-fetched {
+	.output-last-fetched {
 		font-size: 0.8rem;
 		color: #333;
 	}
