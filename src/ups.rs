@@ -1,6 +1,8 @@
 use anyhow::Context;
 use hidapi::{HidApi, HidDevice};
-use serde::Serialize;
+use ordered_float::OrderedFloat;
+use sea_orm::FromJsonQueryResult;
+use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, oneshot};
 
 /// HID Device Vendor ID
@@ -72,7 +74,7 @@ impl UPSExecutorHandle {
 }
 
 /// UPS device line type
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum DeviceLineType {
     /// Device is line interactive
     LineInteractive,
@@ -81,7 +83,7 @@ pub enum DeviceLineType {
 }
 
 /// Current source of power for the UPS
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum DevicePowerState {
     /// Device is being powered from a socket, battery is not used
     Utility,
@@ -90,7 +92,7 @@ pub enum DevicePowerState {
 }
 
 /// Response from a device battery query
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, FromJsonQueryResult)]
 pub struct DeviceBattery {
     /// Capacity of the battery as a percentage 0-100
     pub capacity: u8,
@@ -99,7 +101,7 @@ pub struct DeviceBattery {
 }
 
 /// "Work mode" - Possible current states the UPS is in
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum WorkMode {
     /// UPS is in standby mode, running with less than
     /// 20v on input
@@ -121,18 +123,18 @@ impl WorkMode {
 }
 
 /// Current device state
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct DeviceState {
     /// Voltage going into the UPS (Power coming from wall)
-    pub input_voltage: f64,
+    pub input_voltage: OrderedFloat<f64>,
     /// Voltage coming out of the UPS (Power coming from UPS)
-    pub output_voltage: f64,
+    pub output_voltage: OrderedFloat<f64>,
     /// Percentage load/usage of the UPS
     pub output_load_percent: u8,
     /// Output frequency from the UPS
-    pub output_frequency: f64,
+    pub output_frequency: OrderedFloat<f64>,
     /// Voltage of the battery
-    pub battery_voltage: f64,
+    pub battery_voltage: OrderedFloat<f64>,
     /// Current source of power
     pub device_power_state: DevicePowerState,
     /// Low battery state
@@ -154,7 +156,7 @@ impl DeviceState {
             return WorkMode::Fault;
         }
 
-        if self.output_voltage < 20.0 {
+        if self.output_voltage < OrderedFloat(20.0) {
             return WorkMode::Standby;
         }
 
@@ -309,13 +311,13 @@ fn parse_device_state(msg: &str) -> anyhow::Result<DeviceState> {
 
     let mut parts = msg.split(' ');
 
-    let input_voltage: f64 = parts
+    let input_voltage: OrderedFloat<f64> = parts
         .next()
         .context("Missing input voltage")?
         .parse()
         .context("Invalid input voltage")?;
     let _ = parts.next().context("Missing value 2")?;
-    let output_voltage: f64 = parts
+    let output_voltage: OrderedFloat<f64> = parts
         .next()
         .context("Missing output voltage")?
         .parse()
@@ -325,12 +327,12 @@ fn parse_device_state(msg: &str) -> anyhow::Result<DeviceState> {
         .context("Missing output load percent")?
         .parse()
         .context("Invalid output load percent")?;
-    let output_frequency: f64 = parts
+    let output_frequency: OrderedFloat<f64> = parts
         .next()
         .context("Missing output frequency")?
         .parse()
         .context("Invalid output frequency")?;
-    let battery_voltage: f64 = parts
+    let battery_voltage: OrderedFloat<f64> = parts
         .next()
         .context("Missing battery voltage")?
         .parse()
@@ -446,6 +448,7 @@ mod test {
 
     use anyhow::Context;
     use hidapi::HidDevice;
+    use ordered_float::OrderedFloat;
     use tokio::time::sleep;
 
     use crate::ups::{
@@ -481,11 +484,11 @@ mod test {
         let value = "(237.1 237.1 237.1 008 50.1 27.1 --.- 00001001";
         let battery = parse_device_state(value).expect("Battery should parse successfully");
         let expected = DeviceState {
-            input_voltage: 237.1,
-            output_voltage: 237.1,
+            input_voltage: OrderedFloat(237.1),
+            output_voltage: OrderedFloat(237.1),
             output_load_percent: 8,
-            output_frequency: 50.1,
-            battery_voltage: 27.1,
+            output_frequency: OrderedFloat(50.1),
+            battery_voltage: OrderedFloat(27.1),
             device_power_state: DevicePowerState::Utility,
             battery_low: false,
             fault_mode: false,

@@ -2,7 +2,6 @@ use crate::database::DbResult;
 use crate::watcher::UPSEvent;
 use futures::future::BoxFuture;
 use sea_orm::entity::prelude::*;
-use sea_orm::{prelude::*, EntityOrSelect};
 use sea_orm::{
     ActiveModelTrait,
     ActiveValue::{NotSet, Set},

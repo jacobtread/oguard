@@ -9,28 +9,21 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Events::Table)
+                    .table(BatteryHistory::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Events::Id)
+                        ColumnDef::new(BatteryHistory::Id)
                             .big_unsigned()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Events::Type).integer().not_null())
-                    .col(ColumnDef::new(Events::CreatedAt).date_time().not_null())
-                    .to_owned(),
-            )
-            .await?;
-
-        // Create a index over the type
-        manager
-            .create_index(
-                Index::create()
-                    .name("idx-event-type")
-                    .table(Events::Table)
-                    .col(Events::Type)
+                    .col(ColumnDef::new(BatteryHistory::State).json().not_null())
+                    .col(
+                        ColumnDef::new(BatteryHistory::CreatedAt)
+                            .date_time()
+                            .not_null(),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -39,9 +32,9 @@ impl MigrationTrait for Migration {
         manager
             .create_index(
                 Index::create()
-                    .name("idx-event-created-at")
-                    .table(Events::Table)
-                    .col(Events::CreatedAt)
+                    .name("idx-battery-history-created-at")
+                    .table(BatteryHistory::Table)
+                    .col(BatteryHistory::CreatedAt)
                     .to_owned(),
             )
             .await?;
@@ -51,25 +44,15 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Events::Table).to_owned())
+            .drop_table(Table::drop().table(BatteryHistory::Table).to_owned())
             .await?;
 
         // Drop the index
         manager
             .drop_index(
                 Index::drop()
-                    .table(Events::Table)
-                    .name("idx-event-type")
-                    .to_owned(),
-            )
-            .await?;
-
-        // Drop the index
-        manager
-            .drop_index(
-                Index::drop()
-                    .table(Events::Table)
-                    .name("idx-event-created-at")
+                    .table(BatteryHistory::Table)
+                    .name("idx-battery-history-created-at")
                     .to_owned(),
             )
             .await?;
@@ -79,9 +62,9 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum Events {
+enum BatteryHistory {
     Table,
     Id,
-    Type,
+    State,
     CreatedAt,
 }

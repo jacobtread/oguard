@@ -578,6 +578,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b42b6fa04a440b495c8b04d0e71b707c585f83cb9cb28cf8cd0d976c315e31b4"
 dependencies = [
  "powerfmt",
+ "serde",
 ]
 
 [[package]]
@@ -1470,6 +1471,7 @@ dependencies = [
  "hidapi",
  "log",
  "notify-rust",
+ "ordered-float 4.2.1",
  "sea-orm",
  "sea-orm-migration",
  "serde",
@@ -1492,6 +1494,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1e1c390732d15f1d48471625cd92d154e66db2c56645e29a9cd26f4699f72dc"
 dependencies = [
  "num-traits",
+]
+
+[[package]]
+name = "ordered-float"
+version = "4.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19ff2cf528c6c03d9ed653d6c4ce1dc0582dc4af309790ad92f07c1cd551b0be"
+dependencies = [
+ "num-traits",
+ "rand",
+ "serde",
 ]
 
 [[package]]
@@ -1744,6 +1757,7 @@ dependencies = [
  "libc",
  "rand_chacha",
  "rand_core",
+ "serde",
 ]
 
 [[package]]
@@ -1763,6 +1777,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+ "serde",
 ]
 
 [[package]]
@@ -1979,11 +1994,14 @@ dependencies = [
  "sea-query",
  "sea-query-binder",
  "serde",
+ "serde_json",
  "sqlx",
  "strum",
  "thiserror",
+ "time",
  "tracing",
  "url",
+ "uuid",
 ]
 
 [[package]]
@@ -2023,8 +2041,9 @@ dependencies = [
  "chrono",
  "derivative",
  "inherent",
- "ordered-float",
+ "ordered-float 3.9.2",
  "sea-query-derive",
+ "serde_json",
 ]
 
 [[package]]
@@ -2035,6 +2054,7 @@ checksum = "36bbb68df92e820e4d5aeb17b4acd5cc8b5d18b2c36a4dd6f4626aabfa7ab1b9"
 dependencies = [
  "chrono",
  "sea-query",
+ "serde_json",
  "sqlx",
 ]
 
@@ -2570,6 +2590,7 @@ dependencies = [
  "powerfmt",
  "serde",
  "time-core",
+ "time-macros",
 ]
 
 [[package]]
@@ -2577,6 +2598,16 @@ name = "time-core"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef927ca75afb808a4d64dd374f00a2adf8d0fcff8e7b184af886c3c87ec4a3f3"
+
+[[package]]
+name = "time-macros"
+version = "0.2.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f252a68540fde3a3877aeea552b832b40ab9a69e318efd078774a01ddee1ccf"
+dependencies = [
+ "num-conv",
+ "time-core",
+]
 
 [[package]]
 name = "tinyvec"
@@ -2824,6 +2855,15 @@ name = "utf8parse"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
+
+[[package]]
+name = "uuid"
+version = "1.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5de17fd2f7da591098415cff336e12965a28061ddace43b59cb3c430179c9439"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "vcpkg"

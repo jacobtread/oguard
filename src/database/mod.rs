@@ -1,4 +1,4 @@
-use log::{debug, error, info, warn};
+use log::{debug, warn};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::Database as SeaDatabase;
 use std::{

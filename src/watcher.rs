@@ -73,72 +73,91 @@ impl UPSWatcher {
         UPSWatcherHandle { rx }
     }
 
+    /// Pushes a new event to any of the watchers
+    pub fn push_event(&mut self, event: UPSEvent) {
+        _ = self.tx.send(event);
+    }
+
+    /// Handle polling the device state at the expected interval
+    /// and checking any changes
     pub async fn process(mut self) {
         while self.tx.receiver_count() > 0 && self.executor.is_open() {
-            let device_state = match self.executor.request(QueryDeviceState).await {
-                Ok(value) => value,
-                Err(err) => {
-                    error!("Error while requesting UPS state: {err:?}");
-                    return;
-                }
-            };
-
-            let Some(last_state) = self.last_device_state.as_ref() else {
-                self.last_device_state = Some(device_state);
-                continue;
-            };
-
-            // Battery self tests
-            match (last_state.battery_self_test, device_state.battery_self_test) {
-                (false, true) => {
-                    info!("Device has started self test");
-
-                    _ = self.tx.send(UPSEvent::BatteryTestStart);
-                }
-                (true, false) => {
-                    info!("Device has finished self test");
-
-                    _ = self.tx.send(UPSEvent::BatteryTestEnd);
-                }
-                _ => {}
-            }
-
-            // Low battery
-            match (last_state.battery_low, device_state.battery_low) {
-                (false, true) => {
-                    info!("Device is running low on battery");
-
-                    _ = self.tx.send(UPSEvent::LowBatteryModeStart);
-                }
-                (true, false) => {
-                    info!("Device is no longer low on battery");
-
-                    _ = self.tx.send(UPSEvent::LowBatteryModeEnd);
-                }
-                _ => {}
-            }
-
-            // Power transitions
-            match (
-                device_state.device_power_state,
-                last_state.device_power_state,
-            ) {
-                (DevicePowerState::Utility, DevicePowerState::Battery) => {
-                    info!("AC RECOVERY");
-
-                    _ = self.tx.send(UPSEvent::ACRecovery);
-                }
-                (DevicePowerState::Battery, DevicePowerState::Utility) => {
-                    warn!("AC FAILURE");
-
-                    _ = self.tx.send(UPSEvent::ACFailure);
-                }
-                _ => {}
-            };
-
-            self.last_device_state = Some(device_state);
+            self.process_device_state().await;
 
             sleep(POLL_INTERVAL).await;
         }
+    }
+
+    /// Requests the current device state from the executor and checks
+    /// for any state changes, emits events for changed states
+    pub async fn process_device_state(&mut self) {
+        let device_state = match self.executor.request(QueryDeviceState).await {
+            Ok(value) => value,
+            Err(err) => {
+                error!("Error while requesting UPS device state: {err:?}");
+                return;
+            }
+        };
+
+        // Obtain the previous states if available
+        let (last_battery_self_test, last_battery_low, last_device_power_state) = self
+            .last_device_state
+            .as_ref()
+            .map(|value| {
+                (
+                    Some(value.battery_self_test),
+                    Some(value.battery_low),
+                    Some(value.device_power_state),
+                )
+            })
+            .unwrap_or_default();
+
+        // Battery self tests
+        match (last_battery_self_test, device_state.battery_self_test) {
+            // Should trigger enter event if there is a transition or none previous state
+            (Some(false) | None, true) => {
+                info!("Device has started self test");
+
+                self.push_event(UPSEvent::BatteryTestStart);
+            }
+            (Some(true), false) => {
+                info!("Device has finished self test");
+
+                self.push_event(UPSEvent::BatteryTestEnd);
+            }
+            _ => {}
+        }
+
+        // Low battery
+        match (last_battery_low, device_state.battery_low) {
+            // Should trigger enter event if there is a transition or none previous state
+            (Some(false) | None, true) => {
+                info!("Device is running low on battery");
+
+                self.push_event(UPSEvent::LowBatteryModeStart);
+            }
+            (Some(true), false) => {
+                info!("Device is no longer low on battery");
+                self.push_event(UPSEvent::LowBatteryModeEnd);
+            }
+            _ => {}
+        }
+
+        // Power transitions
+        match (last_device_power_state, device_state.device_power_state) {
+            (Some(DevicePowerState::Utility) | None, DevicePowerState::Battery) => {
+                warn!("AC FAILURE");
+
+                self.push_event(UPSEvent::ACFailure);
+            }
+            (Some(DevicePowerState::Battery), DevicePowerState::Utility) => {
+                info!("AC RECOVERY");
+
+                self.push_event(UPSEvent::ACRecovery);
+            }
+            _ => {}
+        };
+
+        self.last_device_state = Some(device_state);
     }
 }
