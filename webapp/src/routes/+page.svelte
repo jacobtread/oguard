@@ -4,6 +4,7 @@
 	import DeviceBatteryCard from '$lib/components/DeviceBatteryCard.svelte';
 	import type { DeviceBattery, DeviceState } from '$lib/api/types';
 	import DeviceOutputCard from '$lib/components/DeviceOutputCard.svelte';
+	import Sidebar from '$lib/components/Header.svelte';
 	const batteryInfoQuery = createQuery<DeviceBattery>({
 		queryKey: ['battery-info'],
 		queryFn: async () =>
@@ -29,42 +30,57 @@
 	});
 </script>
 
-<div class="grid">
-	{#if $batteryInfoQuery.isPending}
-		Loading...
-	{/if}
-	{#if $batteryInfoQuery.error}
-		An error has occurred:
-		{$batteryInfoQuery.error.message}
-	{/if}
-	{#if $batteryInfoQuery.isSuccess}
-		<DeviceBatteryCard
-			capacity={$batteryInfoQuery.data.capacity}
-			remainingTime={$batteryInfoQuery.data.remaining_time}
-			lastUpdated={$batteryInfoQuery.dataUpdatedAt}
-			refreshing={$batteryInfoQuery.isFetching}
-		/>
-	{/if}
+<div class="layout">
+	<Sidebar />
 
-	{#if $deviceStateQuery.isPending}
-		Loading...
-	{/if}
-	{#if $deviceStateQuery.error}
-		An error has occurred:
-		{$deviceStateQuery.error.message}
-	{/if}
-	{#if $deviceStateQuery.isSuccess}
-		<DeviceOutputCard
-			load={$deviceStateQuery.data.output_load_percent}
-			inputVoltage={$deviceStateQuery.data.input_voltage}
-			outputVoltage={$deviceStateQuery.data.output_voltage}
-			lastUpdated={$deviceStateQuery.dataUpdatedAt}
-			refreshing={$deviceStateQuery.isFetching}
-		/>
-	{/if}
+	<main class="main">
+		<div class="grid">
+			{#if $batteryInfoQuery.isPending}
+				Loading...
+			{/if}
+			{#if $batteryInfoQuery.error}
+				An error has occurred:
+				{$batteryInfoQuery.error.message}
+			{/if}
+			{#if $batteryInfoQuery.isSuccess}
+				<DeviceBatteryCard
+					capacity={$batteryInfoQuery.data.capacity}
+					remainingTime={$batteryInfoQuery.data.remaining_time}
+					lastUpdated={$batteryInfoQuery.dataUpdatedAt}
+					refreshing={$batteryInfoQuery.isFetching}
+				/>
+			{/if}
+
+			{#if $deviceStateQuery.isPending}
+				Loading...
+			{/if}
+			{#if $deviceStateQuery.error}
+				An error has occurred:
+				{$deviceStateQuery.error.message}
+			{/if}
+			{#if $deviceStateQuery.isSuccess}
+				<DeviceOutputCard
+					load={$deviceStateQuery.data.output_load_percent}
+					inputVoltage={$deviceStateQuery.data.input_voltage}
+					outputVoltage={$deviceStateQuery.data.output_voltage}
+					lastUpdated={$deviceStateQuery.dataUpdatedAt}
+					refreshing={$deviceStateQuery.isFetching}
+				/>
+			{/if}
+		</div>
+	</main>
 </div>
 
 <style lang="scss">
+	.layout {
+		display: flex;
+		flex-flow: column;
+		width: 100%;
+	}
+
+	.main {
+	}
+
 	.grid {
 		display: flex;
 		gap: 1rem;
