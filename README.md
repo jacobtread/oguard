@@ -23,3 +23,9 @@ So far I've implemented the basic USB HID protocol and can pull the battery and 
 - Events are reported through desktop notifications
 - Keeps track of a history of the battery and device state (Tracked every minute and stored in the database)
 - Basic API, allows querying the current device and battery state, has SSE endpoint that emits events when they happen
+
+## WebUI
+
+Below is a screenshot of the WIP web UI for the app to monitor the capacity and load:
+
+![alt text](assets/webui.png)
