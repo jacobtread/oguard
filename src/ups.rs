@@ -191,7 +191,6 @@ fn read_response(device: &mut HidDevice) -> anyhow::Result<String> {
 
     let mut buffer = [0u8; 128];
 
-    // TODO: Read timeout of 3000ms
     loop {
         let count = device
             .read_timeout(&mut buffer, 3000)
