@@ -6,6 +6,7 @@ use log::{debug, error};
 use notify_rust::Notification;
 use persistent_watcher::UPSPersistentWatcher;
 use sea_orm::DatabaseConnection;
+use tower_http::cors::CorsLayer;
 use ups::UPSExecutor;
 use watcher::{UPSWatcher, UPSWatcherHandle};
 
@@ -39,6 +40,7 @@ async fn main() -> anyhow::Result<()> {
 
     // build our application with a single route
     let app = router()
+        .layer(CorsLayer::permissive())
         .layer(Extension(database))
         .layer(Extension(executor))
         .layer(Extension(watcher_handle));
