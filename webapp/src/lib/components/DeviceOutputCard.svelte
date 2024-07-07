@@ -18,19 +18,18 @@
 	export let lastUpdated: number;
 
 	const lastUpdatedFormatted = dayjs(lastUpdated).format('LT');
-
-	function getLevelClass(capacity: number) {
-		if (capacity > 85) return 'output-level alert';
-		if (capacity > 70) return 'output-level warn';
-		return 'output-level';
-	}
 </script>
 
 <div class="card output-card">
 	<div class="output-header">
 		<div class="output">
 			<div class="output-level-wrapper">
-				<div class={getLevelClass(load)} style="width:{load}%;"></div>
+				<div
+					class="output-level"
+					class:alert={load > 85}
+					class:warn={load <= 85 && load > 70}
+					style="width:{load}%;"
+				></div>
 			</div>
 		</div>
 

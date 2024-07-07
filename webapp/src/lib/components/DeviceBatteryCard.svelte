@@ -16,19 +16,18 @@
 
 	const remainingTimeFormatted = dayjs.duration(remainingTime, 'seconds').humanize();
 	const lastUpdatedFormatted = dayjs(lastUpdated).format('LT');
-
-	function getBatteryLevelClass(capacity: number) {
-		if (capacity < 15) return 'battery-level alert';
-		if (capacity < 30) return 'battery-level warn';
-		return 'battery-level';
-	}
 </script>
 
 <div class="card battery-card">
 	<div class="battery-header">
 		<div class="battery">
 			<div class="battery-level-wrapper">
-				<div class={getBatteryLevelClass(capacity)} style="width:{capacity}%;"></div>
+				<div
+					class="battery-level"
+					class:alert={capacity < 15}
+					class:warn={capacity >= 15 && capacity < 30}
+					style="width:{capacity}%;"
+				></div>
 			</div>
 		</div>
 
