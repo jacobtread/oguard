@@ -69,7 +69,7 @@
 			<table>
 				<thead>
 					<tr>
-						<th class="column column--level">{$_('eventTable.columns.level')}</th>
+						<th class="column column--level">{$_('event.columns.level')}</th>
 						<th>{$_('event.columns.type')}</th>
 						<th>{$_('event.columns.description')}</th>
 						<th>{$_('event.columns.timestamp')}</th>
