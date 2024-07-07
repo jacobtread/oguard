@@ -1,3 +1,14 @@
+<script context="module">
+	import { getLocaleFromNavigator, init, register } from 'svelte-i18n';
+
+	register('en', () => import('../locales/en.json'));
+
+	init({
+		fallbackLocale: 'en',
+		initialLocale: getLocaleFromNavigator()
+	});
+</script>
+
 <script lang="ts">
 	import '@fontsource-variable/inter';
 	import '$lib/styles/global.scss';
@@ -13,14 +24,6 @@
 	import utc from 'dayjs/plugin/utc';
 	import timezone from 'dayjs/plugin/timezone';
 	import Header from '$lib/components/Header.svelte';
-	import { getLocaleFromNavigator, init, register } from 'svelte-i18n';
-
-	register('en', () => import('../locales/en.json'));
-
-	init({
-		fallbackLocale: 'en',
-		initialLocale: getLocaleFromNavigator()
-	});
 
 	const queryClient = new QueryClient({
 		defaultOptions: {
