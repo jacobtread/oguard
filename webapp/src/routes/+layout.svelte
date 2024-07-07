@@ -11,6 +11,7 @@
 	import localizedFormat from 'dayjs/plugin/localizedFormat';
 	import updateLocale from 'dayjs/plugin/updateLocale';
 	import utc from 'dayjs/plugin/utc';
+	import timezone from 'dayjs/plugin/timezone';
 	import Header from '$lib/components/Header.svelte';
 
 	const queryClient = new QueryClient({
@@ -41,6 +42,7 @@
 	dayjs.extend(localizedFormat);
 	dayjs.extend(updateLocale);
 	dayjs.extend(utc);
+	dayjs.extend(timezone);
 
 	dayjs.updateLocale('en', {
 		relativeTime: {

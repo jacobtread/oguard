@@ -84,18 +84,12 @@
 		margin-bottom: 0.5rem;
 	}
 
-	.nav {
-	}
-
 	.nav-list {
 		display: flex;
 		flex-flow: row;
 		list-style: none;
 		gap: 1.5rem;
 		align-items: center;
-
-		&__item {
-		}
 	}
 
 	.nav-link {
