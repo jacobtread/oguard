@@ -15,7 +15,8 @@ pub fn router() -> Router {
                 "/history",
                 Router::new()
                     .route("/battery-state", get(routes::battery_state_history))
-                    .route("/device-state", get(routes::device_state_history)),
+                    .route("/device-state", get(routes::device_state_history))
+                    .route("/event", get(routes::event_history)),
             ),
     )
 }

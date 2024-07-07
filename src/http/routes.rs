@@ -2,6 +2,7 @@ use std::convert::Infallible;
 use std::time::Duration;
 
 use crate::database::entities::battery_history::BatteryHistoryModel;
+use crate::database::entities::events::EventModel;
 use crate::database::entities::state_history::StateHistoryModel;
 use crate::http::error::HttpResult;
 use crate::ups::{
@@ -54,6 +55,7 @@ pub async fn battery_state_history(
 
     Ok(Json(history))
 }
+
 /// GET /api/history/device-state
 ///
 /// Requests the device state history for the provided range
@@ -64,6 +66,20 @@ pub async fn device_state_history(
     let history = StateHistoryModel::get_range(&db, start, end)
         .await
         .context("Failed to query state history")?;
+
+    Ok(Json(history))
+}
+
+/// GET /api/history/event
+///
+/// Requests the device state history for the provided range
+pub async fn event_history(
+    Extension(db): Extension<DatabaseConnection>,
+    Query(RangeQuery { start, end }): Query<RangeQuery>,
+) -> HttpResult<Vec<EventModel>> {
+    let history = EventModel::get_range(&db, start, end)
+        .await
+        .context("Failed to query event history")?;
 
     Ok(Json(history))
 }
