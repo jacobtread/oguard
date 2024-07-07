@@ -21,6 +21,7 @@ pub mod watcher;
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv()?;
     env_logger::init();
+    log_panics::init();
 
     // Connect to the database
     let database = database::init().await;
