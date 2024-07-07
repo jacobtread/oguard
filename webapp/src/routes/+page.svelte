@@ -4,7 +4,6 @@
 	import DeviceBatteryCard from '$lib/components/DeviceBatteryCard.svelte';
 	import type { DeviceBattery, DeviceState, DeviceBatteryHistory } from '$lib/api/types';
 	import DeviceOutputCard from '$lib/components/DeviceOutputCard.svelte';
-	import Sidebar from '$lib/components/Header.svelte';
 	import dayjs from 'dayjs';
 	import { AreaChart, ScaleTypes } from '@carbon/charts-svelte';
 	import { type AreaChartOptions } from '@carbon/charts';
@@ -83,78 +82,63 @@
 	};
 </script>
 
-<div class="layout">
-	<Sidebar />
+<div class="grid">
+	{#if $batteryInfoQuery.isPending}
+		Loading...
+	{/if}
+	{#if $batteryInfoQuery.error}
+		An error has occurred:
+		{$batteryInfoQuery.error.message}
+	{/if}
+	{#if $batteryInfoQuery.isSuccess}
+		<DeviceBatteryCard
+			capacity={$batteryInfoQuery.data.capacity}
+			remainingTime={$batteryInfoQuery.data.remaining_time}
+			lastUpdated={$batteryInfoQuery.dataUpdatedAt}
+			refreshing={$batteryInfoQuery.isFetching}
+		/>
+	{/if}
 
-	<main class="main">
-		<div class="grid">
-			{#if $batteryInfoQuery.isPending}
-				Loading...
-			{/if}
-			{#if $batteryInfoQuery.error}
-				An error has occurred:
-				{$batteryInfoQuery.error.message}
-			{/if}
-			{#if $batteryInfoQuery.isSuccess}
-				<DeviceBatteryCard
-					capacity={$batteryInfoQuery.data.capacity}
-					remainingTime={$batteryInfoQuery.data.remaining_time}
-					lastUpdated={$batteryInfoQuery.dataUpdatedAt}
-					refreshing={$batteryInfoQuery.isFetching}
-				/>
-			{/if}
-
-			{#if $deviceStateQuery.isPending}
-				Loading...
-			{/if}
-			{#if $deviceStateQuery.error}
-				An error has occurred:
-				{$deviceStateQuery.error.message}
-			{/if}
-			{#if $deviceStateQuery.isSuccess}
-				<DeviceOutputCard
-					load={$deviceStateQuery.data.output_load_percent}
-					inputVoltage={$deviceStateQuery.data.input_voltage}
-					outputVoltage={$deviceStateQuery.data.output_voltage}
-					lastUpdated={$deviceStateQuery.dataUpdatedAt}
-					refreshing={$deviceStateQuery.isFetching}
-				/>
-			{/if}
+	{#if $deviceStateQuery.isPending}
+		Loading...
+	{/if}
+	{#if $deviceStateQuery.error}
+		An error has occurred:
+		{$deviceStateQuery.error.message}
+	{/if}
+	{#if $deviceStateQuery.isSuccess}
+		<DeviceOutputCard
+			load={$deviceStateQuery.data.output_load_percent}
+			inputVoltage={$deviceStateQuery.data.input_voltage}
+			outputVoltage={$deviceStateQuery.data.output_voltage}
+			lastUpdated={$deviceStateQuery.dataUpdatedAt}
+			refreshing={$deviceStateQuery.isFetching}
+		/>
+	{/if}
+</div>
+<div class="grid">
+	{#if $deviceBatteryHistory.isPending}
+		Loading...
+	{/if}
+	{#if $deviceBatteryHistory.error}
+		An error has occurred:
+		{$deviceBatteryHistory.error.message}
+	{/if}
+	{#if $deviceBatteryHistory.isSuccess}
+		<div class="card graph-card">
+			<AreaChart
+				data={$deviceBatteryHistory.data.map((value) => ({
+					date: value.created_at,
+					value: value.state.capacity
+				}))}
+				{options}
+				style="padding:2rem;height:400px;"
+			/>
 		</div>
-		<div class="grid">
-			{#if $deviceBatteryHistory.isPending}
-				Loading...
-			{/if}
-			{#if $deviceBatteryHistory.error}
-				An error has occurred:
-				{$deviceBatteryHistory.error.message}
-			{/if}
-			{#if $deviceBatteryHistory.isSuccess}
-				<div class="card graph-card">
-					<AreaChart
-						data={$deviceBatteryHistory.data.map((value) => ({
-							date: value.created_at,
-							value: value.state.capacity
-						}))}
-						{options}
-						style="padding:2rem;height:400px;"
-					/>
-				</div>
-			{/if}
-		</div>
-	</main>
+	{/if}
 </div>
 
 <style lang="scss">
-	.layout {
-		display: flex;
-		flex-flow: column;
-		width: 100%;
-	}
-
-	.main {
-	}
-
 	.grid {
 		display: flex;
 		gap: 1rem;

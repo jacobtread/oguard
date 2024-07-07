@@ -11,6 +11,7 @@
 	import localizedFormat from 'dayjs/plugin/localizedFormat';
 	import updateLocale from 'dayjs/plugin/updateLocale';
 	import utc from 'dayjs/plugin/utc';
+	import Header from '$lib/components/Header.svelte';
 
 	const queryClient = new QueryClient({
 		defaultOptions: {
@@ -62,8 +63,21 @@
 </script>
 
 <QueryClientProvider client={queryClient}>
-	<main>
-		<slot />
-	</main>
+	<div class="layout">
+		<Header />
+
+		<main class="main">
+			<slot />
+		</main>
+	</div>
+
 	<SvelteQueryDevtools />
 </QueryClientProvider>
+
+<style lang="scss">
+	.layout {
+		display: flex;
+		flex-flow: column;
+		width: 100%;
+	}
+</style>
