@@ -42,6 +42,7 @@
 		"@tanstack/svelte-query-devtools": "^5.50.1",
 		"bits-ui": "^0.21.11",
 		"date-picker-svelte": "^2.13.0",
-		"dayjs": "^1.11.11"
+		"dayjs": "^1.11.11",
+		"svelte-i18n": "^4.0.0"
 	}
 }

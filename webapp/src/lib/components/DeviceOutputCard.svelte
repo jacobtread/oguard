@@ -1,6 +1,7 @@
 <script lang="ts">
 	import SolarBoltCircleBoldDuotone from '~icons/solar/bolt-circle-bold-duotone';
 	import SolarRefreshLineDuotone from '~icons/solar/refresh-line-duotone';
+	import { _ } from 'svelte-i18n';
 
 	import dayjs from 'dayjs';
 
@@ -33,18 +34,24 @@
 			</div>
 		</div>
 
-		<p class="output-capacity"><span class="output-capacity__value">{load}%</span> Load</p>
+		<p class="output-capacity"><span class="output-capacity__value">{load}%</span> {$_('load')}</p>
 		<p class="output-remaining">
-			<SolarBoltCircleBoldDuotone /> Input: {inputVoltage}V <SolarBoltCircleBoldDuotone />Output {outputVoltage}V
+			<SolarBoltCircleBoldDuotone />
+			{$_('input-voltage', { values: { voltage: inputVoltage } })}V
+			<SolarBoltCircleBoldDuotone />
+			{$_('output-voltage', { values: { voltage: outputVoltage } })}V
 		</p>
 	</div>
 
 	<div class="card-content">
-		<p class="output-last-fetched">Last fetched {lastUpdatedFormatted}</p>
+		<p class="output-last-fetched">
+			{$_('last-fetched', { values: { at: lastUpdatedFormatted } })}
+		</p>
 
 		{#if refreshing}
 			<div class="refresh">
-				<SolarRefreshLineDuotone /> Refreshing
+				<SolarRefreshLineDuotone />
+				{$_('refreshing')}
 			</div>
 		{/if}
 	</div>

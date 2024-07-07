@@ -6,6 +6,7 @@
 	import HistoryIcon from '~icons/solar/sort-by-time-bold-duotone';
 	import ConfigureIcon from '~icons/solar/settings-bold-duotone';
 	import { page } from '$app/stores';
+	import { _ } from 'svelte-i18n';
 </script>
 
 <div class="header">
@@ -21,7 +22,7 @@
 			<li class="nav-list__item" class:nav-link--selected={$page.route.id == '/'}>
 				<a class="nav-link" href="{base}/">
 					<HomeIcon class="nav-lin__item" />
-					Home
+					{$_('pages.home')}
 				</a>
 			</li>
 			<li class="nav-list__item">
@@ -31,7 +32,7 @@
 					class:nav-link--selected={$page.route.id == '/events'}
 				>
 					<EventsIcon class="nav-lin__item" />
-					Events
+					{$_('pages.events')}
 				</a>
 			</li>
 			<li class="nav-list__item">
@@ -41,7 +42,7 @@
 					class:nav-link--selected={$page.route.id == '/history'}
 				>
 					<HistoryIcon class="nav-lin__item" />
-					History
+					{$_('pages.history')}
 				</a>
 			</li>
 			<li class="nav-list__item">
@@ -51,7 +52,7 @@
 					class:nav-link--selected={$page.route.id == '/configure'}
 				>
 					<ConfigureIcon class="nav-lin__item" />
-					Configure
+					{$_('pages.configure')}
 				</a>
 			</li>
 		</ul>

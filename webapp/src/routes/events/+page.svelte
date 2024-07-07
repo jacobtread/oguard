@@ -10,6 +10,7 @@
 	import WarningIcon from '~icons/solar/danger-triangle-bold-duotone';
 	import ErrorIcon from '~icons/solar/bug-bold-duotone';
 	import SuccessIcon from '~icons/solar/check-circle-bold-duotone';
+	import { _ } from 'svelte-i18n';
 
 	const currentDate = dayjs();
 	let start = currentDate.startOf('month').toDate();
@@ -40,12 +41,18 @@
 <div class="content">
 	<div class="filters">
 		<div class="card date-input">
-			<label class="date-input__label" for="startDate"><DateIcon /> Start </label>
+			<label class="date-input__label" for="startDate">
+				<DateIcon />
+				{$_('event.filters.start')}
+			</label>
 			<DateInput id="startDate" timePrecision="minute" bind:value={start} />
 		</div>
 
 		<div class="card date-input">
-			<label class="date-input__label" for="endDate"><DateIcon /> End</label>
+			<label class="date-input__label" for="endDate">
+				<DateIcon />
+				{$_('event.filters.end')}
+			</label>
 			<DateInput id="endDate" timePrecision="minute" bind:value={end} />
 		</div>
 	</div>
@@ -62,10 +69,10 @@
 			<table>
 				<thead>
 					<tr>
-						<th class="column column--level">Level</th>
-						<th>Type</th>
-						<th>Description</th>
-						<th>Timestamp</th>
+						<th class="column column--level">{$_('eventTable.columns.level')}</th>
+						<th>{$_('event.columns.type')}</th>
+						<th>{$_('event.columns.description')}</th>
+						<th>{$_('event.columns.timestamp')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -92,8 +99,9 @@
 										</span>
 									{/if}
 								</td>
-								<td class="column column--type">{typeData.label}</td>
-								<td class="column column--description">{typeData.description}</td>
+
+								<td class="column column--type">{$_(`events.${row.type}.label`)}</td>
+								<td class="column column--description">{$_(`events.${row.type}.description`)}</td>
 
 								<td>{dayjs(row.created_at).format('L LT')}</td>
 							</tr>
