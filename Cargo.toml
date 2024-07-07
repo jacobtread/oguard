@@ -48,6 +48,11 @@ ordered-float = { version = "4.2.1", features = ["serde"] }
 rust-i18n = "3"
 strum = { version = "0.26.3", features = ["derive"] }
 
+# HTTP
+reqwest = "0.12.5"
+moka = { version = "0.12.7", features = ["future", "sync"] }
+uuid = { version = "1.9.1", features = ["v4", "serde"] }
+
 # SeaORM 
 [dependencies.sea-orm]
 version = "^0"

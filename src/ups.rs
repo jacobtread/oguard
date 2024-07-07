@@ -1,5 +1,12 @@
+use std::{
+    any::Any,
+    collections::HashMap,
+    time::{Duration, Instant},
+};
+
 use anyhow::Context;
 use hidapi::{HidApi, HidDevice};
+use moka::{policy::EvictionPolicy, sync::Cache};
 use ordered_float::OrderedFloat;
 use sea_orm::FromJsonQueryResult;
 use serde::{Deserialize, Serialize};
@@ -16,9 +23,20 @@ const PRODUCT_ID: u16 = 0x5161;
 /// Dynamic requests
 type UPSRequest = Box<dyn DeviceRequestProxy>;
 
+#[derive(Default)]
+pub struct ResponseCache {
+    pub cache: HashMap<u64, CachedValue>,
+}
+
+pub struct CachedValue {
+    pub value: Box<dyn Any + Send>,
+    pub expires_at: Instant,
+}
+
 /// Executor for running the synchronous requests over the USB HID
 pub struct UPSExecutor {
     device: HidDevice,
+    cache: ResponseCache,
     rx: mpsc::Receiver<UPSRequest>,
 }
 
@@ -32,7 +50,9 @@ impl UPSExecutor {
             .open(VENDOR_ID, PRODUCT_ID)
             .expect("Failed to open device");
 
-        let executor = UPSExecutor { device, rx };
+        let cache = ResponseCache::default();
+
+        let executor = UPSExecutor { device, rx, cache };
 
         std::thread::spawn(move || executor.process());
 
@@ -41,7 +61,7 @@ impl UPSExecutor {
 
     pub fn process(mut self) {
         while let Some(mut msg) = self.rx.blocking_recv() {
-            msg.handle(&mut self.device);
+            msg.handle(&mut self.device, &mut self.cache);
         }
     }
 }
@@ -229,23 +249,64 @@ pub struct DeviceRequest<T> {
 /// Trait for commands that can be executed
 pub trait DeviceCommand: Send + 'static {
     /// The device response
-    type Response: Send + 'static;
+    type Response: Send + Clone + 'static;
 
     /// Executes the command on the device returning the response
     fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response>;
+
+    /// Unique cache key to use if the response can be cached
+    fn cache_key(&self) -> Option<u64> {
+        None
+    }
 }
 
 /// Type erased proxy over [DeviceRequest] to allow them to
 /// be handled and send their response in a dynamic context
 pub trait DeviceRequestProxy: Send + 'static {
     /// Handle the request
-    fn handle(&mut self, device: &mut HidDevice);
+    fn handle(&mut self, device: &mut HidDevice, cache: &mut ResponseCache);
 }
 
-impl<T: Send + 'static> DeviceRequestProxy for DeviceRequest<T> {
-    fn handle(&mut self, device: &mut HidDevice) {
+fn get_cached_response<T>(cache_key: Option<u64>, cache: &ResponseCache) -> Option<T>
+where
+    T: Send + Clone + 'static,
+{
+    let cache_key = cache_key?;
+    let cache_value = cache.cache.get(&cache_key)?;
+
+    if cache_value.expires_at <= Instant::now() {
+        return None;
+    }
+
+    let value = cache_value.value.downcast_ref::<T>();
+    value.cloned()
+}
+
+impl<T: Send + Clone + 'static> DeviceRequestProxy for DeviceRequest<T> {
+    fn handle(&mut self, device: &mut HidDevice, cache: &mut ResponseCache) {
+        let cache_key = self.command.cache_key();
+        if let Some(cached_response) = get_cached_response(cache_key, cache) {
+            // Send the cached response
+            if let Some(tx) = self.tx.take() {
+                _ = tx.send(Ok(cached_response));
+            }
+        }
+
         // Execute the command
         let result = self.command.execute(device);
+
+        // Store successful responses
+        if let Some(cache_key) = cache_key {
+            if let Ok(value) = result.as_ref() {
+                let value = value.clone();
+                let cache_value = CachedValue {
+                    expires_at: Instant::now() + Duration::from_secs(1),
+                    value: Box::new(value),
+                };
+
+                cache.cache.insert(cache_key, cache_value);
+            }
+        }
 
         // Send the response
         if let Some(tx) = self.tx.take() {
@@ -264,6 +325,10 @@ impl DeviceCommand for QueryDeviceBattery {
         execute_command(device, "QI").context("write request")?;
         let response = read_response(device).context("read response")?;
         parse_device_battery(&response).context("parse response")
+    }
+
+    fn cache_key(&self) -> Option<u64> {
+        Some(0)
     }
 }
 
@@ -300,6 +365,10 @@ impl DeviceCommand for QueryDeviceState {
         execute_command(device, "QS").context("write request")?;
         let response = read_response(device).context("read response")?;
         parse_device_state(&response).context("parse response")
+    }
+
+    fn cache_key(&self) -> Option<u64> {
+        Some(1)
     }
 }
 

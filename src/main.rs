@@ -13,6 +13,7 @@ use tower_http::cors::CorsLayer;
 use ups::UPSExecutor;
 use watcher::{UPSEvent, UPSWatcher, UPSWatcherHandle};
 
+pub mod action;
 pub mod config;
 pub mod database;
 pub mod http;
