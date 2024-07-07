@@ -2,6 +2,7 @@ use crate::ups::{DevicePowerState, DeviceState, QueryDeviceState, UPSExecutorHan
 use log::{error, info, warn};
 use serde::Serialize;
 use std::time::Duration;
+use strum::Display;
 use tokio::{sync::broadcast, time::sleep};
 use tokio_stream::wrappers::BroadcastStream;
 
@@ -41,7 +42,7 @@ impl UPSWatcherHandle {
 }
 
 /// Events that could be encountered while processing state updates
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Display)]
 #[serde(tag = "type")]
 pub enum UPSEvent {
     /// AC Power has been lost

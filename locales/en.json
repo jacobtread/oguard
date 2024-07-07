@@ -1,0 +1,34 @@
+{
+    "_version": 1,
+    "server.started": "Serving OGuard at %{host}",
+    "event": {
+        "ACFailure": {
+            "label": "AC Power Failure",
+            "description": "No longer receiving AC power, running on battery"
+        },
+        "ACRecovery": {
+            "label": "AC Power Recovered",
+            "description": "Receiving AC power, no longer running on battery"
+        },
+        "UPSFault": {
+            "label": "Fault encountered",
+            "description": "UPS Encountered a fault"
+        },
+        "LowBatteryModeStart": {
+            "label": "UPS Low Battery",
+            "description": "UPS is running low on battery"
+        },
+        "LowBatteryModeEnd": {
+            "label": "UPS Sufficient Battery",
+            "description": "UPS is no longer running low on battery"
+        },
+        "BatteryTestStart": {
+            "label": "UPS Battery Test Started",
+            "description": "UPS is testing the battery"
+        },
+        "BatteryTestEnd": {
+            "label": "UPS Battery Test Finished",
+            "description": "UPS has finished testing the battery"
+        }
+    }
+}

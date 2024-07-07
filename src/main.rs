@@ -1,3 +1,5 @@
+use std::net::{Ipv4Addr, SocketAddrV4};
+
 use axum::Extension;
 use chrono::Utc;
 use database::entities::events::{EventModel, EventType};
@@ -5,10 +7,11 @@ use http::router;
 use log::{debug, error};
 use notify_rust::Notification;
 use persistent_watcher::UPSPersistentWatcher;
+use rust_i18n::{i18n, t};
 use sea_orm::DatabaseConnection;
 use tower_http::cors::CorsLayer;
 use ups::UPSExecutor;
-use watcher::{UPSWatcher, UPSWatcherHandle};
+use watcher::{UPSEvent, UPSWatcher, UPSWatcherHandle};
 
 pub mod config;
 pub mod database;
@@ -17,11 +20,16 @@ pub mod persistent_watcher;
 pub mod ups;
 pub mod watcher;
 
+i18n!("locales", fallback = "en");
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv()?;
     env_logger::init();
     log_panics::init();
+
+    // Set current locale
+    rust_i18n::set_locale("en");
 
     // Connect to the database
     let database = database::init().await;
@@ -46,10 +54,17 @@ async fn main() -> anyhow::Result<()> {
         .layer(Extension(executor))
         .layer(Extension(watcher_handle));
 
-    // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let address = SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 3000);
 
-    debug!("Server OGuard at http://localhost:3000");
+    // run our app with hyper, listening globally on port 3000
+    let listener = tokio::net::TcpListener::bind(address).await.unwrap();
+
+    debug!(
+        "{}",
+        t!("server.started", host = format!("http://{}", address))
+    );
+
+    send_event_notification(UPSEvent::ACFailure);
 
     axum::serve(listener, app).await?;
 
@@ -74,58 +89,31 @@ fn spawn_tray_listener(mut watcher_handle: UPSWatcherHandle) {
     tokio::spawn(async move {
         while let Some(event) = watcher_handle.next().await {
             debug!("UPS EVENT {:#?}", event);
-
-            match event {
-                watcher::UPSEvent::ACFailure => {
-                    _ = Notification::new()
-                        .summary("AC Power Failure")
-                        .body("No longer receiving AC power, running on battery")
-                        .icon("dialog-negative")
-                        .show();
-                }
-                watcher::UPSEvent::ACRecovery => {
-                    _ = Notification::new()
-                        .summary("AC Power Recovered")
-                        .body("Receiving AC power, no longer running on battery")
-                        .icon("dialog-positive")
-                        .show();
-                }
-                watcher::UPSEvent::UPSFault => {
-                    _ = Notification::new()
-                        .summary("Fault encountered")
-                        .body("UPS Encountered a fault")
-                        .icon("dialog-negative")
-                        .show();
-                }
-                watcher::UPSEvent::LowBatteryModeStart => {
-                    _ = Notification::new()
-                        .summary("UPS Low Battery")
-                        .body("UPS is running low on battery")
-                        .icon("dialog-negative")
-                        .show();
-                }
-                watcher::UPSEvent::LowBatteryModeEnd => {
-                    _ = Notification::new()
-                        .summary("UPS Sufficient Battery")
-                        .body("UPS is no longer running low on battery")
-                        .icon("dialog-positive")
-                        .show();
-                }
-                watcher::UPSEvent::BatteryTestStart => {
-                    _ = Notification::new()
-                        .summary("UPS Battery Test Started")
-                        .body("UPS is testing the battery")
-                        .icon("dialog-positive")
-                        .show();
-                }
-                watcher::UPSEvent::BatteryTestEnd => {
-                    _ = Notification::new()
-                        .summary("UPS Battery Test Finished")
-                        .body("UPS has finished testing the battery")
-                        .icon("dialog-positive")
-                        .show();
-                }
-            }
+            send_event_notification(event);
         }
     });
+}
+
+/// Sends a notification for the provided event
+fn send_event_notification(event: UPSEvent) {
+    let event_name = event.to_string();
+
+    let label_key = format!("event.{}.label", event_name);
+    let description_key = format!("event.{}.description", event_name);
+
+    let label = t!(&label_key);
+    let description = t!(&description_key);
+
+    let icon = match event {
+        watcher::UPSEvent::ACFailure => "dialog-negative",
+        watcher::UPSEvent::ACRecovery => "dialog-positive",
+        watcher::UPSEvent::UPSFault => "dialog-negative",
+        _ => "dialog-positive",
+    };
+
+    _ = Notification::new()
+        .summary(&label)
+        .body(&description)
+        .icon(icon)
+        .show();
 }
