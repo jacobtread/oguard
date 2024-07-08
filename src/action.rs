@@ -1,5 +1,6 @@
 use anyhow::Context;
 use axum::http::{HeaderMap, HeaderName, HeaderValue};
+use futures::{stream::FuturesUnordered, StreamExt};
 use log::{debug, error};
 use notify_rust::Notification;
 use reqwest::Method;
@@ -24,138 +25,145 @@ use crate::{
     watcher::{UPSEvent, UPSWatcherHandle},
 };
 
+type SharedActiveTasks = Arc<RwLock<Vec<EventPipelineTask>>>;
+
+/// Executor for event pipelines
 pub struct EventPipelineRunner {
     /// Executor handle for accessing the UPS
-    pub executor: UPSExecutorHandle,
+    executor: UPSExecutorHandle,
     /// Pipelines to execute
-    pub pipelines: Vec<EventPipeline>,
+    pipelines: Vec<EventPipeline>,
     /// Watcher handle for events
-    pub watcher_handle: UPSWatcherHandle,
+    watcher_handle: UPSWatcherHandle,
+    /// Running task set
+    active_tasks: SharedActiveTasks,
+    /// Task join set
+    join_set: JoinSet<()>,
+}
+
+/// Task currently running on the event pipeline runner
+struct EventPipelineTask {
+    /// Unique ID for the event
+    id: Uuid,
+    /// abort handle for the task
+    abort_handle: AbortHandle,
 }
 
 impl EventPipelineRunner {
-    pub async fn run(mut self) {
-        let active_tasks: Arc<RwLock<Vec<EventPipelineTask>>> = Default::default();
-        let mut join_set: JoinSet<()> = JoinSet::new();
+    /// Creates a new event pipeline runner
+    pub fn new(
+        executor: UPSExecutorHandle,
+        pipelines: Vec<EventPipeline>,
+        watcher_handle: UPSWatcherHandle,
+    ) -> Self {
+        Self {
+            executor,
+            pipelines,
+            watcher_handle,
+            active_tasks: Default::default(),
+            join_set: Default::default(),
+        }
+    }
 
+    /// Runs the event pipelines
+    pub async fn run(mut self) {
         while let Some(event) = self.watcher_handle.next().await {
             debug!("handling {event} event pipeline");
 
-            // Find the pipeline for this event
-            let pipeline = self
-                .pipelines
-                .iter()
-                .find(|pipeline| pipeline.event == event);
+            // Cancel pipelines that can be cancelled
+            self.cancel_pipelines(&event).await;
 
-            // Find pipelines this event cancels
-            let cancels_pipelines: Vec<EventPipeline> = {
-                let cancels = event.cancels();
-                self.pipelines
-                    .iter()
-                    .filter(|pipeline| cancels.contains(&pipeline.event) && pipeline.cancellable)
-                    .cloned()
-                    .collect()
-            };
-
-            if !cancels_pipelines.is_empty() {
-                debug!(
-                    "cancelling {} event pipelines for {event}",
-                    cancels_pipelines.len()
-                );
-            }
-
-            // Cancel running pipelines that this event should cancel
-            {
-                active_tasks
-                    .write()
-                    .await
-                    // Find matching pipeline arc pointers to tasks
-                    .retain(|task| {
-                        let is_cancel = cancels_pipelines
-                            .iter()
-                            .any(|cancel_pipeline| cancel_pipeline.id == task.id);
-
-                        if is_cancel {
-                            task.abort_handle.abort();
-                            false
-                        } else {
-                            true
-                        }
-                    });
-            }
-
-            let Some(pipeline) = pipeline else {
-                // Event has no pipeline to process, continue to next event
-                debug!("skipping {event} event with no pipeline handler");
-                continue;
-            };
-
-            let existing_task = {
-                active_tasks
-                    .read()
-                    .await
-                    .iter()
-                    .any(|task| pipeline.id == task.id)
-            };
-
-            if existing_task {
-                // Task is already running
-                debug!("skipping event with already running task");
-                continue;
-            }
-
-            let pipeline = pipeline.clone();
-            let id = pipeline.id;
-
-            let abort_handle = {
-                let executor = self.executor.clone();
-                let active_tasks = active_tasks.clone();
-
-                // Spawn the task runner
-                join_set.spawn(async move {
-                    let executor = executor;
-                    let mut joint_set = JoinSet::new();
-
-                    debug!("starting {event} task pipeline");
-
-                    for action_pipeline in pipeline.pipelines {
-                        let executor = executor.clone();
-
-                        // Spawn each action pipeline
-                        joint_set.spawn(async move {
-                            for action in action_pipeline.actions {
-                                action.schedule_action(event, &executor).await;
-                            }
-                        });
-                    }
-
-                    // Join the tasks
-                    while (joint_set.join_next().await).is_some() {}
-
-                    debug!("{event} pipeline complete");
-
-                    // Remove the completed task
-                    active_tasks
-                        .write()
-                        .await
-                        .retain(|task| pipeline.id != task.id);
-                })
-            };
-
-            // Add to the active tasks
-            active_tasks
-                .write()
-                .await
-                .push(EventPipelineTask { id, abort_handle });
+            // Run the event pipeline
+            self.run_pipeline(event).await;
         }
     }
-}
 
-pub struct EventPipelineTask {
-    /// Unique ID for the event
-    pub id: Uuid,
-    /// abort handle for the task
-    pub abort_handle: AbortHandle,
+    pub async fn cancel_pipelines(&mut self, event: &UPSEvent) {
+        let cancels = event.cancels();
+
+        // Event cancels no other
+        if cancels.is_empty() {
+            return;
+        }
+
+        // Find pipelines this event cancels
+        let cancels_pipelines: Vec<&EventPipeline> = self
+            .pipelines
+            .iter()
+            .filter(|pipeline| cancels.contains(&pipeline.event) && pipeline.cancellable)
+            .collect();
+
+        // Nothing to cancel
+        if cancels_pipelines.is_empty() {
+            return;
+        }
+
+        debug!(
+            "cancelling {} event pipelines for {event}",
+            cancels_pipelines.len()
+        );
+
+        // Cancel running pipelines that this event should cancel
+        self.active_tasks
+            .write()
+            .await
+            // Find matching pipeline arc pointers to tasks
+            .retain(|task| {
+                let is_cancel = cancels_pipelines
+                    .iter()
+                    .any(|cancel_pipeline| cancel_pipeline.id == task.id);
+
+                if is_cancel {
+                    task.abort_handle.abort();
+                }
+
+                !is_cancel
+            });
+    }
+
+    /// Checks if theres currently an active task for the provided pipeline
+    pub async fn is_running_task(&self, pipeline: &EventPipeline) -> bool {
+        self.active_tasks
+            .read()
+            .await
+            .iter()
+            .any(|task| pipeline.id == task.id)
+    }
+
+    pub async fn run_pipeline(&mut self, event: UPSEvent) {
+        // Find the pipeline for this event
+        let pipeline = self
+            .pipelines
+            .iter()
+            .find(|pipeline| pipeline.event == event);
+
+        let Some(pipeline) = pipeline else {
+            // Event has no pipeline to process, continue to next event
+            debug!("skipping {event} event with no pipeline handler");
+            return;
+        };
+
+        if self.is_running_task(pipeline).await {
+            // Task is already running
+            debug!("skipping event with already running task");
+            return;
+        }
+
+        // Spawn the task runner
+        let abort_handle = self.join_set.spawn(run_pipeline(
+            pipeline.clone(),
+            self.executor.clone(),
+            self.active_tasks.clone(),
+        ));
+
+        let id = pipeline.id;
+
+        // Add to the active tasks
+        self.active_tasks
+            .write()
+            .await
+            .push(EventPipelineTask { id, abort_handle });
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -170,9 +178,49 @@ pub struct EventPipeline {
     pub cancellable: bool,
 }
 
+/// Executes an action pipeline (Serial)
+async fn run_action_pipeline(
+    pipeline: ActionPipeline,
+    event: UPSEvent,
+    executor: UPSExecutorHandle,
+) {
+    for action in pipeline.actions {
+        action.schedule_action(event, &executor).await;
+    }
+}
+
+/// Runs an event pipeline (Parallel)
+async fn run_pipeline(
+    pipeline: EventPipeline,
+    executor: UPSExecutorHandle,
+    active_tasks: SharedActiveTasks,
+) {
+    let event = pipeline.event;
+
+    debug!("starting {event} task pipeline");
+
+    // Spawn and run the action pipelines
+    let mut pipeline_set: FuturesUnordered<_> = pipeline
+        .pipelines
+        .into_iter()
+        .map(|pipeline| run_action_pipeline(pipeline, event, executor.clone()))
+        .collect();
+
+    while pipeline_set.next().await.is_some() {}
+
+    debug!("{event} pipeline complete");
+
+    // Remove the completed task
+    active_tasks
+        .write()
+        .await
+        .retain(|task| pipeline.id != task.id);
+}
+
 /// Pipeline of actions to execute
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionPipeline {
+    /// Actions this pipeline will execute
     actions: Vec<Action>,
 }
 
@@ -202,29 +250,174 @@ impl Default for Action {
     }
 }
 
-impl Action {
-    pub async fn schedule_action(&self, event: UPSEvent, executor: &UPSExecutorHandle) {
-        // Await the required delay
-        match (self.delay.duration, self.delay.below_capacity) {
-            // Run below capacity
-            (None, Some(capacity)) => {
-                Self::await_capacity(executor, capacity).await;
+/// Awaits the provided action delay
+pub async fn await_action_delay(delay: &ActionDelay, executor: &UPSExecutorHandle) {
+    // Await the required delay
+    match (delay.duration, delay.below_capacity) {
+        // Run below capacity
+        (None, Some(capacity)) => {
+            await_capacity(executor, capacity).await;
+        }
+        // Run after fixed duration
+        (Some(duration), None) => {
+            sleep(duration).await;
+        }
+        // Run after fixed duration or below capacity
+        (Some(duration), Some(capacity)) => {
+            select! {
+                _ = await_capacity(executor, capacity) => {}
+                _ = sleep(duration) => {}
+            };
+        }
+        // Run immediately
+        (None, None) => {}
+    }
+}
+
+/// Future that polls the device capacity resolving when the capacity gets
+/// below the provided threshold
+pub async fn await_capacity(executor: &UPSExecutorHandle, capacity: u8) {
+    let poll_interval = Duration::from_secs(1);
+
+    let start = Instant::now() + poll_interval;
+    let mut interval = interval_at(start.into(), poll_interval);
+    interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
+
+    // Loop until capacity reaches threshold
+    loop {
+        let battery_state = match executor.request(QueryDeviceBattery).await {
+            Ok(value) => value,
+            Err(err) => {
+                error!("Error while requesting UPS device battery: {err:?}");
+                continue;
             }
-            // Run after fixed duration
-            (Some(duration), None) => {
-                sleep(duration).await;
-            }
-            // Run after fixed duration or below capacity
-            (Some(duration), Some(capacity)) => {
-                select! {
-                    _ = Self::await_capacity(executor, capacity) => {}
-                    _ = sleep(duration) => {}
-                };
-            }
-            // Run immediately
-            (None, None) => {}
+        };
+
+        if battery_state.capacity < capacity {
+            return;
         }
 
+        interval.tick().await;
+    }
+}
+
+/// Awaits the delay before repeating an action
+pub async fn await_repeat_delay(repeat: &ActionRepeat, executor: &UPSExecutorHandle) {
+    match (repeat.interval, repeat.capacity_decrease) {
+        // Run when capacity decreases by amount
+        (None, Some(capacity)) => {
+            await_capacity_decrease(executor, capacity).await;
+        }
+        // Run after fixed duration
+        (Some(duration), None) => {
+            sleep(duration).await;
+        }
+        // Run after fixed duration or below capacity
+        (Some(duration), Some(capacity)) => {
+            select! {
+                _ = await_capacity_decrease(executor, capacity) => {}
+                _ = sleep(duration) => {}
+            };
+        }
+        // Don't repeat
+        (None, None) => {}
+    }
+}
+
+/// Polls the provided executor until the capacity decreases by the provided amount
+pub async fn await_capacity_decrease(executor: &UPSExecutorHandle, decrease: u8) {
+    let mut last_highest_capacity: Option<u8> = None;
+    let mut last_lowest_capacity: Option<u8> = None;
+
+    let poll_interval = Duration::from_secs(1);
+
+    let start = Instant::now() + poll_interval;
+    let mut interval = interval_at(start.into(), poll_interval);
+    interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
+
+    // Loop until capacity reaches threshold
+    loop {
+        let battery_state = match executor.request(QueryDeviceBattery).await {
+            Ok(value) => value,
+            Err(err) => {
+                error!("Error while requesting UPS device battery: {err:?}");
+                continue;
+            }
+        };
+
+        // Update the highest capacity
+        let highest_capacity = match last_highest_capacity.as_ref() {
+            Some(&value) => {
+                if battery_state.capacity > value {
+                    *last_highest_capacity.insert(battery_state.capacity)
+                } else {
+                    value
+                }
+            }
+            None => *last_highest_capacity.insert(battery_state.capacity),
+        };
+
+        // Update the lowest capacity
+        let lowest_capacity = match last_lowest_capacity.as_ref() {
+            Some(&value) => {
+                if battery_state.capacity < value {
+                    *last_lowest_capacity.insert(battery_state.capacity)
+                } else {
+                    value
+                }
+            }
+            None => *last_lowest_capacity.insert(battery_state.capacity),
+        };
+
+        let difference = highest_capacity.saturating_sub(lowest_capacity);
+
+        if difference >= decrease {
+            return;
+        }
+
+        interval.tick().await;
+    }
+}
+
+impl Action {
+    /// Will run the action asynchronously when the action is ready and handle
+    /// waiting for repeated delays
+    pub async fn schedule_action(&self, event: UPSEvent, executor: &UPSExecutorHandle) {
+        await_action_delay(&self.delay, executor).await;
+
+        let mut execution = 0;
+
+        loop {
+            execution += 1;
+            self.execute_with_retry(event, executor).await;
+
+            // Handle action repeating
+            let Some(repeat) = self.repeat.as_ref() else {
+                break;
+            };
+
+            let can_repeat = repeat
+                .limit
+                // Can repeat if our execution count is less than the defined limit
+                .map(|value| execution < value)
+                // Can always repeat when no limit
+                .unwrap_or(true);
+
+            if !can_repeat {
+                break;
+            }
+
+            debug!("awaiting task repeat delay");
+
+            // Await the repeating delay
+            await_repeat_delay(repeat, executor).await;
+
+            debug!("repeating task");
+        }
+    }
+
+    /// Executes the action and handles retry on failure
+    pub async fn execute_with_retry(&self, event: UPSEvent, executor: &UPSExecutorHandle) {
         let mut attempt = 0;
         let mut last_delay: Option<Duration> = None;
 
@@ -272,33 +465,7 @@ impl Action {
         }
     }
 
-    /// Future that polls the device capacity resolving when the capacity gets
-    /// below the provided threshold
-    pub async fn await_capacity(executor: &UPSExecutorHandle, capacity: u8) {
-        let poll_interval = Duration::from_secs(1);
-
-        let start = Instant::now() + poll_interval;
-        let mut interval = interval_at(start.into(), poll_interval);
-        interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
-
-        // Loop until capacity reaches threshold
-        loop {
-            let battery_state = match executor.request(QueryDeviceBattery).await {
-                Ok(value) => value,
-                Err(err) => {
-                    error!("Error while requesting UPS device battery: {err:?}");
-                    continue;
-                }
-            };
-
-            if battery_state.capacity < capacity {
-                return;
-            }
-
-            interval.tick().await;
-        }
-    }
-
+    /// Executes the action
     pub async fn execute_action(
         &self,
         event: UPSEvent,
@@ -316,6 +483,7 @@ impl Action {
     }
 }
 
+/// Sends a desktop notification for the provided event
 pub async fn execute_notification(event: UPSEvent) -> anyhow::Result<()> {
     let event_name = event.to_string();
 
@@ -341,18 +509,22 @@ pub async fn execute_notification(event: UPSEvent) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Shows a popup window for the provided event
 pub async fn execute_popup(event: UPSEvent) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Puts the system to sleep
 pub async fn execute_sleep(event: UPSEvent) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Executes a shutdown
 pub async fn execute_shutdown(event: UPSEvent) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Triggers the UPS to shutdown
 pub async fn execute_shutdown_ups(
     event: UPSEvent,
     executor: &UPSExecutorHandle,
@@ -360,6 +532,7 @@ pub async fn execute_shutdown_ups(
     Ok(())
 }
 
+/// Starts an executable process
 pub async fn execute_executable(
     event: UPSEvent,
     executable: &ExecutableAction,
@@ -367,6 +540,7 @@ pub async fn execute_executable(
     Ok(())
 }
 
+/// Sends an HTTP request
 pub async fn execute_http_request(
     event: UPSEvent,
     request: &HttpRequestAction,
@@ -453,7 +627,7 @@ pub struct HttpRequestAction {
 /// Configuration for the delay of an actions execution
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionDelay {
-    /// Run the action
+    /// Run the action after a fix duration
     pub duration: Option<Duration>,
 
     /// Run immediately if the capacity is less that or equal to this amount
@@ -469,6 +643,9 @@ pub struct ActionRepeat {
 
     /// Every time the capacity decreases by minimum this amount
     pub capacity_decrease: Option<u8>,
+
+    /// Maximum number of times to repeat
+    pub limit: Option<u8>,
 }
 
 /// Configuration for how an action should retry
@@ -515,7 +692,8 @@ mod test {
     };
 
     use super::{
-        Action, ActionDelay, ActionPipeline, ActionType, EventPipeline, EventPipelineRunner,
+        Action, ActionDelay, ActionPipeline, ActionRepeat, ActionType, EventPipeline,
+        EventPipelineRunner,
     };
 
     #[tokio::test]
@@ -536,7 +714,11 @@ mod test {
                         below_capacity: None,
                         duration: Some(Duration::from_secs(5)),
                     },
-                    repeat: None,
+                    repeat: Some(ActionRepeat {
+                        interval: Some(Duration::from_secs(10)),
+                        capacity_decrease: None,
+                        limit: Some(3),
+                    }),
                     retry: None,
                 }],
             }],
@@ -545,14 +727,7 @@ mod test {
 
         debug!("spawning runner");
 
-        tokio::spawn(
-            EventPipelineRunner {
-                executor,
-                pipelines,
-                watcher_handle,
-            }
-            .run(),
-        );
+        tokio::spawn(EventPipelineRunner::new(executor, pipelines, watcher_handle).run());
 
         debug!("sending event");
 
