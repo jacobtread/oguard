@@ -187,7 +187,9 @@ async fn run_action_pipeline(
     executor: UPSExecutorHandle,
 ) {
     for action in pipeline.actions {
-        action.schedule_action(event, &executor).await;
+        if !action.schedule_action(event, &executor).await {
+            break;
+        }
     }
 }
 
@@ -388,14 +390,17 @@ pub async fn await_capacity_decrease(executor: &UPSExecutorHandle, decrease: u8)
 impl Action {
     /// Will run the action asynchronously when the action is ready and handle
     /// waiting for repeated delays
-    pub async fn schedule_action(&self, event: UPSEvent, executor: &UPSExecutorHandle) {
+    pub async fn schedule_action(&self, event: UPSEvent, executor: &UPSExecutorHandle) -> bool {
         await_action_delay(&self.delay, executor).await;
 
         let mut execution = 0;
+        let mut executed = false;
 
         loop {
+            if self.execute_with_retry(event, executor).await {
+                executed = true;
+            }
             execution += 1;
-            self.execute_with_retry(event, executor).await;
 
             // Handle action repeating
             let Some(repeat) = self.repeat.as_ref() else {
@@ -420,17 +425,19 @@ impl Action {
 
             debug!("repeating task");
         }
+
+        executed
     }
 
     /// Executes the action and handles retry on failure
-    pub async fn execute_with_retry(&self, event: UPSEvent, executor: &UPSExecutorHandle) {
+    pub async fn execute_with_retry(&self, event: UPSEvent, executor: &UPSExecutorHandle) -> bool {
         let mut attempt = 0;
         let mut last_delay: Option<Duration> = None;
 
         loop {
             // Try and execute the action
             let Err(err) = self.execute_action(event, executor).await else {
-                break;
+                return true;
             };
 
             error!("error processing action: {err}");
@@ -469,6 +476,8 @@ impl Action {
                 }
             }
         }
+
+        false
     }
 
     /// Executes the action
@@ -686,7 +695,7 @@ pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyho
         .as_ref()
         .map(|value| value.to_string())
         .unwrap_or_else(|| format!("Shutdown triggered by {event} pipeline"));
-    let timeout = config.timeout.unwrap_or(u32::MAX);
+    let timeout = config.timeout.unwrap_or(0);
     let force_close_apps = config.force_close_apps;
 
     spawn_blocking(move || {
@@ -793,7 +802,7 @@ mod test {
     use uuid::Uuid;
 
     use crate::{
-        action::ExecutableAction,
+        action::{ExecutableAction, ShutdownAction, UPSShutdownAction},
         ups::UPSExecutor,
         watcher::{UPSEvent, UPSWatcherHandle},
     };
@@ -802,6 +811,69 @@ mod test {
         Action, ActionDelay, ActionPipeline, ActionRepeat, ActionType, EventPipeline,
         EventPipelineRunner,
     };
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_full_shutdown() {
+        dotenvy::dotenv().unwrap();
+        env_logger::init();
+        log_panics::init();
+        let (tx, rx) = broadcast::channel(8);
+        let watcher_handle = UPSWatcherHandle { rx };
+        let executor = UPSExecutor::start().unwrap();
+        let pipelines = vec![EventPipeline {
+            id: Uuid::new_v4(),
+            event: UPSEvent::ACFailure,
+            pipelines: vec![ActionPipeline {
+                actions: vec![
+                    Action {
+                        ty: ActionType::Notification,
+                        delay: ActionDelay {
+                            below_capacity: None,
+                            duration: None,
+                        },
+                        repeat: None,
+                        retry: None,
+                    },
+                    Action {
+                        ty: ActionType::Shutdown(ShutdownAction {
+                            message: Some("Full shutdown test".to_string()),
+                            timeout: None,
+                            force_close_apps: false,
+                        }),
+                        delay: ActionDelay {
+                            below_capacity: None,
+                            duration: None,
+                        },
+                        repeat: None,
+                        retry: None,
+                    },
+                    // Action {
+                    //     ty: ActionType::USPShutdown(UPSShutdownAction { delay_minutes: 5 }),
+                    //     delay: ActionDelay {
+                    //         below_capacity: None,
+                    //         duration: None,
+                    //     },
+                    //     repeat: None,
+                    //     retry: None,
+                    // },
+                ],
+            }],
+            cancellable: false,
+        }];
+
+        debug!("spawning runner");
+
+        tokio::spawn(EventPipelineRunner::new(executor, pipelines, watcher_handle).run());
+
+        debug!("sending event");
+
+        _ = tx.send(UPSEvent::ACFailure);
+
+        loop {
+            sleep(Duration::from_secs(60)).await;
+        }
+    }
 
     #[tokio::test]
     #[ignore]
