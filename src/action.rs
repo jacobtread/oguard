@@ -641,12 +641,12 @@ pub async fn execute_http_request(
 
     let request = builder.build().context("building http request")?;
 
-    let response = client
+    let _response = client
         .execute(request)
         .await
-        .context("error sending request")?;
-
-    // TODO: Handle error
+        .context("error sending request")?
+        .error_for_status()
+        .context("response error")?;
 
     Ok(())
 }
@@ -777,6 +777,7 @@ mod test {
     use uuid::Uuid;
 
     use crate::{
+        action::ExecutableAction,
         ups::UPSExecutor,
         watcher::{UPSEvent, UPSWatcherHandle},
     };
@@ -787,7 +788,51 @@ mod test {
     };
 
     #[tokio::test]
-    async fn test_action() {
+    #[ignore]
+    async fn test_notification_action() {
+        dotenvy::dotenv().unwrap();
+        env_logger::init();
+        log_panics::init();
+        let (tx, rx) = broadcast::channel(8);
+        let watcher_handle = UPSWatcherHandle { rx };
+        let executor = UPSExecutor::start().unwrap();
+        let pipelines = vec![EventPipeline {
+            id: Uuid::new_v4(),
+            event: UPSEvent::ACFailure,
+            pipelines: vec![ActionPipeline {
+                actions: vec![Action {
+                    ty: ActionType::Notification,
+                    delay: ActionDelay {
+                        below_capacity: None,
+                        duration: Some(Duration::from_secs(5)),
+                    },
+                    repeat: Some(ActionRepeat {
+                        interval: Some(Duration::from_secs(10)),
+                        capacity_decrease: None,
+                        limit: Some(3),
+                    }),
+                    retry: None,
+                }],
+            }],
+            cancellable: false,
+        }];
+
+        debug!("spawning runner");
+
+        tokio::spawn(EventPipelineRunner::new(executor, pipelines, watcher_handle).run());
+
+        debug!("sending event");
+
+        _ = tx.send(UPSEvent::ACFailure);
+
+        loop {
+            sleep(Duration::from_secs(60)).await;
+        }
+    }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_popup_action() {
         dotenvy::dotenv().unwrap();
         env_logger::init();
         log_panics::init();
@@ -808,6 +853,96 @@ mod test {
                         interval: Some(Duration::from_secs(10)),
                         capacity_decrease: None,
                         limit: Some(3),
+                    }),
+                    retry: None,
+                }],
+            }],
+            cancellable: false,
+        }];
+
+        debug!("spawning runner");
+
+        tokio::spawn(EventPipelineRunner::new(executor, pipelines, watcher_handle).run());
+
+        debug!("sending event");
+
+        _ = tx.send(UPSEvent::ACFailure);
+
+        loop {
+            sleep(Duration::from_secs(60)).await;
+        }
+    }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_sleep_action() {
+        dotenvy::dotenv().unwrap();
+        env_logger::init();
+        log_panics::init();
+        let (tx, rx) = broadcast::channel(8);
+        let watcher_handle = UPSWatcherHandle { rx };
+        let executor = UPSExecutor::start().unwrap();
+        let pipelines = vec![EventPipeline {
+            id: Uuid::new_v4(),
+            event: UPSEvent::ACFailure,
+            pipelines: vec![ActionPipeline {
+                actions: vec![Action {
+                    ty: ActionType::Sleep,
+                    delay: ActionDelay {
+                        below_capacity: None,
+                        duration: Some(Duration::from_secs(5)),
+                    },
+                    repeat: Some(ActionRepeat {
+                        interval: Some(Duration::from_secs(10)),
+                        capacity_decrease: None,
+                        limit: Some(0),
+                    }),
+                    retry: None,
+                }],
+            }],
+            cancellable: false,
+        }];
+
+        debug!("spawning runner");
+
+        tokio::spawn(EventPipelineRunner::new(executor, pipelines, watcher_handle).run());
+
+        debug!("sending event");
+
+        _ = tx.send(UPSEvent::ACFailure);
+
+        loop {
+            sleep(Duration::from_secs(60)).await;
+        }
+    }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_executable_action() {
+        dotenvy::dotenv().unwrap();
+        env_logger::init();
+        log_panics::init();
+        let (tx, rx) = broadcast::channel(8);
+        let watcher_handle = UPSWatcherHandle { rx };
+        let executor = UPSExecutor::start().unwrap();
+        let pipelines = vec![EventPipeline {
+            id: Uuid::new_v4(),
+            event: UPSEvent::ACFailure,
+            pipelines: vec![ActionPipeline {
+                actions: vec![Action {
+                    ty: ActionType::Executable(ExecutableAction {
+                        exe: "notepad.exe".to_string(),
+                        args: vec![],
+                        timeout: None,
+                    }),
+                    delay: ActionDelay {
+                        below_capacity: None,
+                        duration: Some(Duration::from_secs(5)),
+                    },
+                    repeat: Some(ActionRepeat {
+                        interval: Some(Duration::from_secs(10)),
+                        capacity_decrease: None,
+                        limit: Some(0),
                     }),
                     retry: None,
                 }],
