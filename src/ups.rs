@@ -6,14 +6,10 @@ use std::{
 
 use anyhow::Context;
 use hidapi::{HidApi, HidDevice};
-use moka::{policy::EvictionPolicy, sync::Cache};
 use ordered_float::OrderedFloat;
 use sea_orm::FromJsonQueryResult;
 use serde::{Deserialize, Serialize};
-use tokio::{
-    sync::{mpsc, oneshot},
-    time::timeout,
-};
+use tokio::sync::{mpsc, oneshot};
 
 /// HID Device Vendor ID
 const VENDOR_ID: u16 = 0x0665;
