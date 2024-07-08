@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use axum::http::{HeaderMap, HeaderName, HeaderValue};
 use futures::{stream::FuturesUnordered, StreamExt};
 use log::{debug, error};
@@ -9,14 +9,17 @@ use rust_i18n::t;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
+    process::ExitStatus,
     str::FromStr,
     sync::Arc,
     time::{Duration, Instant},
 };
+use system_shutdown::shutdown_with_message;
 use tokio::{
+    process::Command,
     select,
     sync::RwLock,
-    task::{AbortHandle, JoinSet},
+    task::{spawn_blocking, AbortHandle, JoinSet},
     time::{interval_at, sleep, MissedTickBehavior},
 };
 use uuid::Uuid;
@@ -475,10 +478,10 @@ impl Action {
         match &self.ty {
             ActionType::Notification => execute_notification(event).await,
             ActionType::Popup => execute_popup(event).await,
-            ActionType::Sleep => execute_sleep(event).await,
-            ActionType::Shutdown => execute_shutdown(event).await,
-            ActionType::ShutdownUPS => execute_shutdown_ups(event, executor).await,
-            ActionType::Executable(executable) => execute_executable(event, executable).await,
+            ActionType::Sleep => execute_sleep().await,
+            ActionType::Shutdown(config) => execute_shutdown(event, config).await,
+            ActionType::ShutdownUPS => execute_shutdown_ups(executor).await,
+            ActionType::Executable(executable) => execute_executable(executable).await,
             ActionType::HttpRequest(request) => execute_http_request(event, request).await,
         }
     }
@@ -542,29 +545,62 @@ pub async fn execute_popup(event: UPSEvent) -> anyhow::Result<()> {
 }
 
 /// Puts the system to sleep
-pub async fn execute_sleep(event: UPSEvent) -> anyhow::Result<()> {
+pub async fn execute_sleep() -> anyhow::Result<()> {
+    spawn_blocking(move || {
+        system_shutdown::sleep();
+    })
+    .await
+    .context("failed to join sleep task")?;
+
     Ok(())
 }
 
 /// Executes a shutdown
-pub async fn execute_shutdown(event: UPSEvent) -> anyhow::Result<()> {
+pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyhow::Result<()> {
+    let message = config
+        .message
+        .as_ref()
+        .map(|value| value.to_string())
+        .unwrap_or_else(|| format!("Shutdown triggered by {event} pipeline"));
+    let timeout = config.timeout.unwrap_or(u32::MAX);
+    let force_close_apps = config.force_close_apps;
+
+    spawn_blocking(move || {
+        system_shutdown::shutdown_with_message(&message, timeout, force_close_apps);
+    })
+    .await
+    .context("failed to join shutdown task")?;
+
     Ok(())
 }
 
 /// Triggers the UPS to shutdown
-pub async fn execute_shutdown_ups(
-    event: UPSEvent,
-    executor: &UPSExecutorHandle,
-) -> anyhow::Result<()> {
+pub async fn execute_shutdown_ups(executor: &UPSExecutorHandle) -> anyhow::Result<()> {
     Ok(())
 }
 
 /// Starts an executable process
-pub async fn execute_executable(
-    event: UPSEvent,
-    executable: &ExecutableAction,
-) -> anyhow::Result<()> {
-    Ok(())
+pub async fn execute_executable(executable: &ExecutableAction) -> anyhow::Result<()> {
+    let child = Command::new(&executable.exe)
+        .args(&executable.args)
+        .kill_on_drop(true)
+        .spawn()
+        .context("failed to start executable")?;
+
+    let output = child
+        .wait_with_output()
+        .await
+        .context("error getting output")?;
+
+    let status = output.status;
+    if status.success() {
+        return Ok(());
+    }
+
+    let message = String::from_utf8(output.stderr).unwrap_or_default();
+    let message = format!("executable non zero exit code: {message}");
+
+    Err(anyhow!(message))
 }
 
 /// Sends an HTTP request
@@ -615,7 +651,7 @@ pub enum ActionType {
     Sleep,
 
     /// Shutdown the device
-    Shutdown,
+    Shutdown(ShutdownAction),
 
     /// Shutdown the UPS itself
     ShutdownUPS,
@@ -625,6 +661,18 @@ pub enum ActionType {
 
     /// Send an HTTP request
     HttpRequest(HttpRequestAction),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShutdownAction {
+    /// Optional message to show
+    message: Option<String>,
+
+    /// Timeout for shutdown force close
+    timeout: Option<u32>,
+
+    /// Whether to force close apps
+    force_close_apps: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
