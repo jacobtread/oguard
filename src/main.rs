@@ -14,7 +14,6 @@ use ups::UPSExecutor;
 use watcher::{UPSEvent, UPSWatcher, UPSWatcherHandle};
 
 pub mod action;
-pub mod config;
 pub mod database;
 pub mod http;
 pub mod persistent_watcher;

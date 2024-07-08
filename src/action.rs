@@ -16,7 +16,7 @@ use std::{
 use tokio::{
     select,
     sync::RwLock,
-    task::{spawn_blocking, AbortHandle, JoinSet},
+    task::{AbortHandle, JoinSet},
     time::{interval_at, sleep, MissedTickBehavior},
 };
 use uuid::Uuid;
