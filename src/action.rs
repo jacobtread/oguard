@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context};
 use axum::http::{HeaderMap, HeaderName, HeaderValue};
 use futures::{stream::FuturesUnordered, StreamExt};
-use log::{debug, error};
+use log::{debug, error, warn};
 use native_dialog::{MessageDialog, MessageType};
 use notify_rust::Notification;
 use reqwest::Method;
@@ -9,18 +9,16 @@ use rust_i18n::t;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
-    process::ExitStatus,
     str::FromStr,
     sync::Arc,
     time::{Duration, Instant},
 };
-use system_shutdown::shutdown_with_message;
 use tokio::{
     process::Command,
     select,
     sync::RwLock,
     task::{spawn_blocking, AbortHandle, JoinSet},
-    time::{interval_at, sleep, MissedTickBehavior},
+    time::{interval_at, sleep, timeout, MissedTickBehavior},
 };
 use uuid::Uuid;
 
@@ -243,7 +241,11 @@ pub struct Action {
 impl Default for Action {
     fn default() -> Self {
         Action {
-            ty: ActionType::Shutdown,
+            ty: ActionType::Shutdown(ShutdownAction {
+                force_close_apps: false,
+                message: None,
+                timeout: None,
+            }),
             delay: ActionDelay {
                 below_capacity: Some(30),
                 duration: Some(Duration::from_secs(60 * 30)),
@@ -546,11 +548,10 @@ pub async fn execute_popup(event: UPSEvent) -> anyhow::Result<()> {
 
 /// Puts the system to sleep
 pub async fn execute_sleep() -> anyhow::Result<()> {
-    spawn_blocking(move || {
-        system_shutdown::sleep();
-    })
-    .await
-    .context("failed to join sleep task")?;
+    spawn_blocking(system_shutdown::sleep)
+        .await
+        .context("failed to join sleep task")?
+        .context("failed to sleep")?;
 
     Ok(())
 }
@@ -566,10 +567,11 @@ pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyho
     let force_close_apps = config.force_close_apps;
 
     spawn_blocking(move || {
-        system_shutdown::shutdown_with_message(&message, timeout, force_close_apps);
+        system_shutdown::shutdown_with_message(&message, timeout, force_close_apps)
     })
     .await
-    .context("failed to join shutdown task")?;
+    .context("failed to join shutdown task")?
+    .context("failed to shutdown")?;
 
     Ok(())
 }
@@ -587,10 +589,17 @@ pub async fn execute_executable(executable: &ExecutableAction) -> anyhow::Result
         .spawn()
         .context("failed to start executable")?;
 
-    let output = child
-        .wait_with_output()
-        .await
-        .context("error getting output")?;
+    let output = match executable.timeout {
+        Some(duration) => match timeout(duration, child.wait_with_output()).await {
+            Err(_) => {
+                warn!("executable task timed out");
+                return Ok(());
+            }
+            Ok(value) => value,
+        },
+        None => child.wait_with_output().await,
+    }
+    .context("error getting executable output")?;
 
     let status = output.status;
     if status.success() {
@@ -621,6 +630,10 @@ pub async fn execute_http_request(
     }
 
     let mut builder = client.request(method, &request.url).headers(headers);
+
+    if let Some(timeout) = request.timeout.as_ref() {
+        builder = builder.timeout(*timeout);
+    }
 
     if let Some(body) = request.body.as_ref() {
         builder = builder.body(body.to_string());
@@ -697,6 +710,8 @@ pub struct HttpRequestAction {
     headers: HashMap<String, String>,
     /// Optional request body
     body: Option<String>,
+    /// Optional request timeout
+    timeout: Option<Duration>,
 }
 
 /// Configuration for the delay of an actions execution
