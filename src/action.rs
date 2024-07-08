@@ -528,7 +528,7 @@ pub struct ShutdownAction {
     /// Optional message to show
     message: Option<String>,
 
-    /// Timeout for shutdown force close
+    /// Timeout before shutdown
     timeout: Option<u32>,
 
     /// Whether to force close apps
