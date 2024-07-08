@@ -2,6 +2,7 @@ use anyhow::Context;
 use axum::http::{HeaderMap, HeaderName, HeaderValue};
 use futures::{stream::FuturesUnordered, StreamExt};
 use log::{debug, error};
+use native_dialog::{MessageDialog, MessageType};
 use notify_rust::Notification;
 use reqwest::Method;
 use rust_i18n::t;
@@ -15,7 +16,7 @@ use std::{
 use tokio::{
     select,
     sync::RwLock,
-    task::{AbortHandle, JoinSet},
+    task::{spawn_blocking, AbortHandle, JoinSet},
     time::{interval_at, sleep, MissedTickBehavior},
 };
 use uuid::Uuid;
@@ -495,7 +496,6 @@ pub async fn execute_notification(event: UPSEvent) -> anyhow::Result<()> {
 
     let icon = match event {
         UPSEvent::ACFailure => "dialog-negative",
-        UPSEvent::ACRecovery => "dialog-positive",
         UPSEvent::UPSFault => "dialog-negative",
         _ => "dialog-positive",
     };
@@ -504,13 +504,40 @@ pub async fn execute_notification(event: UPSEvent) -> anyhow::Result<()> {
         .summary(&label)
         .body(&description)
         .icon(icon)
-        .show()?;
+        .show()
+        .context("failed to show notification")?;
 
     Ok(())
 }
 
 /// Shows a popup window for the provided event
 pub async fn execute_popup(event: UPSEvent) -> anyhow::Result<()> {
+    let event_name = event.to_string();
+
+    let ty = match event {
+        UPSEvent::ACFailure => MessageType::Error,
+        UPSEvent::UPSFault => MessageType::Error,
+        _ => MessageType::Info,
+    };
+
+    // Message dialogs are blocking until user action so they're moved to a new thread
+    std::thread::spawn(move || {
+        let label_key = format!("event.{}.label", event_name);
+        let description_key = format!("event.{}.description", event_name);
+
+        let label = t!(&label_key);
+        let description = t!(&description_key);
+
+        if let Err(err) = MessageDialog::new()
+            .set_title(&label)
+            .set_text(&description)
+            .set_type(ty)
+            .show_alert()
+        {
+            error!("failed to show popup for {event}: {err}");
+        }
+    });
+
     Ok(())
 }
 
@@ -709,7 +736,7 @@ mod test {
             event: UPSEvent::ACFailure,
             pipelines: vec![ActionPipeline {
                 actions: vec![Action {
-                    ty: ActionType::Notification,
+                    ty: ActionType::Popup,
                     delay: ActionDelay {
                         below_capacity: None,
                         duration: Some(Duration::from_secs(5)),
