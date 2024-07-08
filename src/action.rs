@@ -180,19 +180,6 @@ pub struct EventPipeline {
     pub cancellable: bool,
 }
 
-/// Executes an action pipeline (Serial)
-async fn run_action_pipeline(
-    pipeline: ActionPipeline,
-    event: UPSEvent,
-    executor: UPSExecutorHandle,
-) {
-    for action in pipeline.actions {
-        if !action.schedule_action(event, &executor).await {
-            break;
-        }
-    }
-}
-
 /// Runs an event pipeline (Parallel)
 async fn run_pipeline(
     pipeline: EventPipeline,
@@ -221,6 +208,66 @@ async fn run_pipeline(
         .retain(|task| pipeline.id != task.id);
 }
 
+/// Executes an action pipeline (Serial)
+async fn run_action_pipeline(
+    pipeline: ActionPipeline,
+    event: UPSEvent,
+    executor: UPSExecutorHandle,
+) {
+    let mut repeated = Vec::new();
+
+    for action in pipeline.actions {
+        // Attempt to run the action
+        if !action.schedule_action(event, &executor).await {
+            return;
+        }
+
+        // Queue action repeats
+        if action.repeat.is_some() {
+            repeated.push(action)
+        }
+    }
+
+    // Futures that can be repeated are handled out of orde
+    let mut repeated_futures: FuturesUnordered<_> = repeated
+        .into_iter()
+        .map(|action| run_repeated_action(action, event, executor.clone()))
+        .collect();
+
+    while repeated_futures.next().await.is_some() {}
+}
+
+/// Executes the repeated portion of an action
+async fn run_repeated_action(action: Action, event: UPSEvent, executor: UPSExecutorHandle) {
+    let Some(repeat) = action.repeat.as_ref() else {
+        panic!("attempted to run non repeating action as repeat action")
+    };
+
+    let mut execution = 0;
+
+    while action.execute_with_retry(event, &executor).await {
+        execution += 1;
+
+        let can_repeat = repeat
+            .limit
+            // Can repeat if our execution count is less than the defined limit
+            .map(|value| execution < value)
+            // Can always repeat when no limit
+            .unwrap_or(true);
+
+        if !can_repeat {
+            break;
+        }
+
+        debug!("awaiting task repeat delay");
+
+        // Await the repeating delay
+        await_repeat_delay(repeat, &executor).await;
+
+        debug!("repeating task");
+    }
+}
+
 /// Pipeline of actions to execute
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionPipeline {
@@ -234,28 +281,11 @@ pub struct Action {
     pub ty: ActionType,
     /// Delay for the action
     pub delay: ActionDelay,
-    /// Optionally repeat
+    /// Optionally repeat, initial action run will be in the defined action pipeline
+    /// order any additional repeat runs will happen out of order
     pub repeat: Option<ActionRepeat>,
     /// Optionally retry
     pub retry: Option<ActionRetry>,
-}
-
-impl Default for Action {
-    fn default() -> Self {
-        Action {
-            ty: ActionType::Shutdown(ShutdownAction {
-                force_close_apps: false,
-                message: None,
-                timeout: None,
-            }),
-            delay: ActionDelay {
-                below_capacity: Some(30),
-                duration: Some(Duration::from_secs(60 * 30)),
-            },
-            repeat: None,
-            retry: None,
-        }
-    }
 }
 
 /// Awaits the provided action delay
@@ -392,41 +422,7 @@ impl Action {
     /// waiting for repeated delays
     pub async fn schedule_action(&self, event: UPSEvent, executor: &UPSExecutorHandle) -> bool {
         await_action_delay(&self.delay, executor).await;
-
-        let mut execution = 0;
-        let mut executed = false;
-
-        loop {
-            if self.execute_with_retry(event, executor).await {
-                executed = true;
-            }
-            execution += 1;
-
-            // Handle action repeating
-            let Some(repeat) = self.repeat.as_ref() else {
-                break;
-            };
-
-            let can_repeat = repeat
-                .limit
-                // Can repeat if our execution count is less than the defined limit
-                .map(|value| execution < value)
-                // Can always repeat when no limit
-                .unwrap_or(true);
-
-            if !can_repeat {
-                break;
-            }
-
-            debug!("awaiting task repeat delay");
-
-            // Await the repeating delay
-            await_repeat_delay(repeat, executor).await;
-
-            debug!("repeating task");
-        }
-
-        executed
+        self.execute_with_retry(event, executor).await
     }
 
     /// Executes the action and handles retry on failure
@@ -538,7 +534,7 @@ pub struct ShutdownAction {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UPSShutdownAction {
     /// Delay in minutes before shutting down the UPS
-    delay_minutes: u16,
+    delay_minutes: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -716,6 +712,7 @@ pub async fn execute_shutdown_ups(
     executor
         .request(ScheduleUPSShutdown {
             delay_minutes: config.delay_minutes,
+            reboot_delay_minutes: 1,
         })
         .await
         .context("failed to schedule ups shutdown")?;
@@ -835,21 +832,21 @@ mod test {
                         repeat: None,
                         retry: None,
                     },
-                    Action {
-                        ty: ActionType::Shutdown(ShutdownAction {
-                            message: Some("Full shutdown test".to_string()),
-                            timeout: None,
-                            force_close_apps: false,
-                        }),
-                        delay: ActionDelay {
-                            below_capacity: None,
-                            duration: None,
-                        },
-                        repeat: None,
-                        retry: None,
-                    },
                     // Action {
-                    //     ty: ActionType::USPShutdown(UPSShutdownAction { delay_minutes: 5 }),
+                    //     ty: ActionType::Shutdown(ShutdownAction {
+                    //         message: Some("Full shutdown test".to_string()),
+                    //         timeout: None,
+                    //         force_close_apps: false,
+                    //     }),
+                    //     delay: ActionDelay {
+                    //         below_capacity: None,
+                    //         duration: None,
+                    //     },
+                    //     repeat: None,
+                    //     retry: None,
+                    // },
+                    // Action {
+                    //     ty: ActionType::USPShutdown(UPSShutdownAction { delay_minutes: 1.5 }),
                     //     delay: ActionDelay {
                     //         below_capacity: None,
                     //         duration: None,

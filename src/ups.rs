@@ -477,46 +477,27 @@ impl DeviceCommand for CancelBatteryTest {
     }
 }
 
-/// Command to trigger a delayed shutdown of the UPS
-pub struct ScheduleUPSShutdown {
-    /// Minutes to wait before shutting down
-    pub delay_minutes: u16,
-}
-
-impl DeviceCommand for ScheduleUPSShutdown {
-    type Response = ExecuteResponse;
-
-    fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
-        let delay_minutes = self.delay_minutes.min(9999);
-
-        let command = format!("S{:04}", delay_minutes);
-        execute_command(device, &command).context("write request")?;
-        let response = read_response(device).context("read response")?;
-        parse_execute_response(&response).context("parse response")
-    }
-}
-
 /// Command to trigger a delayed shutdown of the UPS and an
 /// automatic reboot after a specified delay
-pub struct ScheduleUPSShutdownWithReboot {
+pub struct ScheduleUPSShutdown {
     /// Minutes to wait before shutting down
-    pub delay_minutes: u16,
+    pub delay_minutes: f32,
 
     /// Delay in minutes before turning back on
     pub reboot_delay_minutes: u16,
 }
 
-impl DeviceCommand for ScheduleUPSShutdownWithReboot {
-    type Response = ExecuteResponse;
+impl DeviceCommand for ScheduleUPSShutdown {
+    type Response = ();
 
     fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
-        let delay_minutes = self.delay_minutes.min(9999);
+        let delay_minutes = self.delay_minutes.min(9999.0);
         let reboot_delay_minutes = self.reboot_delay_minutes.min(9999);
 
-        let command = format!("S{:04}R{:04}", delay_minutes, reboot_delay_minutes);
+        let command = format!("S{}R{:04}", delay_minutes, reboot_delay_minutes);
         execute_command(device, &command).context("write request")?;
-        let response = read_response(device).context("read response")?;
-        parse_execute_response(&response).context("parse response")
+
+        Ok(())
     }
 }
 
