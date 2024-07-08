@@ -65,8 +65,6 @@ async fn main() -> anyhow::Result<()> {
         t!("server.started", host = format!("http://{}", address))
     );
 
-    send_event_notification(UPSEvent::ACFailure);
-
     axum::serve(listener, app).await?;
 
     Ok(())
