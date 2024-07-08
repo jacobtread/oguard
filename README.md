@@ -32,5 +32,5 @@ So far I've implemented the basic USB HID protocol and can pull the battery and 
 ## WebUI
 
 Below is a screenshot of the WIP web UI for the app to monitor the capacity and load:
-
-![Web UI screenshot](assets/webui.png)
+![Home screenshot](assets/image.png)
+![Events screenshot](assets/image-1.png)
