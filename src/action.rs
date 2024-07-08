@@ -23,7 +23,7 @@ use tokio::{
 use uuid::Uuid;
 
 use crate::{
-    ups::{QueryDeviceBattery, UPSExecutorHandle},
+    ups::{QueryDeviceBattery, ScheduleUPSShutdown, UPSExecutorHandle},
     watcher::{UPSEvent, UPSWatcherHandle},
 };
 
@@ -482,11 +482,134 @@ impl Action {
             ActionType::Popup => execute_popup(event).await,
             ActionType::Sleep => execute_sleep().await,
             ActionType::Shutdown(config) => execute_shutdown(event, config).await,
-            ActionType::ShutdownUPS => execute_shutdown_ups(executor).await,
+            ActionType::USPShutdown(config) => execute_shutdown_ups(config, executor).await,
             ActionType::Executable(executable) => execute_executable(executable).await,
             ActionType::HttpRequest(request) => execute_http_request(event, request).await,
         }
     }
+}
+
+/// Actions the task executor can perform
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ActionType {
+    /// Send desktop notification
+    Notification,
+
+    /// Show popup notification
+    Popup,
+
+    /// Put the device to sleep
+    Sleep,
+
+    /// Shutdown the device
+    Shutdown(ShutdownAction),
+
+    /// Shutdown the UPS itself
+    USPShutdown(UPSShutdownAction),
+
+    /// Run an executable
+    Executable(ExecutableAction),
+
+    /// Send an HTTP request
+    HttpRequest(HttpRequestAction),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShutdownAction {
+    /// Optional message to show
+    message: Option<String>,
+
+    /// Timeout for shutdown force close
+    timeout: Option<u32>,
+
+    /// Whether to force close apps
+    force_close_apps: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UPSShutdownAction {
+    /// Delay in minutes before shutting down the UPS
+    delay_minutes: u16,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecutableAction {
+    /// Executable to run
+    exe: String,
+
+    /// Arguments for the program
+    args: Vec<String>,
+
+    /// Timeout for the program run
+    timeout: Option<Duration>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HttpRequestAction {
+    /// URL to send the request to
+    url: String,
+    /// HTTP method to use
+    method: String,
+    /// Headers to put on the request
+    headers: HashMap<String, String>,
+    /// Optional request body
+    body: Option<String>,
+    /// Optional request timeout
+    timeout: Option<Duration>,
+}
+
+/// Configuration for the delay of an actions execution
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ActionDelay {
+    /// Run the action after a fix duration
+    pub duration: Option<Duration>,
+
+    /// Run immediately if the capacity is less that or equal to this amount
+    /// overrides the duration delay
+    pub below_capacity: Option<u8>,
+}
+
+/// Configuration for how an action should repeat
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ActionRepeat {
+    /// Run at a fixed interval
+    pub interval: Option<Duration>,
+
+    /// Every time the capacity decreases by minimum this amount
+    pub capacity_decrease: Option<u8>,
+
+    /// Maximum number of times to repeat
+    pub limit: Option<u8>,
+}
+
+/// Configuration for how an action should retry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ActionRetry {
+    /// Mode for the retry delay
+    pub delay: ActionRetryDelay,
+    /// Maximum number of retry attempts
+    pub max_attempts: u8,
+}
+
+/// Options for how a retry delay should be determined
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ActionRetryDelay {
+    /// Retry at fixed intervals
+    Fixed { delay: Duration },
+    /// Retry at a linearly increasing rate (5s, 10s, 15s, 20s)
+    LinearBackoff {
+        /// Initial backoff duration
+        initial: Duration,
+        /// Amount to add per failed attempt
+        increment: Duration,
+    },
+    // Retry at a exponentially increasing rate (5s, 10s, 20s, 40s)
+    ExponentialBackoff {
+        /// Initial backoff duration
+        initial: Duration,
+        /// Exponent to multiply by
+        exponent: u32,
+    },
 }
 
 /// Sends a desktop notification for the provided event
@@ -577,7 +700,17 @@ pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyho
 }
 
 /// Triggers the UPS to shutdown
-pub async fn execute_shutdown_ups(executor: &UPSExecutorHandle) -> anyhow::Result<()> {
+pub async fn execute_shutdown_ups(
+    config: &UPSShutdownAction,
+    executor: &UPSExecutorHandle,
+) -> anyhow::Result<()> {
+    executor
+        .request(ScheduleUPSShutdown {
+            delay_minutes: config.delay_minutes,
+        })
+        .await
+        .context("failed to schedule ups shutdown")?;
+
     Ok(())
 }
 
@@ -649,123 +782,6 @@ pub async fn execute_http_request(
         .context("response error")?;
 
     Ok(())
-}
-
-/// Actions the task executor can perform
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ActionType {
-    /// Send desktop notification
-    Notification,
-
-    /// Show popup notification
-    Popup,
-
-    /// Put the device to sleep
-    Sleep,
-
-    /// Shutdown the device
-    Shutdown(ShutdownAction),
-
-    /// Shutdown the UPS itself
-    ShutdownUPS,
-
-    /// Run an executable
-    Executable(ExecutableAction),
-
-    /// Send an HTTP request
-    HttpRequest(HttpRequestAction),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ShutdownAction {
-    /// Optional message to show
-    message: Option<String>,
-
-    /// Timeout for shutdown force close
-    timeout: Option<u32>,
-
-    /// Whether to force close apps
-    force_close_apps: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExecutableAction {
-    /// Executable to run
-    exe: String,
-
-    /// Arguments for the program
-    args: Vec<String>,
-
-    /// Timeout for the program run
-    timeout: Option<Duration>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HttpRequestAction {
-    /// URL to send the request to
-    url: String,
-    /// HTTP method to use
-    method: String,
-    /// Headers to put on the request
-    headers: HashMap<String, String>,
-    /// Optional request body
-    body: Option<String>,
-    /// Optional request timeout
-    timeout: Option<Duration>,
-}
-
-/// Configuration for the delay of an actions execution
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ActionDelay {
-    /// Run the action after a fix duration
-    pub duration: Option<Duration>,
-
-    /// Run immediately if the capacity is less that or equal to this amount
-    /// overrides the duration delay
-    pub below_capacity: Option<u8>,
-}
-
-/// Configuration for how an action should repeat
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ActionRepeat {
-    /// Run at a fixed interval
-    pub interval: Option<Duration>,
-
-    /// Every time the capacity decreases by minimum this amount
-    pub capacity_decrease: Option<u8>,
-
-    /// Maximum number of times to repeat
-    pub limit: Option<u8>,
-}
-
-/// Configuration for how an action should retry
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ActionRetry {
-    /// Mode for the retry delay
-    pub delay: ActionRetryDelay,
-    /// Maximum number of retry attempts
-    pub max_attempts: u8,
-}
-
-/// Options for how a retry delay should be determined
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ActionRetryDelay {
-    /// Retry at fixed intervals
-    Fixed { delay: Duration },
-    /// Retry at a linearly increasing rate (5s, 10s, 15s, 20s)
-    LinearBackoff {
-        /// Initial backoff duration
-        initial: Duration,
-        /// Amount to add per failed attempt
-        increment: Duration,
-    },
-    // Retry at a exponentially increasing rate (5s, 10s, 20s, 40s)
-    ExponentialBackoff {
-        /// Initial backoff duration
-        initial: Duration,
-        /// Exponent to multiply by
-        exponent: u32,
-    },
 }
 
 #[cfg(test)]
