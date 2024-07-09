@@ -1,5 +1,7 @@
 use crate::action::ActionPipeline;
 use crate::database::DbResult;
+use axum::async_trait;
+use chrono::Utc;
 use futures::future::BoxFuture;
 use sea_orm::entity::prelude::*;
 use sea_orm::{
@@ -7,7 +9,7 @@ use sea_orm::{
     ActiveValue::{NotSet, Set},
     DatabaseConnection,
 };
-use sea_orm::{FromJsonQueryResult, FromQueryResult, QuerySelect};
+use sea_orm::{FromJsonQueryResult, FromQueryResult, IntoActiveModel, QuerySelect};
 use serde::{Deserialize, Serialize};
 
 use super::events::UPSEvent;
@@ -53,7 +55,20 @@ impl DbActionPipelines {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
-impl ActiveModelBehavior for ActiveModel {}
+#[async_trait]
+impl ActiveModelBehavior for ActiveModel {
+    /// Will be called before `ActiveModel::insert`, `ActiveModel::update`, and `ActiveModel::save`
+    async fn before_save<C>(mut self, _db: &C, insert: bool) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        // Update last modified time
+        if !insert {
+            self.modified_at = Set(Utc::now());
+        }
+        Ok(self)
+    }
+}
 
 #[derive(FromQueryResult)]
 pub struct CancellableEventPipeline {
@@ -87,8 +102,31 @@ impl Model {
         .insert(db)
     }
 
+    pub async fn find_by_id(
+        db: &DatabaseConnection,
+        id: EventPipelineId,
+    ) -> DbResult<Option<Self>> {
+        Entity::find_by_id(id).one(db).await
+    }
+
+    pub async fn all(db: &DatabaseConnection) -> DbResult<Vec<Self>> {
+        Entity::find().all(db).await
+    }
+
     pub async fn find_by_event(db: &DatabaseConnection, event: UPSEvent) -> DbResult<Vec<Self>> {
         Entity::find().filter(Column::Event.eq(event)).all(db).await
+    }
+
+    pub async fn update(
+        self,
+        db: &DatabaseConnection,
+        pipelines: Vec<ActionPipeline>,
+        cancellable: bool,
+    ) -> DbResult<Self> {
+        let mut active_model = self.into_active_model();
+        active_model.pipelines = Set(DbActionPipelines(pipelines));
+        active_model.cancellable = Set(cancellable);
+        active_model.update(db).await
     }
 
     /// Finds cancellable pipelines for the provided events

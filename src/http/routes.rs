@@ -2,6 +2,7 @@ use std::convert::Infallible;
 use std::time::Duration;
 
 use crate::database::entities::battery_history::BatteryHistoryModel;
+use crate::database::entities::event_pipeline::{EventPipelineId, EventPipelineModel};
 use crate::database::entities::events::EventModel;
 use crate::database::entities::state_history::StateHistoryModel;
 use crate::http::error::HttpResult;
@@ -9,16 +10,17 @@ use crate::ups::{
     DeviceBattery, DeviceState, QueryDeviceBattery, QueryDeviceState, UPSExecutorHandle,
 };
 use crate::watcher::UPSWatcherHandle;
-use anyhow::Context;
-use axum::extract::Query;
+use anyhow::{anyhow, Context};
+use axum::extract::{Path, Query};
 use axum::response::sse::{Event, KeepAlive};
 use axum::response::Sse;
 use axum::{Extension, Json};
+use chrono::Utc;
 use futures::Stream;
 use sea_orm::DatabaseConnection;
 use tokio_stream::StreamExt;
 
-use super::models::RangeQuery;
+use super::models::{CreateEventPipeline, RangeQuery, UpdateEventPipeline};
 
 /// GET /api/device-state
 ///
@@ -82,6 +84,76 @@ pub async fn event_history(
         .context("Failed to query event history")?;
 
     Ok(Json(history))
+}
+
+/// GET /api/event-pipelines
+///
+/// Requests all the event pipelines
+pub async fn get_event_pipelines(
+    Extension(db): Extension<DatabaseConnection>,
+) -> HttpResult<Vec<EventPipelineModel>> {
+    let event_pipelines = EventPipelineModel::all(&db)
+        .await
+        .context("failed to query event pipelines")?;
+
+    Ok(Json(event_pipelines))
+}
+
+/// GET /api/event-pipelines/:id
+///
+/// Requests a specific event pipeline
+pub async fn get_event_pipeline(
+    Extension(db): Extension<DatabaseConnection>,
+    Path(id): Path<EventPipelineId>,
+) -> HttpResult<EventPipelineModel> {
+    let event_pipeline = EventPipelineModel::find_by_id(&db, id)
+        .await
+        .context("failed to find event pipeline")?
+        .ok_or(anyhow!("unknown event pipeline"))?;
+
+    Ok(Json(event_pipeline))
+}
+
+/// PUT /api/event-pipelines/:id
+///
+/// Updates a event pipeline
+pub async fn update_event_pipeline(
+    Extension(db): Extension<DatabaseConnection>,
+    Path(id): Path<EventPipelineId>,
+    Json(request): Json<UpdateEventPipeline>,
+) -> HttpResult<EventPipelineModel> {
+    let event_pipeline = EventPipelineModel::find_by_id(&db, id)
+        .await
+        .context("failed to find event pipeline")?
+        .ok_or(anyhow!("unknown event pipeline"))?;
+
+    let event_pipeline = event_pipeline
+        .update(&db, request.pipelines, request.cancellable)
+        .await
+        .context("failed to update pipeline")?;
+
+    Ok(Json(event_pipeline))
+}
+
+/// POST /api/event-pipelines
+///
+/// Creates a new event pipeline
+pub async fn create_event_pipeline(
+    Extension(db): Extension<DatabaseConnection>,
+    Json(request): Json<CreateEventPipeline>,
+) -> HttpResult<EventPipelineModel> {
+    let current_time = Utc::now();
+    let event_pipeline = EventPipelineModel::create(
+        &db,
+        request.event,
+        request.pipelines,
+        request.cancellable,
+        current_time,
+    )
+    .await
+    .context("failed to find event pipeline")?;
+
+    Ok(Json(event_pipeline))
 }
 
 /// GET /api/events

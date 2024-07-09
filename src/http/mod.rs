@@ -17,6 +17,18 @@ pub fn router() -> Router {
                     .route("/battery-state", get(routes::battery_state_history))
                     .route("/device-state", get(routes::device_state_history))
                     .route("/event", get(routes::event_history)),
+            )
+            .nest(
+                "/event-pipelines",
+                Router::new()
+                    .route(
+                        "/",
+                        get(routes::get_event_pipelines).post(routes::create_event_pipeline),
+                    )
+                    .route(
+                        "/:id",
+                        get(routes::get_event_pipeline).put(routes::update_event_pipeline),
+                    ),
             ),
     )
 }
