@@ -497,6 +497,7 @@ impl Action {
 
 /// Actions the task executor can perform
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum ActionType {
     /// Send desktop notification
     Notification,
@@ -599,6 +600,7 @@ pub struct ActionRetry {
 
 /// Options for how a retry delay should be determined
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum ActionRetryDelay {
     /// Retry at fixed intervals
     Fixed { delay: Duration },
