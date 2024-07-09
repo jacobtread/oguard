@@ -1,17 +1,17 @@
 use std::net::{Ipv4Addr, SocketAddrV4};
 
+use action::EventPipelineRunner;
 use axum::Extension;
 use chrono::Utc;
-use database::entities::events::{EventModel, EventType};
+use database::entities::events::EventModel;
 use http::router;
 use log::{debug, error};
-use notify_rust::Notification;
 use persistent_watcher::UPSPersistentWatcher;
 use rust_i18n::{i18n, t};
 use sea_orm::DatabaseConnection;
 use tower_http::cors::CorsLayer;
 use ups::UPSExecutor;
-use watcher::{UPSEvent, UPSWatcher, UPSWatcherHandle};
+use watcher::{UPSWatcher, UPSWatcherHandle};
 
 pub mod action;
 pub mod database;
@@ -45,7 +45,11 @@ async fn main() -> anyhow::Result<()> {
 
     // Spawn event watch listeners
     spawn_persist_listener(watcher_handle.clone(), database.clone());
-    spawn_tray_listener(watcher_handle.clone());
+
+    // Start the event pipeline runner
+    let event_pipeline_runner =
+        EventPipelineRunner::new(executor.clone(), database.clone(), watcher_handle.clone());
+    tokio::spawn(event_pipeline_runner.run());
 
     // build our application with a single route
     let app = router()
@@ -74,44 +78,9 @@ fn spawn_persist_listener(mut watcher_handle: UPSWatcherHandle, db: DatabaseConn
     tokio::spawn(async move {
         while let Some(event) = watcher_handle.next().await {
             let current_time = Utc::now();
-            if let Err(err) = EventModel::create(&db, EventType::from(event), current_time).await {
+            if let Err(err) = EventModel::create(&db, event, current_time).await {
                 error!("failed to save event to database: {err}");
             }
         }
     });
-}
-
-/// Spawns an event listener for publishing notifications when the
-/// watcher detects a change in state
-fn spawn_tray_listener(mut watcher_handle: UPSWatcherHandle) {
-    tokio::spawn(async move {
-        while let Some(event) = watcher_handle.next().await {
-            debug!("UPS EVENT {:#?}", event);
-            send_event_notification(event);
-        }
-    });
-}
-
-/// Sends a notification for the provided event
-fn send_event_notification(event: UPSEvent) {
-    let event_name = event.to_string();
-
-    let label_key = format!("event.{}.label", event_name);
-    let description_key = format!("event.{}.description", event_name);
-
-    let label = t!(&label_key);
-    let description = t!(&description_key);
-
-    let icon = match event {
-        watcher::UPSEvent::ACFailure => "dialog-negative",
-        watcher::UPSEvent::ACRecovery => "dialog-positive",
-        watcher::UPSEvent::UPSFault => "dialog-negative",
-        _ => "dialog-positive",
-    };
-
-    _ = Notification::new()
-        .summary(&label)
-        .body(&description)
-        .icon(icon)
-        .show();
 }

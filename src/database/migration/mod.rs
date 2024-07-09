@@ -3,6 +3,7 @@ pub use sea_orm_migration::prelude::*;
 mod m20240705_091507_create_events;
 mod m20240706_034731_create_battery_history;
 mod m20240706_034731_create_state_history;
+mod m20240709_071553_create_event_pipelines;
 
 pub struct Migrator;
 
@@ -11,8 +12,9 @@ impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
             Box::new(m20240705_091507_create_events::Migration),
-            Box::new(m20240706_034731_create_state_history::Migration),
             Box::new(m20240706_034731_create_battery_history::Migration),
+            Box::new(m20240706_034731_create_state_history::Migration),
+            Box::new(m20240709_071553_create_event_pipelines::Migration),
         ]
     }
 }

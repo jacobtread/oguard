@@ -1,5 +1,4 @@
 use crate::database::DbResult;
-use crate::watcher::UPSEvent;
 use futures::future::BoxFuture;
 use sea_orm::entity::prelude::*;
 use sea_orm::{
@@ -7,7 +6,8 @@ use sea_orm::{
     ActiveValue::{NotSet, Set},
     DatabaseConnection,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use strum::Display;
 
 pub type EventModel = Model;
 pub type EventActiveModel = ActiveModel;
@@ -24,15 +24,19 @@ pub struct Model {
     /// Type of event that occurred
     #[sea_orm(column_name = "type")]
     #[serde(rename = "type")]
-    pub ty: EventType,
+    pub ty: UPSEvent,
 
     /// Creation time for the event
     pub created_at: DateTimeUtc,
 }
 
-#[derive(Debug, EnumIter, DeriveActiveEnum, PartialEq, Eq, Clone, Copy, Serialize)]
+/// Events that could be encountered while processing state updates
+#[derive(
+    Debug, EnumIter, DeriveActiveEnum, PartialEq, Eq, Clone, Copy, Serialize, Deserialize, Display,
+)]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
-pub enum EventType {
+#[serde(tag = "type")]
+pub enum UPSEvent {
     /// AC Power has been lost
     #[sea_orm(num_value = 0)]
     ACFailure,
@@ -56,16 +60,17 @@ pub enum EventType {
     BatteryTestEnd,
 }
 
-impl From<UPSEvent> for EventType {
-    fn from(value: UPSEvent) -> Self {
-        match value {
-            UPSEvent::ACFailure => Self::ACFailure,
-            UPSEvent::ACRecovery => Self::ACRecovery,
-            UPSEvent::UPSFault => Self::UPSFault,
-            UPSEvent::LowBatteryModeStart => Self::LowBatteryModeStart,
-            UPSEvent::LowBatteryModeEnd => Self::LowBatteryModeEnd,
-            UPSEvent::BatteryTestStart => Self::BatteryTestStart,
-            UPSEvent::BatteryTestEnd => Self::BatteryTestEnd,
+impl UPSEvent {
+    /// Defines the events that this event can cancel
+    pub fn cancels(&self) -> &'static [UPSEvent] {
+        match self {
+            UPSEvent::ACFailure => &[UPSEvent::ACRecovery],
+            UPSEvent::ACRecovery => &[UPSEvent::ACFailure],
+            UPSEvent::UPSFault => &[],
+            UPSEvent::LowBatteryModeStart => &[UPSEvent::LowBatteryModeEnd],
+            UPSEvent::LowBatteryModeEnd => &[UPSEvent::LowBatteryModeStart],
+            UPSEvent::BatteryTestStart => &[UPSEvent::BatteryTestEnd],
+            UPSEvent::BatteryTestEnd => &[UPSEvent::BatteryTestStart],
         }
     }
 }
@@ -79,7 +84,7 @@ impl Model {
     /// Creates a new player from the provided details
     pub fn create(
         db: &DatabaseConnection,
-        ty: EventType,
+        ty: UPSEvent,
         created_at: DateTimeUtc,
     ) -> BoxFuture<'_, DbResult<Self>> {
         ActiveModel {

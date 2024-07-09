@@ -1,8 +1,9 @@
-use crate::ups::{DevicePowerState, DeviceState, QueryDeviceState, UPSExecutorHandle};
+use crate::{
+    database::entities::events::UPSEvent,
+    ups::{DevicePowerState, DeviceState, QueryDeviceState, UPSExecutorHandle},
+};
 use log::{error, info, warn};
-use serde::{Deserialize, Serialize};
 use std::time::Duration;
-use strum::Display;
 use tokio::{sync::broadcast, time::sleep};
 use tokio_stream::wrappers::BroadcastStream;
 
@@ -38,41 +39,6 @@ impl UPSWatcherHandle {
     /// Receive the next watcher message
     pub async fn next(&mut self) -> Option<UPSEvent> {
         self.rx.recv().await.ok()
-    }
-}
-
-/// Events that could be encountered while processing state updates
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize, Display)]
-#[serde(tag = "type")]
-pub enum UPSEvent {
-    /// AC Power has been lost
-    ACFailure,
-    /// AC Power has been recovered
-    ACRecovery,
-    /// UPS has encountered a fault
-    UPSFault,
-    /// UPS has entered low battery mode
-    LowBatteryModeStart,
-    /// UPS has left low power mode
-    LowBatteryModeEnd,
-    /// UPS Battery test has started
-    BatteryTestStart,
-    /// UPS Battery test has ended
-    BatteryTestEnd,
-}
-
-impl UPSEvent {
-    /// Defines the events that this event can cancel
-    pub fn cancels(&self) -> &'static [UPSEvent] {
-        match self {
-            UPSEvent::ACFailure => &[UPSEvent::ACRecovery],
-            UPSEvent::ACRecovery => &[UPSEvent::ACFailure],
-            UPSEvent::UPSFault => &[],
-            UPSEvent::LowBatteryModeStart => &[UPSEvent::LowBatteryModeEnd],
-            UPSEvent::LowBatteryModeEnd => &[UPSEvent::LowBatteryModeStart],
-            UPSEvent::BatteryTestStart => &[UPSEvent::BatteryTestEnd],
-            UPSEvent::BatteryTestEnd => &[UPSEvent::BatteryTestStart],
-        }
     }
 }
 

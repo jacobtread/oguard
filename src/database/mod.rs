@@ -28,11 +28,6 @@ const DATABASE_PATH_URL: &str = "sqlite:data/app.db";
 pub async fn init() -> DatabaseConnection {
     debug!("Connected to database..");
 
-    connect_database().await
-}
-
-/// Connects to the database
-async fn connect_database() -> DatabaseConnection {
     let path = Path::new(&DATABASE_PATH);
 
     // Create path to database file if missing
@@ -47,8 +42,13 @@ async fn connect_database() -> DatabaseConnection {
         File::create(path).expect("Unable to create sqlite database file");
     }
 
+    connect_database(DATABASE_PATH_URL).await
+}
+
+/// Connects to the database
+pub async fn connect_database(url: &str) -> DatabaseConnection {
     // Connect to database
-    let connection = SeaDatabase::connect(DATABASE_PATH_URL)
+    let connection = SeaDatabase::connect(url)
         .await
         .expect("Unable to create database connection");
 

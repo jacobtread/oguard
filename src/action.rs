@@ -1,11 +1,21 @@
+use crate::{
+    database::entities::{
+        event_pipeline::{CancellableEventPipeline, EventPipelineId, EventPipelineModel},
+        events::UPSEvent,
+    },
+    ups::{QueryDeviceBattery, ScheduleUPSShutdown, UPSExecutorHandle},
+    watcher::UPSWatcherHandle,
+};
 use anyhow::{anyhow, Context};
 use axum::http::{HeaderMap, HeaderName, HeaderValue};
 use futures::{stream::FuturesUnordered, StreamExt};
 use log::{debug, error, warn};
 use native_dialog::{MessageDialog, MessageType};
 use notify_rust::Notification;
+use ordered_float::OrderedFloat;
 use reqwest::Method;
 use rust_i18n::t;
+use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -20,12 +30,6 @@ use tokio::{
     task::{spawn_blocking, AbortHandle, JoinSet},
     time::{interval_at, sleep, timeout, MissedTickBehavior},
 };
-use uuid::Uuid;
-
-use crate::{
-    ups::{QueryDeviceBattery, ScheduleUPSShutdown, UPSExecutorHandle},
-    watcher::{UPSEvent, UPSWatcherHandle},
-};
 
 type SharedActiveTasks = Arc<RwLock<Vec<EventPipelineTask>>>;
 
@@ -33,8 +37,8 @@ type SharedActiveTasks = Arc<RwLock<Vec<EventPipelineTask>>>;
 pub struct EventPipelineRunner {
     /// Executor handle for accessing the UPS
     executor: UPSExecutorHandle,
-    /// Pipelines to execute
-    pipelines: Vec<EventPipeline>,
+    /// Database to load the event pipelines from
+    db: DatabaseConnection,
     /// Watcher handle for events
     watcher_handle: UPSWatcherHandle,
     /// Running task set
@@ -46,7 +50,7 @@ pub struct EventPipelineRunner {
 /// Task currently running on the event pipeline runner
 struct EventPipelineTask {
     /// Unique ID for the event
-    id: Uuid,
+    id: EventPipelineId,
     /// abort handle for the task
     abort_handle: AbortHandle,
 }
@@ -55,12 +59,12 @@ impl EventPipelineRunner {
     /// Creates a new event pipeline runner
     pub fn new(
         executor: UPSExecutorHandle,
-        pipelines: Vec<EventPipeline>,
+        db: DatabaseConnection,
         watcher_handle: UPSWatcherHandle,
     ) -> Self {
         Self {
             executor,
-            pipelines,
+            db,
             watcher_handle,
             active_tasks: Default::default(),
             join_set: Default::default(),
@@ -75,8 +79,25 @@ impl EventPipelineRunner {
             // Cancel pipelines that can be cancelled
             self.cancel_pipelines(&event).await;
 
-            // Run the event pipeline
-            self.run_pipeline(event).await;
+            // Find pipelines to run
+            let pipelines = match EventPipelineModel::find_by_event(&self.db, event).await {
+                Ok(value) => value,
+                Err(err) => {
+                    error!("failed to query event pipelines for event {event}: {err}");
+                    continue;
+                }
+            };
+
+            if pipelines.is_empty() {
+                // Event has no pipelines to process, continue to next event
+                debug!("skipping {event} event with no pipeline handler");
+                continue;
+            }
+
+            for pipeline in pipelines {
+                // Start the event pipeline
+                self.start_pipeline(event, pipeline).await;
+            }
         }
     }
 
@@ -89,11 +110,14 @@ impl EventPipelineRunner {
         }
 
         // Find pipelines this event cancels
-        let cancels_pipelines: Vec<&EventPipeline> = self
-            .pipelines
-            .iter()
-            .filter(|pipeline| cancels.contains(&pipeline.event) && pipeline.cancellable)
-            .collect();
+        let cancels_pipelines: Vec<CancellableEventPipeline> =
+            match EventPipelineModel::find_cancellable(&self.db, cancels.to_vec()).await {
+                Ok(value) => value,
+                Err(err) => {
+                    error!("failed to query cancellable event pipelines for {event}: {err}");
+                    return;
+                }
+            };
 
         // Nothing to cancel
         if cancels_pipelines.is_empty() {
@@ -124,28 +148,18 @@ impl EventPipelineRunner {
     }
 
     /// Checks if theres currently an active task for the provided pipeline
-    pub async fn is_running_task(&self, pipeline: &EventPipeline) -> bool {
+    pub async fn is_running_task(&self, id: EventPipelineId) -> bool {
         self.active_tasks
             .read()
             .await
             .iter()
-            .any(|task| pipeline.id == task.id)
+            .any(|task| id == task.id)
     }
 
-    pub async fn run_pipeline(&mut self, event: UPSEvent) {
-        // Find the pipeline for this event
-        let pipeline = self
-            .pipelines
-            .iter()
-            .find(|pipeline| pipeline.event == event);
+    pub async fn start_pipeline(&mut self, event: UPSEvent, pipeline: EventPipelineModel) {
+        let id = pipeline.id;
 
-        let Some(pipeline) = pipeline else {
-            // Event has no pipeline to process, continue to next event
-            debug!("skipping {event} event with no pipeline handler");
-            return;
-        };
-
-        if self.is_running_task(pipeline).await {
+        if self.is_running_task(id).await {
             // Task is already running
             debug!("skipping event with already running task");
             return;
@@ -153,12 +167,11 @@ impl EventPipelineRunner {
 
         // Spawn the task runner
         let abort_handle = self.join_set.spawn(run_pipeline(
-            pipeline.clone(),
+            pipeline,
             self.executor.clone(),
             self.active_tasks.clone(),
+            event,
         ));
-
-        let id = pipeline.id;
 
         // Add to the active tasks
         self.active_tasks
@@ -168,31 +181,19 @@ impl EventPipelineRunner {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EventPipeline {
-    /// Unique ID for the event
-    pub id: Uuid,
-    /// Event that triggers the pipeline
-    pub event: UPSEvent,
-    /// Action pipelines to run
-    pub pipelines: Vec<ActionPipeline>,
-    /// Whether the events that cancel this should abort the run
-    pub cancellable: bool,
-}
-
 /// Runs an event pipeline (Parallel)
 async fn run_pipeline(
-    pipeline: EventPipeline,
+    pipeline: EventPipelineModel,
     executor: UPSExecutorHandle,
     active_tasks: SharedActiveTasks,
+    event: UPSEvent,
 ) {
-    let event = pipeline.event;
-
     debug!("starting {event} task pipeline");
 
     // Spawn and run the action pipelines
     let mut pipeline_set: FuturesUnordered<_> = pipeline
         .pipelines
+        .into_inner()
         .into_iter()
         .map(|pipeline| run_action_pipeline(pipeline, event, executor.clone()))
         .collect();
@@ -269,13 +270,13 @@ async fn run_repeated_action(action: Action, event: UPSEvent, executor: UPSExecu
 }
 
 /// Pipeline of actions to execute
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ActionPipeline {
     /// Actions this pipeline will execute
     actions: Vec<Action>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Action {
     /// Action type
     pub ty: ActionType,
@@ -495,7 +496,7 @@ impl Action {
 }
 
 /// Actions the task executor can perform
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionType {
     /// Send desktop notification
     Notification,
@@ -519,7 +520,7 @@ pub enum ActionType {
     HttpRequest(HttpRequestAction),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ShutdownAction {
     /// Optional message to show
     message: Option<String>,
@@ -531,13 +532,13 @@ pub struct ShutdownAction {
     force_close_apps: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UPSShutdownAction {
     /// Delay in minutes before shutting down the UPS
-    delay_minutes: f32,
+    delay_minutes: OrderedFloat<f32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ExecutableAction {
     /// Executable to run
     exe: String,
@@ -549,7 +550,7 @@ pub struct ExecutableAction {
     timeout: Option<Duration>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HttpRequestAction {
     /// URL to send the request to
     url: String,
@@ -564,7 +565,7 @@ pub struct HttpRequestAction {
 }
 
 /// Configuration for the delay of an actions execution
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ActionDelay {
     /// Run the action after a fix duration
     pub duration: Option<Duration>,
@@ -575,7 +576,7 @@ pub struct ActionDelay {
 }
 
 /// Configuration for how an action should repeat
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ActionRepeat {
     /// Run at a fixed interval
     pub interval: Option<Duration>,
@@ -588,7 +589,7 @@ pub struct ActionRepeat {
 }
 
 /// Configuration for how an action should retry
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ActionRetry {
     /// Mode for the retry delay
     pub delay: ActionRetryDelay,
@@ -597,7 +598,7 @@ pub struct ActionRetry {
 }
 
 /// Options for how a retry delay should be determined
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionRetryDelay {
     /// Retry at fixed intervals
     Fixed { delay: Duration },
@@ -711,7 +712,7 @@ pub async fn execute_shutdown_ups(
 ) -> anyhow::Result<()> {
     executor
         .request(ScheduleUPSShutdown {
-            delay_minutes: config.delay_minutes,
+            delay_minutes: config.delay_minutes.0,
             reboot_delay_minutes: 1,
         })
         .await
@@ -753,7 +754,7 @@ pub async fn execute_executable(executable: &ExecutableAction) -> anyhow::Result
 
 /// Sends an HTTP request
 pub async fn execute_http_request(
-    event: UPSEvent,
+    _event: UPSEvent,
     request: &HttpRequestAction,
 ) -> anyhow::Result<()> {
     let method = Method::from_str(&request.method).context("invalid http method")?;
@@ -792,36 +793,61 @@ pub async fn execute_http_request(
 
 #[cfg(test)]
 mod test {
-    use std::time::Duration;
-
-    use log::debug;
-    use tokio::{sync::broadcast, time::sleep};
-    use uuid::Uuid;
-
-    use crate::{
-        action::{ExecutableAction, ShutdownAction, UPSShutdownAction},
-        ups::UPSExecutor,
-        watcher::{UPSEvent, UPSWatcherHandle},
-    };
-
     use super::{
-        Action, ActionDelay, ActionPipeline, ActionRepeat, ActionType, EventPipeline,
-        EventPipelineRunner,
+        Action, ActionDelay, ActionPipeline, ActionType, EventPipelineModel, EventPipelineRunner,
     };
+    use crate::{
+        action::ExecutableAction,
+        database::{connect_database, entities::events::UPSEvent},
+        ups::UPSExecutor,
+        watcher::UPSWatcherHandle,
+    };
+    use chrono::Utc;
+    use log::debug;
+    use std::time::Duration;
+    use tokio::{sync::broadcast, time::sleep};
+
+    fn setup_tests() {
+        dotenvy::dotenv().unwrap();
+        env_logger::init();
+        log_panics::init();
+    }
+
+    async fn test_pipeline(
+        event: UPSEvent,
+        pipeline: Vec<ActionPipeline>,
+        cancellable: bool,
+    ) -> anyhow::Result<()> {
+        let (tx, rx) = broadcast::channel(8);
+        let watcher_handle = UPSWatcherHandle { rx };
+        let executor = UPSExecutor::start()?;
+
+        // Use in memory database for event pipelines
+        let db = connect_database("sqlite::memory:").await;
+
+        EventPipelineModel::create(&db, event, pipeline, cancellable, Utc::now()).await?;
+        debug!("spawning runner");
+
+        tokio::spawn(EventPipelineRunner::new(executor, db, watcher_handle).run());
+
+        debug!("sending event");
+
+        tx.send(UPSEvent::ACFailure)?;
+
+        // Sleep for 1 minute to allow test a chance to run
+        sleep(Duration::from_secs(60)).await;
+
+        Ok(())
+    }
 
     #[tokio::test]
     #[ignore]
     async fn test_full_shutdown() {
-        dotenvy::dotenv().unwrap();
-        env_logger::init();
-        log_panics::init();
-        let (tx, rx) = broadcast::channel(8);
-        let watcher_handle = UPSWatcherHandle { rx };
-        let executor = UPSExecutor::start().unwrap();
-        let pipelines = vec![EventPipeline {
-            id: Uuid::new_v4(),
-            event: UPSEvent::ACFailure,
-            pipelines: vec![ActionPipeline {
+        setup_tests();
+
+        test_pipeline(
+            UPSEvent::ACFailure,
+            vec![ActionPipeline {
                 actions: vec![
                     Action {
                         ty: ActionType::Notification,
@@ -856,164 +882,92 @@ mod test {
                     // },
                 ],
             }],
-            cancellable: false,
-        }];
-
-        debug!("spawning runner");
-
-        tokio::spawn(EventPipelineRunner::new(executor, pipelines, watcher_handle).run());
-
-        debug!("sending event");
-
-        _ = tx.send(UPSEvent::ACFailure);
-
-        loop {
-            sleep(Duration::from_secs(60)).await;
-        }
+            false,
+        )
+        .await
+        .unwrap();
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_notification_action() {
-        dotenvy::dotenv().unwrap();
-        env_logger::init();
-        log_panics::init();
-        let (tx, rx) = broadcast::channel(8);
-        let watcher_handle = UPSWatcherHandle { rx };
-        let executor = UPSExecutor::start().unwrap();
-        let pipelines = vec![EventPipeline {
-            id: Uuid::new_v4(),
-            event: UPSEvent::ACFailure,
-            pipelines: vec![ActionPipeline {
+        setup_tests();
+
+        test_pipeline(
+            UPSEvent::ACFailure,
+            vec![ActionPipeline {
                 actions: vec![Action {
                     ty: ActionType::Notification,
                     delay: ActionDelay {
                         below_capacity: None,
                         duration: Some(Duration::from_secs(5)),
                     },
-                    repeat: Some(ActionRepeat {
-                        interval: Some(Duration::from_secs(10)),
-                        capacity_decrease: None,
-                        limit: Some(3),
-                    }),
+                    repeat: None,
                     retry: None,
                 }],
             }],
-            cancellable: false,
-        }];
-
-        debug!("spawning runner");
-
-        tokio::spawn(EventPipelineRunner::new(executor, pipelines, watcher_handle).run());
-
-        debug!("sending event");
-
-        _ = tx.send(UPSEvent::ACFailure);
-
-        loop {
-            sleep(Duration::from_secs(60)).await;
-        }
+            false,
+        )
+        .await
+        .unwrap();
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_popup_action() {
-        dotenvy::dotenv().unwrap();
-        env_logger::init();
-        log_panics::init();
-        let (tx, rx) = broadcast::channel(8);
-        let watcher_handle = UPSWatcherHandle { rx };
-        let executor = UPSExecutor::start().unwrap();
-        let pipelines = vec![EventPipeline {
-            id: Uuid::new_v4(),
-            event: UPSEvent::ACFailure,
-            pipelines: vec![ActionPipeline {
+        setup_tests();
+
+        test_pipeline(
+            UPSEvent::ACFailure,
+            vec![ActionPipeline {
                 actions: vec![Action {
                     ty: ActionType::Popup,
                     delay: ActionDelay {
                         below_capacity: None,
                         duration: Some(Duration::from_secs(5)),
                     },
-                    repeat: Some(ActionRepeat {
-                        interval: Some(Duration::from_secs(10)),
-                        capacity_decrease: None,
-                        limit: Some(3),
-                    }),
+                    repeat: None,
                     retry: None,
                 }],
             }],
-            cancellable: false,
-        }];
-
-        debug!("spawning runner");
-
-        tokio::spawn(EventPipelineRunner::new(executor, pipelines, watcher_handle).run());
-
-        debug!("sending event");
-
-        _ = tx.send(UPSEvent::ACFailure);
-
-        loop {
-            sleep(Duration::from_secs(60)).await;
-        }
+            false,
+        )
+        .await
+        .unwrap();
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_sleep_action() {
-        dotenvy::dotenv().unwrap();
-        env_logger::init();
-        log_panics::init();
-        let (tx, rx) = broadcast::channel(8);
-        let watcher_handle = UPSWatcherHandle { rx };
-        let executor = UPSExecutor::start().unwrap();
-        let pipelines = vec![EventPipeline {
-            id: Uuid::new_v4(),
-            event: UPSEvent::ACFailure,
-            pipelines: vec![ActionPipeline {
+        setup_tests();
+
+        test_pipeline(
+            UPSEvent::ACFailure,
+            vec![ActionPipeline {
                 actions: vec![Action {
                     ty: ActionType::Sleep,
                     delay: ActionDelay {
                         below_capacity: None,
                         duration: Some(Duration::from_secs(5)),
                     },
-                    repeat: Some(ActionRepeat {
-                        interval: Some(Duration::from_secs(10)),
-                        capacity_decrease: None,
-                        limit: Some(0),
-                    }),
+                    repeat: None,
                     retry: None,
                 }],
             }],
-            cancellable: false,
-        }];
-
-        debug!("spawning runner");
-
-        tokio::spawn(EventPipelineRunner::new(executor, pipelines, watcher_handle).run());
-
-        debug!("sending event");
-
-        _ = tx.send(UPSEvent::ACFailure);
-
-        loop {
-            sleep(Duration::from_secs(60)).await;
-        }
+            false,
+        )
+        .await
+        .unwrap();
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_executable_action() {
-        dotenvy::dotenv().unwrap();
-        env_logger::init();
-        log_panics::init();
-        let (tx, rx) = broadcast::channel(8);
-        let watcher_handle = UPSWatcherHandle { rx };
-        let executor = UPSExecutor::start().unwrap();
-        let pipelines = vec![EventPipeline {
-            id: Uuid::new_v4(),
-            event: UPSEvent::ACFailure,
-            pipelines: vec![ActionPipeline {
+        setup_tests();
+
+        test_pipeline(
+            UPSEvent::ACFailure,
+            vec![ActionPipeline {
                 actions: vec![Action {
                     ty: ActionType::Executable(ExecutableAction {
                         exe: "notepad.exe".to_string(),
@@ -1024,27 +978,13 @@ mod test {
                         below_capacity: None,
                         duration: Some(Duration::from_secs(5)),
                     },
-                    repeat: Some(ActionRepeat {
-                        interval: Some(Duration::from_secs(10)),
-                        capacity_decrease: None,
-                        limit: Some(0),
-                    }),
+                    repeat: None,
                     retry: None,
                 }],
             }],
-            cancellable: false,
-        }];
-
-        debug!("spawning runner");
-
-        tokio::spawn(EventPipelineRunner::new(executor, pipelines, watcher_handle).run());
-
-        debug!("sending event");
-
-        _ = tx.send(UPSEvent::ACFailure);
-
-        loop {
-            sleep(Duration::from_secs(60)).await;
-        }
+            false,
+        )
+        .await
+        .unwrap();
     }
 }

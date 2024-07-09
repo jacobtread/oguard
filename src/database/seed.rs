@@ -1,20 +1,17 @@
 use chrono::Utc;
 
-use crate::database::{
-    connect_database,
-    entities::events::{EventModel, EventType},
-};
+use crate::database::entities::events::{EventModel, UPSEvent};
 
 #[tokio::test]
 #[ignore = "Seeding logic, not a real test"]
 async fn seed() {
-    let db = connect_database().await;
+    let db = crate::database::init().await;
 
     let start = Utc::now();
 
     for _ in 0..50 {
         let date = Utc::now();
-        EventModel::create(&db, EventType::ACFailure, date)
+        EventModel::create(&db, UPSEvent::ACFailure, date)
             .await
             .unwrap();
     }
