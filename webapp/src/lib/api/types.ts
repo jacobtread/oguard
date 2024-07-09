@@ -89,3 +89,68 @@ export interface EventHistory {
 	type: EventType;
 	created_at: string;
 }
+
+export enum ActionTypeKey {
+	Notification = 'Notification',
+	Popup = 'Popup',
+	Sleep = 'Sleep',
+	Shutdown = 'Shutdown',
+	USPShutdown = 'USPShutdown',
+	Executable = 'Executable',
+	HttpRequest = 'HttpRequest'
+}
+
+export type ActionType =
+	| { type: ActionTypeKey.Notification }
+	| { type: ActionTypeKey.Popup }
+	| { type: ActionTypeKey.Sleep }
+	| {
+			type: ActionTypeKey.Shutdown;
+			message: string | null;
+			timeout: number | null;
+			force_close_apps: boolean;
+	  }
+	| { type: ActionTypeKey.USPShutdown; delay_minutes: number }
+	| { type: ActionTypeKey.Executable; exe: string; args: string[]; timeout: number | null }
+	| {
+			type: ActionTypeKey.HttpRequest;
+			url: string;
+			method: string;
+			headers: Record<string, string>;
+			body: string | null;
+			timeout: number | null;
+	  };
+
+export type ActionDelay = {
+	duration: number | null;
+	below_capacity: number | null;
+};
+
+export type ActionRepeat = {
+	interval: number | null;
+	capacity_decrease: number | null;
+	limit: number | null;
+};
+
+export enum ActionRetryDelayKey {
+	Fixed = 'Fixed',
+	LinearBackoff = 'LinearBackoff',
+	ExponentialBackoff = 'ExponentialBackoff'
+}
+
+export type ActionRetryDelay =
+	| { type: ActionRetryDelayKey.Fixed; delay: number }
+	| { type: ActionRetryDelayKey.LinearBackoff; initial: number; increment: number }
+	| { type: ActionRetryDelayKey.ExponentialBackoff; initial: number; exponent: number };
+
+export type ActionRetry = {
+	delay: ActionRetryDelay;
+	max_attempts: number;
+};
+
+export type Action = {
+	ty: ActionType;
+	delay: ActionDelay;
+	repeat: ActionRepeat | null;
+	retry: ActionRetry | null;
+};
