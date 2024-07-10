@@ -43,4 +43,10 @@
 	background-color: palette.$gray-700;
 	color: white;
 	text-decoration: none;
+
+	&--secondary {
+		border: 0.125rem solid palette.$gray-300;
+		background-color: palette.$gray-200;
+		color: palette.$gray-900;
+	}
 }

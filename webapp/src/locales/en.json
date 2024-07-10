@@ -54,5 +54,42 @@
             "label": "UPS Battery Test Finished",
             "description": "UPS has finished testing the battery"
         }
+    },
+    "actions": {
+        "Notification": {
+            "label": "Notification",
+            "description": "Send a desktop notification"
+        },
+        "Popup": {
+            "label": "Popup",
+            "description": "Show a popup notification"
+        },
+        "Sleep": {
+            "label": "Sleep",
+            "description": "Put the device to sleep"
+        },
+        "Shutdown": {
+            "label": "Shutdown",
+            "description": "Shutdown the device"
+        },
+        "USPShutdown": {
+            "label": "Shutdown UPS",
+            "description": "Shutdown the UPS"
+        },
+        "Executable": {
+            "label": "Executable",
+            "description": "Run an executable"
+        },
+        "HttpRequest": {
+            "label": "HTTP request",
+            "description": "Send an HTTP request"
+        }
+    },
+    "action": {
+        "settings": "{setting} settings",
+        "add": "Add {action} action",
+        "delay": "Delay",
+        "repeat": "Repeat",
+        "retry": "Retry"
     }
 }

@@ -25,13 +25,13 @@
 		</div>
 		{#if $eventPipelinesQuery.isPending}
 			Loading...
-		{/if}
-		{#if $eventPipelinesQuery.error}
+		{:else if $eventPipelinesQuery.error}
 			An error has occurred:
 			{$eventPipelinesQuery.error.message}
-		{/if}
-		{#if $eventPipelinesQuery.isSuccess}
-			{#if $eventPipelinesQuery.data.length === 0}
+		{:else if $eventPipelinesQuery.isSuccess}
+			{#each $eventPipelinesQuery.data as row}
+				<PipelineItem item={row} />
+			{:else}
 				<div class="empty">
 					<p class="empty__text">
 						You don't have any event pipelines press
@@ -39,9 +39,6 @@
 						to create a new one
 					</p>
 				</div>
-			{/if}
-			{#each $eventPipelinesQuery.data as row}
-				<PipelineItem item={row} />
 			{/each}
 		{/if}
 		<div class="actions__footer"></div>

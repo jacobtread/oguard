@@ -110,6 +110,21 @@ export enum ActionTypeKey {
 	HttpRequest = 'HttpRequest'
 }
 
+export const ACTION_TYPE_KEYS: ActionTypeKey[] = [
+	ActionTypeKey.Notification,
+	ActionTypeKey.Popup,
+	ActionTypeKey.Sleep,
+	ActionTypeKey.Shutdown,
+	ActionTypeKey.USPShutdown,
+	ActionTypeKey.Executable,
+	ActionTypeKey.HttpRequest
+];
+
+export type ActionTypeConfig<K extends ActionTypeKey> = Omit<
+	Extract<ActionType, { type: K }>,
+	'type'
+>;
+
 export type ActionType =
 	| { type: ActionTypeKey.Notification }
 	| { type: ActionTypeKey.Popup }
