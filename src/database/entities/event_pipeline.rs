@@ -24,7 +24,6 @@ pub type EventPipelineEntity = Entity;
 pub struct Model {
     /// Unique ID for the event
     #[sea_orm(primary_key)]
-    #[serde(skip)]
     pub id: i64,
 
     /// User provided name for the pipeline
@@ -132,16 +131,27 @@ impl Model {
     pub async fn update(
         self,
         db: &DatabaseConnection,
-        name: String,
-        pipeline: ActionPipeline,
-        cancellable: bool,
-        enabled: bool,
+        name: Option<String>,
+        pipeline: Option<ActionPipeline>,
+        cancellable: Option<bool>,
+        enabled: Option<bool>,
     ) -> DbResult<Self> {
         let mut active_model = self.into_active_model();
-        active_model.name = Set(name);
-        active_model.pipeline = Set(pipeline);
-        active_model.cancellable = Set(cancellable);
-        active_model.enabled = Set(enabled);
+        if let Some(name) = name {
+            active_model.name = Set(name);
+        }
+
+        if let Some(pipeline) = pipeline {
+            active_model.pipeline = Set(pipeline);
+        }
+
+        if let Some(cancellable) = cancellable {
+            active_model.cancellable = Set(cancellable);
+        }
+
+        if let Some(enabled) = enabled {
+            active_model.enabled = Set(enabled);
+        }
         active_model.update(db).await
     }
 
@@ -168,10 +178,12 @@ impl Model {
             .column(Column::Id)
             .column(Column::Event)
             .column(Column::Cancellable)
+            .column(Column::Enabled)
             .filter(
                 Column::Event
                     .is_in(events)
-                    .and(Column::Cancellable.eq(true)),
+                    .and(Column::Cancellable.eq(true))
+                    .and(Column::Enabled.eq(true)),
             )
             .into_model::<CancellableEventPipeline>()
             .all(db)

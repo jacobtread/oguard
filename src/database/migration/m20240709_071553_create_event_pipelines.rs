@@ -20,7 +20,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(EventPipelines::Name).string().not_null())
                     .col(ColumnDef::new(EventPipelines::Event).integer().not_null())
-                    .col(ColumnDef::new(EventPipelines::Pipelines).json().not_null())
+                    .col(ColumnDef::new(EventPipelines::Pipeline).json().not_null())
                     .col(
                         ColumnDef::new(EventPipelines::Cancellable)
                             .boolean()
@@ -165,7 +165,7 @@ enum EventPipelines {
     Id,
     Name,
     Event,
-    Pipelines,
+    Pipeline,
     Cancellable,
     Enabled,
     CreatedAt,

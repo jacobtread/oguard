@@ -35,7 +35,6 @@ pub struct Model {
     Debug, EnumIter, DeriveActiveEnum, PartialEq, Eq, Clone, Copy, Serialize, Deserialize, Display,
 )]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
-#[serde(tag = "type")]
 pub enum UPSEvent {
     /// AC Power has been lost
     #[sea_orm(num_value = 0)]

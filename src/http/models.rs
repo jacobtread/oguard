@@ -13,13 +13,14 @@ pub struct RangeQuery {
 pub struct CreateEventPipeline {
     pub name: String,
     pub event: UPSEvent,
-    pub pipelines: Vec<ActionPipeline>,
+    pub pipeline: ActionPipeline,
     pub cancellable: bool,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateEventPipeline {
-    pub name: String,
-    pub pipelines: Vec<ActionPipeline>,
-    pub cancellable: bool,
+    pub name: Option<String>,
+    pub pipeline: Option<ActionPipeline>,
+    pub cancellable: Option<bool>,
+    pub enabled: Option<bool>,
 }
