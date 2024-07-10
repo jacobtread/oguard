@@ -1,3 +1,4 @@
+@use 'palette.scss' as palette;
 * {
 	font-family: 'Inter Variable', Arial, Helvetica, sans-serif;
 	margin: 0;
@@ -150,4 +151,15 @@
 	height: 3.5rem;
 	border-radius: 0.25rem;
 	text-align: center;
+}
+
+.button {
+	border: none;
+	padding: 0.5rem 0.75rem;
+	font-size: 0.9rem;
+	border-radius: 0.25rem;
+	cursor: pointer;
+	background-color: palette.$gray-700;
+	color: white;
+	text-decoration: none;
 }

@@ -37,6 +37,16 @@ export enum EventType {
 	BatteryTestEnd = 'BatteryTestEnd'
 }
 
+export const EVENT_TYPES = [
+	EventType.ACFailure,
+	EventType.ACRecovery,
+	EventType.UPSFault,
+	EventType.LowBatteryModeStart,
+	EventType.LowBatteryModeEnd,
+	EventType.BatteryTestStart,
+	EventType.BatteryTestEnd
+];
+
 export enum EventLevel {
 	Info = 0,
 	Success = 1,
@@ -56,16 +66,16 @@ export const EVENT_TYPE_DATA: Record<EventType, EventTypeData> = {
 		level: EventLevel.Success
 	},
 	[EventType.UPSFault]: {
-		level: EventLevel.Success
+		level: EventLevel.Severe
 	},
 	[EventType.LowBatteryModeStart]: {
-		level: EventLevel.Success
+		level: EventLevel.Severe
 	},
 	[EventType.LowBatteryModeEnd]: {
 		level: EventLevel.Success
 	},
 	[EventType.BatteryTestStart]: {
-		level: EventLevel.Success
+		level: EventLevel.Info
 	},
 	[EventType.BatteryTestEnd]: {
 		level: EventLevel.Success
@@ -153,4 +163,27 @@ export type Action = {
 	delay: ActionDelay;
 	repeat: ActionRepeat | null;
 	retry: ActionRetry | null;
+};
+
+export type ActionPipeline = {
+	actions: Action[];
+};
+
+export type EventPipeline = {
+	id: number;
+	name: string;
+	event: EventType;
+	pipeline: ActionPipeline;
+	cancellable: boolean;
+	enabled: boolean;
+	created_at: string;
+	modified_at: string;
+	last_executed_at: string | null;
+};
+
+export type CreateEventPipeline = {
+	name: string;
+	event: EventType;
+	pipeline: ActionPipeline;
+	cancellable: boolean;
 };

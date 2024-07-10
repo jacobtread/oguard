@@ -5,6 +5,7 @@
 	import HomeIcon from '~icons/solar/home-bold-duotone';
 	import HistoryIcon from '~icons/solar/sort-by-time-bold-duotone';
 	import ConfigureIcon from '~icons/solar/settings-bold-duotone';
+	import PipelineIcon from '~icons/solar/square-sort-horizontal-bold-duotone';
 	import { page } from '$app/stores';
 	import { _ } from 'svelte-i18n';
 </script>
@@ -15,13 +16,12 @@
 
 		<h1 class="title">OGuard</h1>
 	</div>
-</div>
-<div class="sub-header">
+
 	<nav class="nav">
 		<ul class="nav-list">
-			<li class="nav-list__item" class:nav-link--selected={$page.route.id == '/'}>
-				<a class="nav-link" href="{base}/">
-					<HomeIcon class="nav-lin__item" />
+			<li class="nav-list__item">
+				<a class="nav-link" href="{base}/" class:nav-link--selected={$page.route.id == '/'}>
+					<HomeIcon class="nav-link__item" />
 					{$_('pages.home')}
 				</a>
 			</li>
@@ -31,7 +31,7 @@
 					href="{base}/events"
 					class:nav-link--selected={$page.route.id == '/events'}
 				>
-					<EventsIcon class="nav-lin__item" />
+					<EventsIcon class="nav-link__item" />
 					{$_('pages.events')}
 				</a>
 			</li>
@@ -41,8 +41,18 @@
 					href="{base}/history"
 					class:nav-link--selected={$page.route.id == '/history'}
 				>
-					<HistoryIcon class="nav-lin__item" />
+					<HistoryIcon class="nav-link__item" />
 					{$_('pages.history')}
+				</a>
+			</li>
+			<li class="nav-list__item">
+				<a
+					class="nav-link"
+					href="{base}/pipelines"
+					class:nav-link--selected={$page.route.id?.startsWith('/pipelines')}
+				>
+					<PipelineIcon class="nav-link__item" />
+					{$_('pages.pipelines')}
 				</a>
 			</li>
 			<li class="nav-list__item">
@@ -51,7 +61,7 @@
 					href="{base}/configure"
 					class:nav-link--selected={$page.route.id == '/configure'}
 				>
-					<ConfigureIcon class="nav-lin__item" />
+					<ConfigureIcon class="nav-link__item" />
 					{$_('pages.configure')}
 				</a>
 			</li>
@@ -60,48 +70,40 @@
 </div>
 
 <style lang="scss">
+	@use '../styles/palette.scss' as palette;
+
 	.header {
+		background-color: #fff;
 		min-width: 15rem;
-		border: 1px solid #efefef;
-		box-shadow: 2px 10px 20px rgba(0, 0, 0, 0.1);
-		text-align: center;
-		padding: 1rem;
-		display: flex;
-		align-items: center;
-
-		flex-flow: row;
-		gap: 1rem;
-	}
-	.sub-header {
-		min-width: 15rem;
-		background-color: #34495e;
-		box-shadow: 2px 10px 20px rgba(0, 0, 0, 0.5);
 		text-align: center;
 		display: flex;
 		align-items: center;
+		border-bottom: 0.1rem solid #dfe3e8;
 
 		flex-flow: row;
 		gap: 1rem;
-		margin-bottom: 0.5rem;
+		padding-left: 1rem;
 	}
 
 	.nav-list {
 		display: flex;
 		flex-flow: row;
 		list-style: none;
-		gap: 1.5rem;
 		align-items: center;
 	}
 
 	.nav-link {
 		display: flex;
-		gap: 0.25rem;
+		align-items: center;
+		vertical-align: middle;
+		gap: 0.5rem;
 		text-decoration: none;
-		color: #fff;
+		color: palette.$gray-700;
 		padding: 1rem;
 
 		&--selected {
-			border-bottom: 0.2rem solid #ffffff;
+			background: palette.$gray-700;
+			color: #fff !important;
 		}
 	}
 

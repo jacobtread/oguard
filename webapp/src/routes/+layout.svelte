@@ -95,5 +95,7 @@
 		display: flex;
 		flex-flow: column;
 		width: 100%;
+		background-color: #f4f6f8;
+		height: 100vh;
 	}
 </style>

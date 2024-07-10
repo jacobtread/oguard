@@ -3,7 +3,8 @@
         "home": "Home",
         "events": "Events",
         "history": "History",
-        "configure": "Configure"
+        "configure": "Configure",
+        "pipelines": "Event Pipelines"
     },
     "refreshing": "Refreshing",
     "last-fetched": "Last fetched {at}",
