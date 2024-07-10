@@ -77,39 +77,45 @@
 						Choose an event this pipeline should run on
 					</Label.Root>
 					<Combobox.Root items={filteredValues} bind:inputValue bind:touchedInput>
-						<Combobox.Input placeholder="Select an event" />
+						<Combobox.Input placeholder="Select an event">Test</Combobox.Input>
 						<Combobox.Label id="eventType" />
 
-						<Combobox.Content>
+						<Combobox.Content sideOffset={8} sameWidth={false} class="flex flex-col gap-4">
 							{#each filteredValues as eventType}
 								{@const typeData = EVENT_TYPE_DATA[eventType.value]}
 								{#if typeData !== undefined}
 									<Combobox.Item value={eventType.value}>
 										<Combobox.ItemIndicator />
-										{#if typeData.level === EventLevel.Info}
-											<span class="level level--info">
-												<InfoIcon />
-											</span>
-										{:else if typeData.level === EventLevel.Success}
-											<span class="level level--success">
-												<SuccessIcon />
-											</span>
-										{:else if typeData.level === EventLevel.Warning}
-											<span class="level level--warning">
-												<WarningIcon />
-											</span>
-										{:else if typeData.level === EventLevel.Severe}
-											<span class="level level--severe">
-												<ErrorIcon />
-											</span>
-										{/if}
+										<div class="event-item">
+											<div class="event-item__icon">
+												{#if typeData.level === EventLevel.Info}
+													<span class="level level--info">
+														<InfoIcon />
+													</span>
+												{:else if typeData.level === EventLevel.Success}
+													<span class="level level--success">
+														<SuccessIcon />
+													</span>
+												{:else if typeData.level === EventLevel.Warning}
+													<span class="level level--warning">
+														<WarningIcon />
+													</span>
+												{:else if typeData.level === EventLevel.Severe}
+													<span class="level level--severe">
+														<ErrorIcon />
+													</span>
+												{/if}
+											</div>
 
-										<div>
-											<p>{eventType.label}</p>
-											<p>{eventType.description}</p>
+											<div class="event-item__text">
+												<p class="event-item__label">{eventType.label}</p>
+												<p class="event-item__description">{eventType.description}</p>
+											</div>
 										</div>
 									</Combobox.Item>
 								{/if}
+							{:else}
+								<span> No results found </span>
 							{/each}
 						</Combobox.Content>
 						<Combobox.Arrow />
@@ -128,7 +134,7 @@
 					>
 						Choose a name for this pipeline
 					</Label.Root>
-					<input id="name" type="text" bind:value={name} />
+					<input class="input" id="name" type="text" required maxlength="100" bind:value={name} />
 				</div>
 			</div>
 			<div class="field">
@@ -154,12 +160,6 @@
 			</div>
 		</div>
 
-		<div class="actions__header">
-			<h2 class="actions__header__title">Actions</h2>
-		</div>
-
-		<div class="actions__content"></div>
-
 		<div class="actions__footer">
 			<button type="submit" class="button" disabled={$createPipelineMutation.isPending}
 				>Create</button
@@ -180,6 +180,29 @@
 		}
 
 		&__content {
+		}
+	}
+
+	.event-item {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+		padding: 0.5rem 1rem;
+
+		&__icon {
+		}
+
+		&__text {
+			display: flex;
+			flex-flow: column;
+			gap: 0.25rem;
+		}
+
+		&__label {
+			font-weight: bold;
+		}
+		&__description {
+			font-size: 0.9rem;
 		}
 	}
 
@@ -244,5 +267,26 @@
 		background-color: palette.$gray-700;
 		color: white;
 		text-decoration: none;
+	}
+
+	.level {
+		font-size: 1.25rem;
+		line-height: 1;
+
+		&--info {
+			color: #34495e;
+		}
+
+		&--success {
+			color: #30b455;
+		}
+
+		&--warning {
+			color: #efaf13;
+		}
+
+		&--severe {
+			color: #aa1109;
+		}
 	}
 </style>
