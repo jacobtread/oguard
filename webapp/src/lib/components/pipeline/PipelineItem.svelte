@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { EventPipeline, UpdateEventPipeline } from '$lib/api/types';
+	import type { EventPipeline, ListEventPipeline, UpdateEventPipeline } from '$lib/api/types';
 	import BoxIcon from '~icons/solar/box-bold-duotone';
 	import { Label, Switch } from 'bits-ui';
 	import dayjs from 'dayjs';
@@ -7,7 +7,7 @@
 	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import { onDestroy } from 'svelte';
 
-	export let item: EventPipeline;
+	export let item: ListEventPipeline;
 
 	let canToggleEnabled: boolean = true;
 	let toggleEnabledTimeout: number | null = null;

@@ -169,6 +169,17 @@ export type ActionPipeline = {
 	actions: Action[];
 };
 
+export type ListEventPipeline = {
+	id: number;
+	name: string;
+	event: EventType;
+	cancellable: boolean;
+	enabled: boolean;
+	created_at: string;
+	modified_at: string;
+	last_executed_at: string | null;
+};
+
 export type EventPipeline = {
 	id: number;
 	name: string;

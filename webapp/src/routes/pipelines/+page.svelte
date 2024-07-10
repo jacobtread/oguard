@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { EventPipeline } from '$lib/api/types';
+	import type { ListEventPipeline } from '$lib/api/types';
 	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import { createQuery } from '@tanstack/svelte-query';
 	import PipelineItem from '$lib/components/pipeline/PipelineItem.svelte';
 
-	const eventPipelinesQuery = createQuery<EventPipeline[]>({
+	const eventPipelinesQuery = createQuery<ListEventPipeline[]>({
 		queryKey: ['event-pipelines'],
 		queryFn: async () =>
-			await requestJson<EventPipeline[]>({
+			await requestJson<ListEventPipeline[]>({
 				method: HttpMethod.GET,
 				route: '/api/event-pipelines'
 			})

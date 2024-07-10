@@ -79,6 +79,34 @@ pub struct CancellableEventPipeline {
     pub cancellable: bool,
 }
 
+/// Partial event pipeline for lists, does not include the pipeline JSON itself
+#[derive(DerivePartialModel, FromQueryResult, Serialize)]
+#[sea_orm(entity = "Entity")]
+pub struct ListEventPipeline {
+    /// Unique ID for the event
+    #[sea_orm(primary_key)]
+    pub id: i64,
+
+    /// User provided name for the pipeline
+    pub name: String,
+
+    /// The event this pipeline is for
+    pub event: UPSEvent,
+
+    /// Whether the events that cancel this should abort the run
+    pub cancellable: bool,
+
+    /// Whether the pipeline is enabled
+    pub enabled: bool,
+
+    /// Creation time for the event pipeline
+    pub created_at: DateTimeUtc,
+    /// When the pipeline was last updated
+    pub modified_at: DateTimeUtc,
+    /// When the pipeline was last executed
+    pub last_executed_at: Option<DateTimeUtc>,
+}
+
 impl Model {
     /// Creates a new player from the provided details
     pub fn create(
@@ -110,8 +138,13 @@ impl Model {
         Entity::find_by_id(id).one(db).await
     }
 
-    pub async fn all(db: &DatabaseConnection) -> DbResult<Vec<Self>> {
-        Entity::find().all(db).await
+    /// Gets a list of all the pipelines, does not include the pipeline action pipeline just
+    /// the details about the pipeline itself
+    pub async fn all(db: &DatabaseConnection) -> DbResult<Vec<ListEventPipeline>> {
+        Entity::find()
+            .into_partial_model::<ListEventPipeline>()
+            .all(db)
+            .await
     }
 
     pub async fn find_by_event(db: &DatabaseConnection, event: UPSEvent) -> DbResult<Vec<Self>> {

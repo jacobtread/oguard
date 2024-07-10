@@ -2,7 +2,9 @@ use std::convert::Infallible;
 use std::time::Duration;
 
 use crate::database::entities::battery_history::BatteryHistoryModel;
-use crate::database::entities::event_pipeline::{EventPipelineId, EventPipelineModel};
+use crate::database::entities::event_pipeline::{
+    EventPipelineId, EventPipelineModel, ListEventPipeline,
+};
 use crate::database::entities::events::EventModel;
 use crate::database::entities::state_history::StateHistoryModel;
 use crate::http::error::HttpResult;
@@ -91,7 +93,7 @@ pub async fn event_history(
 /// Requests all the event pipelines
 pub async fn get_event_pipelines(
     Extension(db): Extension<DatabaseConnection>,
-) -> HttpResult<Vec<EventPipelineModel>> {
+) -> HttpResult<Vec<ListEventPipeline>> {
     let event_pipelines = EventPipelineModel::all(&db)
         .await
         .context("failed to query event pipelines")?;
