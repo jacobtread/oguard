@@ -188,7 +188,9 @@ async fn run_pipeline(
     active_tasks: SharedActiveTasks,
     event: UPSEvent,
 ) {
-    debug!("starting {event} task pipeline");
+    let name = &pipeline.name;
+
+    debug!("starting \"{name}\" ({event}) task pipeline");
 
     // Spawn and run the action pipelines
     let mut pipeline_set: FuturesUnordered<_> = pipeline
@@ -200,7 +202,7 @@ async fn run_pipeline(
 
     while pipeline_set.next().await.is_some() {}
 
-    debug!("{event} pipeline complete");
+    debug!("\"{name}\" ({event})  pipeline complete");
 
     // Remove the completed task
     active_tasks
@@ -827,7 +829,15 @@ mod test {
         // Use in memory database for event pipelines
         let db = connect_database("sqlite::memory:").await;
 
-        EventPipelineModel::create(&db, event, pipeline, cancellable, Utc::now()).await?;
+        EventPipelineModel::create(
+            &db,
+            "Test action".to_string(),
+            event,
+            pipeline,
+            cancellable,
+            Utc::now(),
+        )
+        .await?;
         debug!("spawning runner");
 
         tokio::spawn(EventPipelineRunner::new(executor, db, watcher_handle).run());

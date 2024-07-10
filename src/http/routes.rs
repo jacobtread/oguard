@@ -128,7 +128,7 @@ pub async fn update_event_pipeline(
         .ok_or(anyhow!("unknown event pipeline"))?;
 
     let event_pipeline = event_pipeline
-        .update(&db, request.pipelines, request.cancellable)
+        .update(&db, request.name, request.pipelines, request.cancellable)
         .await
         .context("failed to update pipeline")?;
 
@@ -145,6 +145,7 @@ pub async fn create_event_pipeline(
     let current_time = Utc::now();
     let event_pipeline = EventPipelineModel::create(
         &db,
+        request.name,
         request.event,
         request.pipelines,
         request.cancellable,

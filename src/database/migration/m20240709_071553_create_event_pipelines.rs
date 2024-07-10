@@ -18,6 +18,7 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
+                    .col(ColumnDef::new(EventPipelines::Name).string().not_null())
                     .col(ColumnDef::new(EventPipelines::Event).integer().not_null())
                     .col(ColumnDef::new(EventPipelines::Pipelines).json().not_null())
                     .col(
@@ -39,6 +40,16 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
+        // Create a index over the name
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx-event-pl-name")
+                    .table(EventPipelines::Table)
+                    .col(EventPipelines::Name)
+                    .to_owned(),
+            )
+            .await?;
         // Create a index over the type
         manager
             .create_index(
@@ -94,6 +105,16 @@ impl MigrationTrait for Migration {
             .drop_index(
                 Index::drop()
                     .table(EventPipelines::Table)
+                    .name("idx-event-pl-name")
+                    .to_owned(),
+            )
+            .await?;
+
+        // Drop the index
+        manager
+            .drop_index(
+                Index::drop()
+                    .table(EventPipelines::Table)
                     .name("idx-event-pl-event")
                     .to_owned(),
             )
@@ -136,6 +157,7 @@ impl MigrationTrait for Migration {
 enum EventPipelines {
     Table,
     Id,
+    Name,
     Event,
     Pipelines,
     Cancellable,

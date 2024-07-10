@@ -27,6 +27,9 @@ pub struct Model {
     #[serde(skip)]
     pub id: i64,
 
+    /// User provided name for the pipeline
+    pub name: String,
+
     /// The event this pipeline is for
     pub event: UPSEvent,
 
@@ -86,6 +89,7 @@ impl Model {
     /// Creates a new player from the provided details
     pub fn create(
         db: &DatabaseConnection,
+        name: String,
         event: UPSEvent,
         pipelines: Vec<ActionPipeline>,
         cancellable: bool,
@@ -93,6 +97,7 @@ impl Model {
     ) -> BoxFuture<'_, DbResult<Self>> {
         ActiveModel {
             id: NotSet,
+            name: Set(name),
             event: Set(event),
             pipelines: Set(DbActionPipelines(pipelines)),
             cancellable: Set(cancellable),
@@ -120,10 +125,12 @@ impl Model {
     pub async fn update(
         self,
         db: &DatabaseConnection,
+        name: String,
         pipelines: Vec<ActionPipeline>,
         cancellable: bool,
     ) -> DbResult<Self> {
         let mut active_model = self.into_active_model();
+        active_model.name = Set(name);
         active_model.pipelines = Set(DbActionPipelines(pipelines));
         active_model.cancellable = Set(cancellable);
         active_model.update(db).await

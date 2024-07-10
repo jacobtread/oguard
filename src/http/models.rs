@@ -11,6 +11,7 @@ pub struct RangeQuery {
 
 #[derive(Debug, Deserialize)]
 pub struct CreateEventPipeline {
+    pub name: String,
     pub event: UPSEvent,
     pub pipelines: Vec<ActionPipeline>,
     pub cancellable: bool,
@@ -18,6 +19,7 @@ pub struct CreateEventPipeline {
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateEventPipeline {
+    pub name: String,
     pub pipelines: Vec<ActionPipeline>,
     pub cancellable: bool,
 }
