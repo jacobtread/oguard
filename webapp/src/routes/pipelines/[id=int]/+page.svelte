@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import type { EventPipeline } from '$lib/api/types';
+	import type { EventPipeline, Action } from '$lib/api/types';
 	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { base } from '$app/paths';
@@ -19,6 +19,14 @@
 			}),
 		retry: false
 	});
+
+	let actions: Action[] = [];
+
+	$: {
+		if ($pipelineQuery.data !== undefined) {
+			actions = $pipelineQuery.data.pipeline.actions;
+		}
+	}
 </script>
 
 <div class="wrapper">
@@ -35,8 +43,8 @@
 				<h2 class="title">Editing Pipeline <span class="pipeline-name">{pipeline.name}</span></h2>
 			</div>
 			<div class="container__content">
-				{#each pipeline.pipeline.actions as action}
-					<p>{action.ty}</p>
+				{#each actions as action}
+					<p>{JSON.stringify(action)}</p>
 				{:else}
 					<p class="empty">
 						You don't have any actions in this pipeline, press <b>Add Action</b> to add an action
@@ -56,7 +64,14 @@
 </div>
 
 {#if addAction}
-	<AddActionForm onSubmit={console.log} onCancel={() => (addAction = false)} />
+	<AddActionForm
+		onSubmit={(action) => {
+			addAction = false;
+			actions.push(action);
+			actions = actions;
+		}}
+		onCancel={() => (addAction = false)}
+	/>
 {/if}
 
 <style lang="scss">
