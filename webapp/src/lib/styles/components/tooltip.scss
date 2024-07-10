@@ -1,0 +1,13 @@
+@use '../palette.scss' as palette;
+
+[data-tooltip-content] {
+	background-color: #fff;
+	border: 1px solid #eee;
+	border-radius: 0.25rem;
+	padding: 0.5rem;
+}
+
+[data-tooltip-trigger] {
+	border: none;
+	background-color: transparent;
+}

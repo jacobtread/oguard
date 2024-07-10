@@ -1,0 +1,33 @@
+@use '../palette.scss' as palette;
+
+[data-select-content] {
+	background-color: #222;
+	border: 1px solid #444;
+	border-radius: 0.25rem;
+	// padding: 0.5rem;
+	max-height: 25rem;
+	overflow-y: auto;
+	// width: 15rem !important;
+}
+
+[data-select-item] {
+	cursor: pointer;
+
+	&[data-disabled] {
+		cursor: not-allowed;
+	}
+
+	&[data-highlighted] {
+		outline: 1px solid white;
+	}
+
+	&[data-selected] {
+		background-color: #333;
+	}
+}
+
+[data-select-label] {
+	padding: 1rem;
+	border-top: 1px solid #444;
+	border-bottom: 1px solid #444;
+}

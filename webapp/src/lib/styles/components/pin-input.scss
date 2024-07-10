@@ -1,0 +1,22 @@
+@use '../palette.scss' as palette;
+
+[data-pin-input-root] {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+}
+
+[data-pin-input-input] {
+	border: 1px solid #444;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #222;
+	color: #ffffff;
+	padding: 0.75rem;
+	cursor: pointer;
+	width: 3.5rem;
+	height: 3.5rem;
+	border-radius: 0.25rem;
+	text-align: center;
+}

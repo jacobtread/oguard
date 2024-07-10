@@ -1,0 +1,73 @@
+@use '../palette.scss' as palette;
+
+[data-pagination-root] {
+	display: inline-flex;
+	align-items: stretch;
+	border: 0px solid #444;
+	position: relative;
+}
+
+[data-pagination-per-page-button] {
+	border: none;
+	background-color: #222;
+	color: #ffffff;
+	border: 1px solid #444;
+	padding: 0.5rem;
+	height: 2rem;
+
+	border-top-left-radius: 0.25rem;
+	border-bottom-left-radius: 0.25rem;
+}
+
+[data-pagination-prev-button],
+[data-pagination-next-button],
+[data-pagination-page] {
+	border: none;
+	border: 1px solid #444;
+	border-left: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #222;
+	color: #ffffff;
+	padding: 0.75rem;
+	height: 2rem;
+	cursor: pointer;
+
+	&[data-selected] {
+		background-color: #444;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+	}
+}
+
+[data-pagination-next-button] {
+	border-top-right-radius: 0.25rem;
+	border-bottom-right-radius: 0.25rem;
+}
+
+[data-pagination-prev-button],
+[data-pagination-next-button],
+[data-pagination-page] {
+	border: none;
+	border: 1px solid #444;
+	border-left: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #222;
+	color: #ffffff;
+	padding: 0.75rem;
+	height: 2rem;
+	cursor: pointer;
+
+	&[data-selected] {
+		background-color: #444;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+	}
+}

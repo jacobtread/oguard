@@ -1,0 +1,41 @@
+@use '../palette.scss' as palette;
+
+[data-combobox-hidden-input] {
+}
+[data-combobox-arrow] {
+}
+[data-combobox-label] {
+}
+[data-combobox-input] {
+	display: inline-block;
+
+	padding: 0.5rem 0.75rem;
+	font-size: 0.9rem;
+	border-radius: 0.25rem;
+	cursor: pointer;
+	background-color: palette.$gray-100;
+	border: 0.1rem solid palette.$gray-300;
+	text-decoration: none;
+}
+
+[data-combobox-root] {
+}
+
+[data-combobox-content] {
+	border-radius: 0.5rem;
+	border: 0.1rem solid #dfe3e8;
+	background-color: #fff;
+	padding: 0.5rem;
+	max-height: 30rem;
+	overflow: auto;
+	box-shadow: 2px 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+[data-combobox-item] {
+	display: flex;
+	border-radius: 0.25rem;
+
+	&:hover {
+		background-color: palette.$gray-300;
+	}
+}
