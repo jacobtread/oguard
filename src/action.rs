@@ -8,6 +8,7 @@ use crate::{
 };
 use anyhow::{anyhow, Context};
 use axum::http::{HeaderMap, HeaderName, HeaderValue};
+use chrono::Utc;
 use futures::{stream::FuturesUnordered, StreamExt};
 use log::{debug, error, warn};
 use native_dialog::{MessageDialog, MessageType};
@@ -80,7 +81,7 @@ impl EventPipelineRunner {
             self.cancel_pipelines(&event).await;
 
             // Find pipelines to run
-            let pipelines = match EventPipelineModel::find_by_event(&self.db, event).await {
+            let pipelines = match EventPipelineModel::find_by_event_enabled(&self.db, event).await {
                 Ok(value) => value,
                 Err(err) => {
                     error!("failed to query event pipelines for event {event}: {err}");
@@ -167,6 +168,7 @@ impl EventPipelineRunner {
 
         // Spawn the task runner
         let abort_handle = self.join_set.spawn(run_pipeline(
+            self.db.clone(),
             pipeline,
             self.executor.clone(),
             self.active_tasks.clone(),
@@ -183,6 +185,7 @@ impl EventPipelineRunner {
 
 /// Runs an event pipeline (Parallel)
 async fn run_pipeline(
+    db: DatabaseConnection,
     pipeline: EventPipelineModel,
     executor: UPSExecutorHandle,
     active_tasks: SharedActiveTasks,
@@ -204,6 +207,14 @@ async fn run_pipeline(
         if action.repeat.is_some() {
             repeated.push(action)
         }
+    }
+
+    // Update time of last execution
+    if let Err(err) = EventPipelineModel::set_last_executed(&db, pipeline.id, Utc::now()).await {
+        error!(
+            "failed to update last executed timestamp for {} ({}): {}",
+            pipeline.name, pipeline.id, err
+        );
     }
 
     // Futures that can be repeated are handled out of orde

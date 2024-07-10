@@ -26,6 +26,7 @@ impl MigrationTrait for Migration {
                             .boolean()
                             .not_null(),
                     )
+                    .col(ColumnDef::new(EventPipelines::Enabled).boolean().not_null())
                     .col(
                         ColumnDef::new(EventPipelines::CreatedAt)
                             .date_time()
@@ -35,6 +36,11 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(EventPipelines::ModifiedAt)
                             .date_time()
                             .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(EventPipelines::LastExecutedAt)
+                            .date_time()
+                            .null(),
                     )
                     .to_owned(),
             )
@@ -161,6 +167,8 @@ enum EventPipelines {
     Event,
     Pipelines,
     Cancellable,
+    Enabled,
     CreatedAt,
     ModifiedAt,
+    LastExecutedAt,
 }

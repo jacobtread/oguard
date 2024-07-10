@@ -39,10 +39,15 @@ pub struct Model {
     /// Whether the events that cancel this should abort the run
     pub cancellable: bool,
 
+    /// Whether the pipeline is enabled
+    pub enabled: bool,
+
     /// Creation time for the event pipeline
     pub created_at: DateTimeUtc,
     /// When the pipeline was last updated
     pub modified_at: DateTimeUtc,
+    /// When the pipeline was last executed
+    pub last_executed_at: Option<DateTimeUtc>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -91,8 +96,10 @@ impl Model {
             event: Set(event),
             pipeline: Set(pipeline),
             cancellable: Set(cancellable),
+            enabled: Set(true),
             created_at: Set(created_at),
             modified_at: Set(created_at),
+            last_executed_at: Set(None),
         }
         .insert(db)
     }
@@ -112,18 +119,43 @@ impl Model {
         Entity::find().filter(Column::Event.eq(event)).all(db).await
     }
 
+    pub async fn find_by_event_enabled(
+        db: &DatabaseConnection,
+        event: UPSEvent,
+    ) -> DbResult<Vec<Self>> {
+        Entity::find()
+            .filter(Column::Event.eq(event).and(Column::Enabled.eq(true)))
+            .all(db)
+            .await
+    }
+
     pub async fn update(
         self,
         db: &DatabaseConnection,
         name: String,
         pipeline: ActionPipeline,
         cancellable: bool,
+        enabled: bool,
     ) -> DbResult<Self> {
         let mut active_model = self.into_active_model();
         active_model.name = Set(name);
         active_model.pipeline = Set(pipeline);
         active_model.cancellable = Set(cancellable);
+        active_model.enabled = Set(enabled);
         active_model.update(db).await
+    }
+
+    pub async fn set_last_executed(
+        db: &DatabaseConnection,
+        id: EventPipelineId,
+        last_executed_at: DateTimeUtc,
+    ) -> DbResult<()> {
+        Entity::update_many()
+            .col_expr(Column::LastExecutedAt, Expr::value(Some(last_executed_at)))
+            .filter(Column::Id.eq(id))
+            .exec(db)
+            .await?;
+        Ok(())
     }
 
     /// Finds cancellable pipelines for the provided events
