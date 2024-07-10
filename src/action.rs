@@ -15,7 +15,7 @@ use notify_rust::Notification;
 use ordered_float::OrderedFloat;
 use reqwest::Method;
 use rust_i18n::t;
-use sea_orm::DatabaseConnection;
+use sea_orm::{DatabaseConnection, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -192,34 +192,9 @@ async fn run_pipeline(
 
     debug!("starting \"{name}\" ({event}) task pipeline");
 
-    // Spawn and run the action pipelines
-    let mut pipeline_set: FuturesUnordered<_> = pipeline
-        .pipelines
-        .into_inner()
-        .into_iter()
-        .map(|pipeline| run_action_pipeline(pipeline, event, executor.clone()))
-        .collect();
-
-    while pipeline_set.next().await.is_some() {}
-
-    debug!("\"{name}\" ({event})  pipeline complete");
-
-    // Remove the completed task
-    active_tasks
-        .write()
-        .await
-        .retain(|task| pipeline.id != task.id);
-}
-
-/// Executes an action pipeline (Serial)
-async fn run_action_pipeline(
-    pipeline: ActionPipeline,
-    event: UPSEvent,
-    executor: UPSExecutorHandle,
-) {
     let mut repeated = Vec::new();
 
-    for action in pipeline.actions {
+    for action in pipeline.pipeline.actions {
         // Attempt to run the action
         if !action.schedule_action(event, &executor).await {
             return;
@@ -238,6 +213,14 @@ async fn run_action_pipeline(
         .collect();
 
     while repeated_futures.next().await.is_some() {}
+
+    debug!("\"{name}\" ({event})  pipeline complete");
+
+    // Remove the completed task
+    active_tasks
+        .write()
+        .await
+        .retain(|task| pipeline.id != task.id);
 }
 
 /// Executes the repeated portion of an action
@@ -272,7 +255,7 @@ async fn run_repeated_action(action: Action, event: UPSEvent, executor: UPSExecu
 }
 
 /// Pipeline of actions to execute
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct ActionPipeline {
     /// Actions this pipeline will execute
     actions: Vec<Action>,
@@ -819,7 +802,7 @@ mod test {
 
     async fn test_pipeline(
         event: UPSEvent,
-        pipeline: Vec<ActionPipeline>,
+        pipeline: ActionPipeline,
         cancellable: bool,
     ) -> anyhow::Result<()> {
         let (tx, rx) = broadcast::channel(8);
@@ -859,7 +842,7 @@ mod test {
 
         test_pipeline(
             UPSEvent::ACFailure,
-            vec![ActionPipeline {
+            ActionPipeline {
                 actions: vec![
                     Action {
                         ty: ActionType::Notification,
@@ -893,7 +876,7 @@ mod test {
                     //     retry: None,
                     // },
                 ],
-            }],
+            },
             false,
         )
         .await
@@ -907,7 +890,7 @@ mod test {
 
         test_pipeline(
             UPSEvent::ACFailure,
-            vec![ActionPipeline {
+            ActionPipeline {
                 actions: vec![Action {
                     ty: ActionType::Notification,
                     delay: ActionDelay {
@@ -917,7 +900,7 @@ mod test {
                     repeat: None,
                     retry: None,
                 }],
-            }],
+            },
             false,
         )
         .await
@@ -931,7 +914,7 @@ mod test {
 
         test_pipeline(
             UPSEvent::ACFailure,
-            vec![ActionPipeline {
+            ActionPipeline {
                 actions: vec![Action {
                     ty: ActionType::Popup,
                     delay: ActionDelay {
@@ -941,7 +924,7 @@ mod test {
                     repeat: None,
                     retry: None,
                 }],
-            }],
+            },
             false,
         )
         .await
@@ -955,7 +938,7 @@ mod test {
 
         test_pipeline(
             UPSEvent::ACFailure,
-            vec![ActionPipeline {
+            ActionPipeline {
                 actions: vec![Action {
                     ty: ActionType::Sleep,
                     delay: ActionDelay {
@@ -965,7 +948,7 @@ mod test {
                     repeat: None,
                     retry: None,
                 }],
-            }],
+            },
             false,
         )
         .await
@@ -979,7 +962,7 @@ mod test {
 
         test_pipeline(
             UPSEvent::ACFailure,
-            vec![ActionPipeline {
+            ActionPipeline {
                 actions: vec![Action {
                     ty: ActionType::Executable(ExecutableAction {
                         exe: "notepad.exe".to_string(),
@@ -993,7 +976,7 @@ mod test {
                     repeat: None,
                     retry: None,
                 }],
-            }],
+            },
             false,
         )
         .await

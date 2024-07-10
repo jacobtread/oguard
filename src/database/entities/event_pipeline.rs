@@ -9,8 +9,8 @@ use sea_orm::{
     ActiveValue::{NotSet, Set},
     DatabaseConnection,
 };
-use sea_orm::{FromJsonQueryResult, FromQueryResult, IntoActiveModel, QuerySelect};
-use serde::{Deserialize, Serialize};
+use sea_orm::{FromQueryResult, IntoActiveModel, QuerySelect};
+use serde::Serialize;
 
 use super::events::UPSEvent;
 
@@ -33,8 +33,8 @@ pub struct Model {
     /// The event this pipeline is for
     pub event: UPSEvent,
 
-    /// Action pipelines for this event pipeline
-    pub pipelines: DbActionPipelines,
+    /// Pipeline of actions to run
+    pub pipeline: ActionPipeline,
 
     /// Whether the events that cancel this should abort the run
     pub cancellable: bool,
@@ -43,16 +43,6 @@ pub struct Model {
     pub created_at: DateTimeUtc,
     /// When the pipeline was last updated
     pub modified_at: DateTimeUtc,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
-pub struct DbActionPipelines(pub Vec<ActionPipeline>);
-
-impl DbActionPipelines {
-    #[inline]
-    pub fn into_inner(self) -> Vec<ActionPipeline> {
-        self.0
-    }
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -91,7 +81,7 @@ impl Model {
         db: &DatabaseConnection,
         name: String,
         event: UPSEvent,
-        pipelines: Vec<ActionPipeline>,
+        pipeline: ActionPipeline,
         cancellable: bool,
         created_at: DateTimeUtc,
     ) -> BoxFuture<'_, DbResult<Self>> {
@@ -99,7 +89,7 @@ impl Model {
             id: NotSet,
             name: Set(name),
             event: Set(event),
-            pipelines: Set(DbActionPipelines(pipelines)),
+            pipeline: Set(pipeline),
             cancellable: Set(cancellable),
             created_at: Set(created_at),
             modified_at: Set(created_at),
@@ -126,12 +116,12 @@ impl Model {
         self,
         db: &DatabaseConnection,
         name: String,
-        pipelines: Vec<ActionPipeline>,
+        pipeline: ActionPipeline,
         cancellable: bool,
     ) -> DbResult<Self> {
         let mut active_model = self.into_active_model();
         active_model.name = Set(name);
-        active_model.pipelines = Set(DbActionPipelines(pipelines));
+        active_model.pipeline = Set(pipeline);
         active_model.cancellable = Set(cancellable);
         active_model.update(db).await
     }
