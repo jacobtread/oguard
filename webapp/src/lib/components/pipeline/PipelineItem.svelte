@@ -1,10 +1,56 @@
 <script lang="ts">
-	import type { EventPipeline } from '$lib/api/types';
+	import type { EventPipeline, UpdateEventPipeline } from '$lib/api/types';
 	import BoxIcon from '~icons/solar/box-bold-duotone';
 	import { Label, Switch } from 'bits-ui';
 	import dayjs from 'dayjs';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { HttpMethod, requestJson } from '$lib/api/utils';
+	import { onDestroy } from 'svelte';
 
 	export let item: EventPipeline;
+
+	let canToggleEnabled: boolean = true;
+	let toggleEnabledTimeout: number | null = null;
+
+	const client = useQueryClient();
+
+	// Mutation to update the player details
+	const changeEnabledMutation = createMutation({
+		mutationFn: async (enabled: boolean) =>
+			await requestJson<EventPipeline, UpdateEventPipeline>({
+				method: HttpMethod.PUT,
+				route: `/api/event-pipelines/${item.id}`,
+				body: { enabled }
+			}),
+
+		// Invalidate the current player details
+		onSuccess: () => {
+			client.invalidateQueries({ queryKey: ['event-pipelines'] });
+		}
+	});
+
+	async function onChangeEnabled(enabled: boolean) {
+		if (!canToggleEnabled) return;
+
+		canToggleEnabled = false;
+
+		try {
+			await $changeEnabledMutation.mutate(!enabled);
+		} catch (error) {
+			console.error('Failed to update enabled', error);
+		} finally {
+			// Delay enabling the switch for 2 seconds
+			toggleEnabledTimeout = setTimeout(() => {
+				canToggleEnabled = true;
+			}, 1000);
+		}
+	}
+
+	onDestroy(() => {
+		if (toggleEnabledTimeout !== null) {
+			clearTimeout(toggleEnabledTimeout);
+		}
+	});
 </script>
 
 <div class="item">
@@ -30,9 +76,10 @@
 	<div class="item__actions">
 		<Label.Root>Enabled</Label.Root>
 		<Switch.Root
+			disabled={!canToggleEnabled}
 			checked={item.enabled}
 			onCheckedChange={() => {
-				// TODO: API CALL TO UPDATE ENABLED STATE
+				onChangeEnabled(item.enabled);
 			}}
 		>
 			<Switch.Thumb />

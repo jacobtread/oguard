@@ -187,3 +187,11 @@ export type CreateEventPipeline = {
 	pipeline: ActionPipeline;
 	cancellable: boolean;
 };
+
+export type UpdateEventPipeline = Partial<{
+	name: string;
+	event: EventType;
+	pipeline: ActionPipeline;
+	cancellable: boolean;
+	enabled: boolean;
+}>;

@@ -10,10 +10,7 @@
 			await requestJson<EventPipeline[]>({
 				method: HttpMethod.GET,
 				route: '/api/event-pipelines'
-			}),
-
-		// Refetch the data every second
-		refetchInterval: 3000
+			})
 	});
 </script>
 
