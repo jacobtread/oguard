@@ -18,6 +18,7 @@
 	import { _ } from 'svelte-i18n';
 	import ExpandIcon from '~icons/solar/double-alt-arrow-down-bold-duotone';
 	import { fly } from 'svelte/transition';
+	import ActionDelayConfig from './ActionDelayConfig.svelte';
 
 	export let onSubmit: (action: Action) => void;
 	export let onCancel: () => void;
@@ -51,14 +52,6 @@
 		}
 	};
 
-	let delay: ActionDelay = {
-		duration: null,
-		below_capacity: null
-	};
-
-	let repeat: ActionRepeat | null = null;
-	let retry: ActionRetry | null = null;
-
 	let configScreen: Partial<Record<ActionTypeKey, unknown>> = {
 		[ActionTypeKey.Shutdown]: ShutdownConfig,
 		[ActionTypeKey.USPShutdown]: UpsShutdownConfig,
@@ -67,6 +60,14 @@
 	};
 
 	$: CurrentConfigScreen = configScreen[selectedActionType];
+
+	let delay: ActionDelay = {
+		duration: null,
+		below_capacity: null
+	};
+
+	let repeat: ActionRepeat | null = null;
+	let retry: ActionRetry | null = null;
 
 	function handleSubmit() {
 		const config: ActionType = {
@@ -109,7 +110,7 @@
 				const cfg = config as ActionTypeConfig<ActionTypeKey.Executable>;
 
 				// Clear invalid timeouts
-				if (cfg.timeout !== null && cfg.timeout <= 0) {
+				if (cfg.timeout !== null && cfg.timeout.secs <= 0) {
 					cfg.timeout = null;
 				}
 
@@ -125,7 +126,7 @@
 				}
 
 				// Clear invalid timeouts
-				if (cfg.timeout !== null && cfg.timeout <= 0) {
+				if (cfg.timeout !== null && cfg.timeout.secs <= 0) {
 					cfg.timeout = null;
 				}
 
@@ -196,7 +197,9 @@
 							{$_('action.delay')}
 							<span data-collapsible-icon> <ExpandIcon /> </span>
 						</Collapsible.Trigger>
-						<Collapsible.Content>Delay</Collapsible.Content>
+						<Collapsible.Content>
+							<ActionDelayConfig bind:delay />
+						</Collapsible.Content>
 					</Collapsible.Root>
 				</div>
 				<div class="dialog__section">

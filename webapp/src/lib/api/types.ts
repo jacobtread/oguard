@@ -136,23 +136,28 @@ export type ActionType =
 			force_close_apps: boolean;
 	  }
 	| { type: ActionTypeKey.USPShutdown; delay_minutes: number }
-	| { type: ActionTypeKey.Executable; exe: string; args: string[]; timeout: number | null }
+	| { type: ActionTypeKey.Executable; exe: string; args: string[]; timeout: Duration | null }
 	| {
 			type: ActionTypeKey.HttpRequest;
 			url: string;
 			method: string;
 			headers: Record<string, string>;
 			body: string | null;
-			timeout: number | null;
+			timeout: Duration | null;
 	  };
 
+export type Duration = {
+	secs: number;
+	nanos: number;
+};
+
 export type ActionDelay = {
-	duration: number | null;
+	duration: Duration | null;
 	below_capacity: number | null;
 };
 
 export type ActionRepeat = {
-	interval: number | null;
+	interval: Duration | null;
 	capacity_decrease: number | null;
 	limit: number | null;
 };
@@ -164,9 +169,9 @@ export enum ActionRetryDelayKey {
 }
 
 export type ActionRetryDelay =
-	| { type: ActionRetryDelayKey.Fixed; delay: number }
-	| { type: ActionRetryDelayKey.LinearBackoff; initial: number; increment: number }
-	| { type: ActionRetryDelayKey.ExponentialBackoff; initial: number; exponent: number };
+	| { type: ActionRetryDelayKey.Fixed; delay: Duration }
+	| { type: ActionRetryDelayKey.LinearBackoff; initial: Duration; increment: Duration }
+	| { type: ActionRetryDelayKey.ExponentialBackoff; initial: Duration; exponent: number };
 
 export type ActionRetry = {
 	delay: ActionRetryDelay;
