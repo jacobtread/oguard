@@ -168,6 +168,33 @@ export enum ActionRetryDelayKey {
 	ExponentialBackoff = 'ExponentialBackoff'
 }
 
+export function getDefaultActionRetryDelay(key: ActionRetryDelayKey): ActionRetryDelay {
+	switch (key) {
+		case ActionRetryDelayKey.Fixed:
+			return { type: ActionRetryDelayKey.Fixed, delay: { secs: 10, nanos: 0 } };
+		case ActionRetryDelayKey.LinearBackoff:
+			return {
+				type: ActionRetryDelayKey.LinearBackoff,
+				initial: { secs: 5, nanos: 0 },
+				increment: { secs: 10, nanos: 0 }
+			};
+		case ActionRetryDelayKey.ExponentialBackoff:
+			return {
+				type: ActionRetryDelayKey.ExponentialBackoff,
+				initial: { secs: 5, nanos: 0 },
+				exponent: 2
+			};
+		default:
+			throw new Error('Unhandled action retry delay type');
+	}
+}
+
+export const ACTION_RETRY_DELAY_KEYS: ActionRetryDelayKey[] = [
+	ActionRetryDelayKey.Fixed,
+	ActionRetryDelayKey.LinearBackoff,
+	ActionRetryDelayKey.ExponentialBackoff
+];
+
 export type ActionRetryDelay =
 	| { type: ActionRetryDelayKey.Fixed; delay: Duration }
 	| { type: ActionRetryDelayKey.LinearBackoff; initial: Duration; increment: Duration }

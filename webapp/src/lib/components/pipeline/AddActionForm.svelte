@@ -1,7 +1,9 @@
 <script lang="ts">
 	import {
 		ACTION_TYPE_KEYS,
+		ActionRetryDelayKey,
 		ActionTypeKey,
+		getDefaultActionRetryDelay,
 		type Action,
 		type ActionDelay,
 		type ActionRepeat,
@@ -19,6 +21,8 @@
 	import ExpandIcon from '~icons/solar/double-alt-arrow-down-bold-duotone';
 	import { fly } from 'svelte/transition';
 	import ActionDelayConfig from './ActionDelayConfig.svelte';
+	import ActionRepeatConfig from './ActionRepeatConfig.svelte';
+	import ActionRetryConfig from './ActionRetryConfig.svelte';
 
 	export let onSubmit: (action: Action) => void;
 	export let onCancel: () => void;
@@ -68,6 +72,16 @@
 
 	let repeat: ActionRepeat | null = null;
 	let retry: ActionRetry | null = null;
+
+	const addRepeat = () => (repeat = { interval: null, capacity_decrease: null, limit: 1 });
+	const removeRepeat = () => (repeat = null);
+
+	const addRetry = () =>
+		(retry = {
+			delay: getDefaultActionRetryDelay(ActionRetryDelayKey.Fixed),
+			max_attempts: 1
+		});
+	const removeRetry = () => (retry = null);
 
 	function handleSubmit() {
 		const config: ActionType = {
@@ -135,6 +149,28 @@
 
 			default:
 				break;
+		}
+
+		if (delay.duration !== null && delay.duration.secs <= 0) {
+			delay.duration = null;
+		}
+
+		if (delay.below_capacity !== null && delay.below_capacity < 0) {
+			delay.below_capacity = 0;
+		}
+
+		if (repeat !== null) {
+			if (repeat.interval !== null && repeat.interval.secs <= 0) {
+				repeat.interval = null;
+			}
+
+			if (repeat.capacity_decrease !== null && repeat.capacity_decrease <= 0) {
+				repeat.capacity_decrease = null;
+			}
+
+			if (repeat.limit !== null && repeat.limit < 1) {
+				repeat.limit = null;
+			}
 		}
 
 		onSubmit({ ty: config, delay, repeat, retry });
@@ -208,7 +244,15 @@
 							{$_('action.repeat')}
 							<span data-collapsible-icon> <ExpandIcon /> </span>
 						</Collapsible.Trigger>
-						<Collapsible.Content>Repeat</Collapsible.Content>
+						<Collapsible.Content>
+							{#if repeat === null}
+								<p>This action will not automatically repeat</p>
+								<button on:click={addRepeat}>Add Repeat</button>
+							{:else}
+								<ActionRepeatConfig bind:repeat />
+								<button on:click={removeRepeat}>Remove Repeating</button>
+							{/if}
+						</Collapsible.Content>
 					</Collapsible.Root>
 				</div>
 				<div class="dialog__section">
@@ -217,7 +261,15 @@
 							{$_('action.retry')}
 							<span data-collapsible-icon> <ExpandIcon /> </span>
 						</Collapsible.Trigger>
-						<Collapsible.Content>Retry</Collapsible.Content>
+						<Collapsible.Content>
+							{#if retry === null}
+								<p>This action will not retry on failure</p>
+								<button on:click={addRetry}>Add Retry</button>
+							{:else}
+								<ActionRetryConfig bind:retry />
+								<button on:click={removeRetry}>Remove Retry</button>
+							{/if}</Collapsible.Content
+						>
 					</Collapsible.Root>
 				</div>
 			</div>

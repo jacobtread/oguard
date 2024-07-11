@@ -7,12 +7,12 @@
         "pipelines": "Event Pipelines"
     },
     "refreshing": "Refreshing",
-    "last-fetched": "Last fetched {at}",
+    "last_fetched": "Last fetched {at}",
     "remaining": "Remaining: {duration}",
     "capacity": "Capacity",
     "load": "Load",
-    "input-voltage": "Input: {voltage}",
-    "output-voltage": "Output: {voltage}",
+    "input_voltage": "Input: {voltage}",
+    "output_voltage": "Output: {voltage}",
     "event": {
         "columns": {
             "level": "Level",
@@ -90,6 +90,20 @@
         "add": "Add {action} action",
         "delay": "Delay",
         "repeat": "Repeat",
-        "retry": "Retry"
+        "retry": "Retry",
+        "retry_keys": {
+            "Fixed": {
+                "label": "Fixed Delay",
+                "description": "Delay each retry by a fixed duration of time"
+            },
+            "LinearBackoff": {
+                "label": "Linear Backoff Delay",
+                "description": "Delay each retry by a duration increasing by the provided increment"
+            },
+            "ExponentialBackoff": {
+                "label": "Exponential Backoff Delay",
+                "description": "Delay each retry by an initial duration multiplying the delay by an exponent for each retry"
+            }
+        }
     }
 }
