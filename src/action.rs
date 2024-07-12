@@ -524,7 +524,7 @@ pub struct ShutdownAction {
     message: Option<String>,
 
     /// Timeout before shutdown
-    timeout: Option<u32>,
+    timeout: Option<Duration>,
 
     /// Whether to force close apps
     force_close_apps: bool,
@@ -731,7 +731,10 @@ pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyho
         .as_ref()
         .map(|value| replace_event_placeholders(event, value))
         .unwrap_or_else(|| format!("Shutdown triggered by {event} pipeline"));
-    let timeout = config.timeout.unwrap_or(0);
+    let timeout = config
+        .timeout
+        .map(|value| value.as_secs() as u32)
+        .unwrap_or(0);
     let force_close_apps = config.force_close_apps;
 
     spawn_blocking(move || {

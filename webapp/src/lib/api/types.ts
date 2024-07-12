@@ -132,7 +132,7 @@ export type ActionType =
 	| {
 			type: ActionTypeKey.Shutdown;
 			message: string | null;
-			timeout: number | null;
+			timeout: Duration | null;
 			force_close_apps: boolean;
 	  }
 	| { type: ActionTypeKey.USPShutdown; delay_minutes: number }

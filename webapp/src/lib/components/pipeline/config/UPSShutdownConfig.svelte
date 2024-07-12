@@ -6,4 +6,13 @@
 
 <p>UPS Shutdown config</p>
 
-<input type="number" bind:value={config.delay_minutes} />
+<div>
+	<h4>Delay</h4>
+
+	<p>
+		Delay before the UPS will shutdown, ensure this is a sufficient amount of time for the device to
+		shutdown and be sure to include a shutdown action before this
+	</p>
+
+	<input type="number" bind:value={config.delay_minutes} />
+</div>
