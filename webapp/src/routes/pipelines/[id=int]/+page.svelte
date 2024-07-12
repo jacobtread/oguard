@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import type { EventPipeline, Action } from '$lib/api/types';
+	import type { EventPipeline, Action, UpdateEventPipeline } from '$lib/api/types';
 	import { HttpMethod, requestJson } from '$lib/api/utils';
-	import { createQuery } from '@tanstack/svelte-query';
+	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { base } from '$app/paths';
 	import AddActionForm from '$lib/components/pipeline/AddActionForm.svelte';
 
 	let addAction = false;
+
+	const client = useQueryClient();
 
 	$: pipelineId = parseInt($page.params.id);
 
@@ -18,6 +20,21 @@
 				route: `/api/event-pipelines/${pipelineId}`
 			}),
 		retry: false
+	});
+
+	// Mutation to update the player details
+	$: updateMutation = createMutation({
+		mutationFn: async ({ name, pipeline, cancellable }: UpdateEventPipeline) =>
+			await requestJson<EventPipeline, UpdateEventPipeline>({
+				method: HttpMethod.PUT,
+				route: `/api/event-pipelines/${pipelineId}`,
+				body: { name, pipeline, cancellable }
+			}),
+
+		// Invalidate the current player details
+		onSuccess: () => {
+			client.invalidateQueries({ queryKey: ['event-pipelines'] });
+		}
 	});
 
 	let actions: Action[] = [];
@@ -55,7 +72,18 @@
 				<div class="container__footer__actions">
 					<button class="button" on:click={() => (addAction = true)}>Add Action</button>
 					<div style="flex: auto;"></div>
-					<button class="button">Save</button>
+					<button
+						class="button"
+						on:click={() => {
+							$updateMutation.mutate({
+								name: $pipelineQuery.data.name,
+								cancellable: $pipelineQuery.data.cancellable,
+								pipeline: {
+									actions
+								}
+							});
+						}}>Save</button
+					>
 					<a class="button button--secondary" href="{base}/pipelines">Back</a>
 				</div>
 			</div>
