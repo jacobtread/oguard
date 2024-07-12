@@ -14,7 +14,7 @@ use log::{debug, error, warn};
 use native_dialog::{MessageDialog, MessageType};
 use notify_rust::Notification;
 use ordered_float::OrderedFloat;
-use reqwest::Method;
+use reqwest::{header, Method};
 use rust_i18n::t;
 use sea_orm::{DatabaseConnection, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
@@ -556,9 +556,34 @@ pub struct HttpRequestAction {
     /// Headers to put on the request
     headers: HashMap<String, String>,
     /// Optional request body
-    body: Option<String>,
+    body: Option<HttpRequestActionBody>,
     /// Optional request timeout
     timeout: Option<Duration>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum HttpRequestActionBody {
+    /// Send a pre-defined JSON payload { "event": "ACFailure" }
+    Json,
+
+    /// Send a pre-defined text payload "ACFailure"
+    Text,
+
+    /// Custom user defined payload
+    UserDefined {
+        /// Payload to send, can include {OGUARD_EVENT} placeholder to replace
+        payload: String,
+        /// Content type header value to use
+        content_type: String,
+    },
+}
+
+/// Serializer for the pre-defined http request JSON body
+#[derive(Serialize)]
+pub struct HttpRequestJsonBody {
+    /// The event
+    pub event: UPSEvent,
 }
 
 /// Configuration for the delay of an actions execution
@@ -615,6 +640,8 @@ pub enum ActionRetryDelay {
         exponent: u32,
     },
 }
+
+const EVENT_PLACEHOLDER: &str = "{OGUARD_EVENT}";
 
 /// Sends a desktop notification for the provided event
 pub async fn execute_notification(event: UPSEvent) -> anyhow::Result<()> {
@@ -724,8 +751,6 @@ pub async fn execute_executable(
     event: UPSEvent,
     executable: &ExecutableAction,
 ) -> anyhow::Result<()> {
-    const EVENT_PLACEHOLDER: &str = "{OGUARD_EVENT}";
-
     // Replace placeholder arguments
     let args: Vec<_> = executable
         .args
@@ -770,7 +795,7 @@ pub async fn execute_executable(
 
 /// Sends an HTTP request
 pub async fn execute_http_request(
-    _event: UPSEvent,
+    event: UPSEvent,
     request: &HttpRequestAction,
 ) -> anyhow::Result<()> {
     let method = Method::from_str(&request.method).context("invalid http method")?;
@@ -785,17 +810,43 @@ pub async fn execute_http_request(
         headers.insert(key, value);
     }
 
-    let mut builder = client.request(method, &request.url).headers(headers);
+    let mut builder = client.request(method, &request.url);
 
     if let Some(timeout) = request.timeout.as_ref() {
         builder = builder.timeout(*timeout);
     }
 
     if let Some(body) = request.body.as_ref() {
-        builder = builder.body(body.to_string());
+        match body {
+            HttpRequestActionBody::Json => {
+                let body = HttpRequestJsonBody { event };
+                let body = serde_json::to_string(&body).context("failed to serialize body")?;
+                builder = builder.body(body);
+                headers.insert(
+                    header::CONTENT_TYPE,
+                    HeaderValue::from_static("application/json"),
+                );
+            }
+            HttpRequestActionBody::Text => {
+                builder = builder.body(event.to_string());
+            }
+            HttpRequestActionBody::UserDefined {
+                payload,
+                content_type,
+            } => {
+                let payload = payload.replace(EVENT_PLACEHOLDER, &event.to_string());
+                builder = builder.body(payload);
+                if let Ok(header_value) = HeaderValue::from_str(content_type) {
+                    headers.insert(header::CONTENT_TYPE, header_value);
+                }
+            }
+        };
     }
 
-    let request = builder.build().context("building http request")?;
+    let request = builder
+        .headers(headers)
+        .build()
+        .context("building http request")?;
 
     let _response = client
         .execute(request)
