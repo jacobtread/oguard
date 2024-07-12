@@ -19,6 +19,7 @@ use rust_i18n::t;
 use sea_orm::{DatabaseConnection, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 use std::{
+    borrow::Cow,
     collections::HashMap,
     str::FromStr,
     sync::Arc,
@@ -642,6 +643,29 @@ pub enum ActionRetryDelay {
 }
 
 const EVENT_PLACEHOLDER: &str = "{OGUARD_EVENT}";
+const EVENT_NAME_PLACEHOLDER: &str = "{OGUARD_EVENT_NAME}";
+const EVENT_DESCRIPTION_PLACEHOLDER: &str = "{OGUARD_EVENT_DESCRIPTION}";
+
+fn replace_event_placeholders(event: UPSEvent, value: &str) -> String {
+    let mut value = Cow::Borrowed(value);
+    let event_name = event.to_string();
+
+    if value.contains(EVENT_PLACEHOLDER) {
+        value = Cow::Owned(value.replace(EVENT_PLACEHOLDER, &event_name));
+    }
+
+    if value.contains(EVENT_NAME_PLACEHOLDER) {
+        let label_key = format!("event.{}.label", event_name);
+        value = Cow::Owned(value.replace(EVENT_NAME_PLACEHOLDER, &label_key));
+    }
+
+    if value.contains(EVENT_DESCRIPTION_PLACEHOLDER) {
+        let description_key = format!("event.{}.description", event_name);
+        value = Cow::Owned(value.replace(EVENT_DESCRIPTION_PLACEHOLDER, &description_key));
+    }
+
+    value.to_string()
+}
 
 /// Sends a desktop notification for the provided event
 pub async fn execute_notification(event: UPSEvent) -> anyhow::Result<()> {
@@ -715,7 +739,7 @@ pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyho
     let message = config
         .message
         .as_ref()
-        .map(|value| value.to_string())
+        .map(|value| replace_event_placeholders(event, value))
         .unwrap_or_else(|| format!("Shutdown triggered by {event} pipeline"));
     let timeout = config.timeout.unwrap_or(0);
     let force_close_apps = config.force_close_apps;
@@ -755,13 +779,7 @@ pub async fn execute_executable(
     let args: Vec<_> = executable
         .args
         .iter()
-        .map(|arg| {
-            if arg.contains(EVENT_PLACEHOLDER) {
-                arg.replace(EVENT_PLACEHOLDER, &event.to_string())
-            } else {
-                arg.to_string()
-            }
-        })
+        .map(|arg| replace_event_placeholders(event, arg))
         .collect();
 
     let child = Command::new(&executable.exe)
@@ -834,7 +852,7 @@ pub async fn execute_http_request(
                 payload,
                 content_type,
             } => {
-                let payload = payload.replace(EVENT_PLACEHOLDER, &event.to_string());
+                let payload = replace_event_placeholders(event, payload);
                 builder = builder.body(payload);
                 if let Ok(header_value) = HeaderValue::from_str(content_type) {
                     headers.insert(header::CONTENT_TYPE, header_value);
