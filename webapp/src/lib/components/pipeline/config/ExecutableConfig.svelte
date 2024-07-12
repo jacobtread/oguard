@@ -10,7 +10,7 @@
 	let arg = config.args.join(' ');
 
 	function updateArgs() {
-		config.args = arg.split(' ');
+		config.args = arg.trim().split(' ');
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
