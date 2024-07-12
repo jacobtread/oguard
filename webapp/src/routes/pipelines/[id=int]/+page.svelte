@@ -44,6 +44,11 @@
 			actions = $pipelineQuery.data.pipeline.actions;
 		}
 	}
+
+	const removeAction = (index: number) => {
+		actions.splice(index, 1);
+		actions = actions;
+	};
 </script>
 
 <div class="wrapper">
@@ -60,8 +65,9 @@
 				<h2 class="title">Editing Pipeline <span class="pipeline-name">{pipeline.name}</span></h2>
 			</div>
 			<div class="container__content">
-				{#each actions as action}
+				{#each actions as action, index}
 					<p>{JSON.stringify(action)}</p>
+					<button on:click={() => removeAction(index)}>Remove</button>
 				{:else}
 					<p class="empty">
 						You don't have any actions in this pipeline, press <b>Add Action</b> to add an action
