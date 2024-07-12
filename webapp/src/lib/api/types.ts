@@ -142,9 +142,11 @@ export type ActionType =
 			url: string;
 			method: string;
 			headers: Record<string, string>;
-			body: string | null;
+			body: HttpRequestBody | null;
 			timeout: Duration | null;
 	  };
+
+export type HttpRequestBody = { payload: string; content_type: string };
 
 export type Duration = {
 	secs: number;
