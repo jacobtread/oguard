@@ -34,3 +34,4 @@ So far I've implemented the basic USB HID protocol and can pull the battery and 
 Below is a screenshot of the WIP web UI for the app to monitor the capacity and load:
 ![Home screenshot](assets/image.png)
 ![Events screenshot](assets/image-1.png)
+![Pipeline screenshot](assets/image-2.png)
