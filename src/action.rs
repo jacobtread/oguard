@@ -485,7 +485,7 @@ impl Action {
             ActionType::Sleep => execute_sleep().await,
             ActionType::Shutdown(config) => execute_shutdown(event, config).await,
             ActionType::USPShutdown(config) => execute_shutdown_ups(config, executor).await,
-            ActionType::Executable(executable) => execute_executable(executable).await,
+            ActionType::Executable(executable) => execute_executable(event, executable).await,
             ActionType::HttpRequest(request) => execute_http_request(event, request).await,
         }
     }
@@ -720,9 +720,27 @@ pub async fn execute_shutdown_ups(
 }
 
 /// Starts an executable process
-pub async fn execute_executable(executable: &ExecutableAction) -> anyhow::Result<()> {
+pub async fn execute_executable(
+    event: UPSEvent,
+    executable: &ExecutableAction,
+) -> anyhow::Result<()> {
+    const EVENT_PLACEHOLDER: &str = "{OGUARD_EVENT}";
+
+    // Replace placeholder arguments
+    let args: Vec<_> = executable
+        .args
+        .iter()
+        .map(|arg| {
+            if arg.contains(EVENT_PLACEHOLDER) {
+                arg.replace(EVENT_PLACEHOLDER, &event.to_string())
+            } else {
+                arg.to_string()
+            }
+        })
+        .collect();
+
     let child = Command::new(&executable.exe)
-        .args(&executable.args)
+        .args(&args)
         .kill_on_drop(true)
         .spawn()
         .context("failed to start executable")?;

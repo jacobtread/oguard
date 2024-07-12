@@ -33,13 +33,16 @@
 <div>
 	<h4>Arguments</h4>
 
-	<p>Arguments to run the executable with</p>
+	<p>
+		Arguments to run the executable with. You can use the <span>&lbrace;OGUARD_EVENT&rbrace;</span> placeholder
+		which will be replaced with the event name
+	</p>
 
 	<input type="text" bind:value={arg} required />
 </div>
 
 <p>Will run</p>
-<pre><code>{config.exe} {config.args.join(' ')}</code></pre>
+<pre><code>{config.exe} {arg}</code></pre>
 
 <div>
 	<h4>Timeout</h4>
