@@ -563,21 +563,11 @@ pub struct HttpRequestAction {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum HttpRequestActionBody {
-    /// Send a pre-defined JSON payload { "event": "ACFailure" }
-    Json,
-
-    /// Send a pre-defined text payload "ACFailure"
-    Text,
-
-    /// Custom user defined payload
-    UserDefined {
-        /// Payload to send, can include {OGUARD_EVENT} placeholder to replace
-        payload: String,
-        /// Content type header value to use
-        content_type: String,
-    },
+pub struct HttpRequestActionBody {
+    /// Payload to send, supports placeholders
+    payload: String,
+    /// Content type header value to use
+    content_type: String,
 }
 
 /// Serializer for the pre-defined http request JSON body
@@ -835,30 +825,11 @@ pub async fn execute_http_request(
     }
 
     if let Some(body) = request.body.as_ref() {
-        match body {
-            HttpRequestActionBody::Json => {
-                let body = HttpRequestJsonBody { event };
-                let body = serde_json::to_string(&body).context("failed to serialize body")?;
-                builder = builder.body(body);
-                headers.insert(
-                    header::CONTENT_TYPE,
-                    HeaderValue::from_static("application/json"),
-                );
-            }
-            HttpRequestActionBody::Text => {
-                builder = builder.body(event.to_string());
-            }
-            HttpRequestActionBody::UserDefined {
-                payload,
-                content_type,
-            } => {
-                let payload = replace_event_placeholders(event, payload);
-                builder = builder.body(payload);
-                if let Ok(header_value) = HeaderValue::from_str(content_type) {
-                    headers.insert(header::CONTENT_TYPE, header_value);
-                }
-            }
-        };
+        let payload = replace_event_placeholders(event, &body.payload);
+        builder = builder.body(payload);
+        if let Ok(header_value) = HeaderValue::from_str(&body.content_type) {
+            headers.insert(header::CONTENT_TYPE, header_value);
+        }
     }
 
     let request = builder
