@@ -33,6 +33,12 @@ pub fn router() -> Router {
                         get(routes::get_event_pipeline).put(routes::update_event_pipeline),
                     ),
             )
-            .route("/toggle-buzzer", post(routes::toggle_buzzer)),
+            .route("/toggle-buzzer", post(routes::toggle_buzzer))
+            .nest(
+                "/test-battery",
+                Router::new()
+                    .route("/start", post(routes::test_battery_start))
+                    .route("/cancel", post(routes::test_battery_cancel)),
+            ),
     )
 }

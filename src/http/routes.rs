@@ -9,8 +9,8 @@ use crate::database::entities::events::EventModel;
 use crate::database::entities::state_history::StateHistoryModel;
 use crate::http::error::HttpResult;
 use crate::ups::{
-    DeviceBattery, DeviceState, QueryDeviceBattery, QueryDeviceState, ToggleBuzzer,
-    UPSExecutorHandle,
+    BatteryTest, CancelBatteryTest, DeviceBattery, DeviceState, QueryDeviceBattery,
+    QueryDeviceState, ToggleBuzzer, UPSExecutorHandle,
 };
 use crate::watcher::UPSWatcherHandle;
 use anyhow::{anyhow, Context};
@@ -20,7 +20,6 @@ use axum::response::Sse;
 use axum::{Extension, Json};
 use chrono::Utc;
 use futures::Stream;
-use log::debug;
 use reqwest::StatusCode;
 use sea_orm::DatabaseConnection;
 use tokio_stream::StreamExt;
@@ -198,6 +197,34 @@ pub async fn toggle_buzzer(Extension(executor): Extension<UPSExecutorHandle>) ->
         .request(ToggleBuzzer)
         .await
         .context("toggle buzzer request")?;
+
+    Ok(StatusCode::OK)
+}
+
+/// POST /api/test-battery/start
+///
+/// Starts a 10s battery test
+pub async fn test_battery_start(
+    Extension(executor): Extension<UPSExecutorHandle>,
+) -> HttpStatusResult {
+    executor
+        .request(BatteryTest)
+        .await
+        .context("battery test request")?;
+
+    Ok(StatusCode::OK)
+}
+
+/// POST /api/test-battery/cancel
+///
+/// Cancels a 10s battery test
+pub async fn test_battery_cancel(
+    Extension(executor): Extension<UPSExecutorHandle>,
+) -> HttpStatusResult {
+    executor
+        .request(CancelBatteryTest)
+        .await
+        .context("cancel battery test request")?;
 
     Ok(StatusCode::OK)
 }
