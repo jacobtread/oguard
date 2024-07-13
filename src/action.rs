@@ -278,7 +278,7 @@ pub struct Action {
     /// Action type
     pub ty: ActionType,
     /// Delay for the action
-    pub delay: ActionDelay,
+    pub delay: Option<ActionDelay>,
     /// Optionally repeat, initial action run will be in the defined action pipeline
     /// order any additional repeat runs will happen out of order
     pub repeat: Option<ActionRepeat>,
@@ -419,7 +419,10 @@ impl Action {
     /// Will run the action asynchronously when the action is ready and handle
     /// waiting for repeated delays
     pub async fn schedule_action(&self, event: UPSEvent, executor: &UPSExecutorHandle) -> bool {
-        await_action_delay(&self.delay, executor).await;
+        if let Some(delay) = self.delay.as_ref() {
+            await_action_delay(delay, executor).await;
+        }
+
         self.execute_with_retry(event, executor).await
     }
 
@@ -918,10 +921,10 @@ mod test {
                 actions: vec![
                     Action {
                         ty: ActionType::Notification,
-                        delay: ActionDelay {
+                        delay: Some(ActionDelay {
                             below_capacity: None,
                             duration: None,
-                        },
+                        }),
                         repeat: None,
                         retry: None,
                     },
@@ -965,10 +968,10 @@ mod test {
             ActionPipeline {
                 actions: vec![Action {
                     ty: ActionType::Notification,
-                    delay: ActionDelay {
+                    delay: Some(ActionDelay {
                         below_capacity: None,
                         duration: Some(Duration::from_secs(5)),
-                    },
+                    }),
                     repeat: None,
                     retry: None,
                 }],
@@ -989,10 +992,10 @@ mod test {
             ActionPipeline {
                 actions: vec![Action {
                     ty: ActionType::Popup,
-                    delay: ActionDelay {
+                    delay: Some(ActionDelay {
                         below_capacity: None,
                         duration: Some(Duration::from_secs(5)),
-                    },
+                    }),
                     repeat: None,
                     retry: None,
                 }],
@@ -1013,10 +1016,10 @@ mod test {
             ActionPipeline {
                 actions: vec![Action {
                     ty: ActionType::Sleep,
-                    delay: ActionDelay {
+                    delay: Some(ActionDelay {
                         below_capacity: None,
                         duration: Some(Duration::from_secs(5)),
-                    },
+                    }),
                     repeat: None,
                     retry: None,
                 }],
@@ -1041,10 +1044,10 @@ mod test {
                         args: vec![],
                         timeout: None,
                     }),
-                    delay: ActionDelay {
+                    delay: Some(ActionDelay {
                         below_capacity: None,
                         duration: Some(Duration::from_secs(5)),
-                    },
+                    }),
                     repeat: None,
                     retry: None,
                 }],
