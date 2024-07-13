@@ -199,9 +199,5 @@ pub async fn toggle_buzzer(Extension(executor): Extension<UPSExecutorHandle>) ->
         .await
         .context("toggle buzzer request")?;
 
-    let device_state = executor.request(QueryDeviceState).await?;
-
-    debug!("buzzer state: {}", device_state.buzzer_control);
-
     Ok(StatusCode::OK)
 }
