@@ -4,10 +4,12 @@
 	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { base } from '$app/paths';
-	import AddActionForm from '$lib/components/pipeline/AddActionForm.svelte';
 	import ActionItem from '$lib/components/pipeline/ActionItem.svelte';
+	import CreateActionForm from '$lib/components/pipeline/CreateActionForm.svelte';
+	import EditActionForm from '$lib/components/pipeline/EditActionForm.svelte';
 
 	let addAction = false;
+	let editAction: number | null = null;
 
 	const client = useQueryClient();
 
@@ -45,6 +47,8 @@
 		setActions([...actions]);
 	}
 
+	$: editingAction = editAction === null ? null : actions[editAction];
+
 	const setActions = (values: Action[]) => {
 		actions = [...values];
 	};
@@ -74,7 +78,12 @@
 			</div>
 			<div class="container__content">
 				{#each actions as action, index}
-					<ActionItem {index} item={action} onRemove={() => removeAction(index)} />
+					<ActionItem
+						{index}
+						item={action}
+						onEdit={() => (editAction = index)}
+						onRemove={() => removeAction(index)}
+					/>
 				{:else}
 					<p class="empty">
 						You don't have any actions in this pipeline, press <b>Add Action</b> to add an action
@@ -106,13 +115,28 @@
 </div>
 
 {#if addAction}
-	<AddActionForm
+	<CreateActionForm
 		onSubmit={(action) => {
 			addAction = false;
 			actions.push(action);
 			actions = actions;
 		}}
 		onCancel={() => (addAction = false)}
+	/>
+{/if}
+
+{#if editingAction !== null && editAction !== null}
+	<EditActionForm
+		action={editingAction}
+		onSubmit={(action) => {
+			if (editAction !== null) {
+				actions[editAction] = action;
+				actions = actions;
+			}
+
+			editAction = null;
+		}}
+		onCancel={() => (editAction = null)}
 	/>
 {/if}
 

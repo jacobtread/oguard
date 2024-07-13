@@ -146,6 +146,32 @@ export type ActionType =
 			timeout: Duration | null;
 	  };
 
+export function getDefaultActionType(actionType: ActionTypeKey): ActionType {
+	switch (actionType) {
+		case ActionTypeKey.Notification:
+			return { type: ActionTypeKey.Notification };
+		case ActionTypeKey.Popup:
+			return { type: ActionTypeKey.Popup };
+		case ActionTypeKey.Sleep:
+			return { type: ActionTypeKey.Sleep };
+		case ActionTypeKey.Shutdown:
+			return { type: ActionTypeKey.Shutdown, message: '', timeout: null, force_close_apps: false };
+		case ActionTypeKey.USPShutdown:
+			return { type: ActionTypeKey.USPShutdown, delay_minutes: 1 };
+		case ActionTypeKey.Executable:
+			return { type: ActionTypeKey.Executable, exe: 'notepad.exe', args: [], timeout: null };
+		case ActionTypeKey.HttpRequest:
+			return {
+				type: ActionTypeKey.HttpRequest,
+				url: 'https://example.com',
+				method: 'GET',
+				headers: {},
+				body: null,
+				timeout: null
+			};
+	}
+}
+
 export type HttpRequestBody = { payload: string; content_type: string };
 
 export type Duration = {
@@ -209,7 +235,7 @@ export type ActionRetry = {
 
 export type Action = {
 	ty: ActionType;
-	delay: ActionDelay;
+	delay: ActionDelay | null;
 	repeat: ActionRepeat | null;
 	retry: ActionRetry | null;
 };

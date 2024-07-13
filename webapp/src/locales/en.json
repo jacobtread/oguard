@@ -87,7 +87,7 @@
     },
     "action": {
         "settings": "{setting} settings",
-        "add": "Add {action} action",
+        "configure": "Configure {action} action",
         "delay": "Delay",
         "repeat": "Repeat",
         "retry": "Retry",

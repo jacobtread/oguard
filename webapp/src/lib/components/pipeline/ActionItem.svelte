@@ -9,6 +9,7 @@
 	export let item: Action;
 
 	export let onRemove: () => void;
+	export let onEdit: () => void;
 </script>
 
 <div class="item">
@@ -87,6 +88,7 @@
 	</div>
 
 	<div class="item__actions">
+		<button class="button" on:click={onEdit}>Edit</button>
 		<button class="button" on:click={onRemove}>Remove</button>
 	</div>
 </div>
