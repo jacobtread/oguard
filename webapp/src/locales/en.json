@@ -104,6 +104,18 @@
                 "label": "Exponential Backoff Delay",
                 "description": "Delay each retry by an initial duration multiplying the delay by an exponent for each retry"
             }
+        },
+        "delay_explain": {
+            "duration_capacity": "Delayed until either {duration} elapses or the battery capacity goes below {capacity}%",
+            "duration": "Delayed until {duration} has elapsed",
+            "below_capacity": "Delayed until the battery capacity goes below {capacity}%"
+        },
+        "repeat_explain": {
+            "interval_capacity": "Repeats every {duration} and every time the capacity decreases by {capacity}%",
+            "interval": "Repeats every {duration}",
+            "capacity": "Repeats every time the capacity decreases by {capacity}%",
+            "limit": "Will repeat {limit} times",
+            "no_limit": "Will repeat until the system shuts down or the service is stopped"
         }
     }
 }

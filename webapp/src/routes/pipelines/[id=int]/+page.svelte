@@ -5,6 +5,7 @@
 	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { base } from '$app/paths';
 	import AddActionForm from '$lib/components/pipeline/AddActionForm.svelte';
+	import ActionItem from '$lib/components/pipeline/ActionItem.svelte';
 
 	let addAction = false;
 
@@ -40,14 +41,21 @@
 	let actions: Action[] = [];
 
 	$: {
-		if ($pipelineQuery.data !== undefined) {
-			actions = $pipelineQuery.data.pipeline.actions;
-		}
+		let actions = $pipelineQuery.data?.pipeline.actions ?? [];
+		setActions([...actions]);
 	}
+
+	const setActions = (values: Action[]) => {
+		actions = [...values];
+	};
 
 	const removeAction = (index: number) => {
 		actions.splice(index, 1);
 		actions = actions;
+	};
+
+	const onReset = () => {
+		actions = [...($pipelineQuery.data?.pipeline.actions ?? [])];
 	};
 </script>
 
@@ -66,8 +74,7 @@
 			</div>
 			<div class="container__content">
 				{#each actions as action, index}
-					<p>{JSON.stringify(action)}</p>
-					<button on:click={() => removeAction(index)}>Remove</button>
+					<ActionItem {index} item={action} onRemove={() => removeAction(index)} />
 				{:else}
 					<p class="empty">
 						You don't have any actions in this pipeline, press <b>Add Action</b> to add an action
@@ -90,6 +97,7 @@
 							});
 						}}>Save</button
 					>
+					<button class="button button--secondary" on:click={onReset}>Reset</button>
 					<a class="button button--secondary" href="{base}/pipelines">Back</a>
 				</div>
 			</div>

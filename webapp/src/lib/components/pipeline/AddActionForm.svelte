@@ -102,7 +102,7 @@
 				}
 
 				// Clear invalid timeouts
-				if (cfg.timeout !== null && cfg.timeout <= 0) {
+				if (cfg.timeout !== null && cfg.timeout.secs <= 0) {
 					cfg.timeout = null;
 				}
 
@@ -135,7 +135,7 @@
 				const cfg = config as ActionTypeConfig<ActionTypeKey.HttpRequest>;
 
 				// Clear empty body
-				if (cfg.body !== null && cfg.body.length <= 0) {
+				if (cfg.body !== null && cfg.body.payload.length <= 0) {
 					cfg.body = null;
 				}
 
