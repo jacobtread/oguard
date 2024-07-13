@@ -14,6 +14,8 @@ use thiserror::Error;
 /// Type alias for dynamic error handling and JSON responses
 pub type HttpResult<T> = Result<Json<T>, DynHttpError>;
 
+pub type HttpStatusResult = Result<StatusCode, DynHttpError>;
+
 /// Wrapper for dynamic error handling using [HttpError] types
 pub struct DynHttpError {
     /// The dynamic error cause
@@ -97,7 +99,7 @@ impl HttpError for AnyhowHttpError {
 
     fn reason(&self) -> String {
         // Anyhow errors use a generic message
-        "Server error".to_string()
+        self.0.to_string()
     }
 }
 

@@ -4,8 +4,9 @@ use std::{
     time::{Duration, Instant},
 };
 
-use anyhow::Context;
-use hidapi::{HidApi, HidDevice};
+use anyhow::{anyhow, Context};
+use hidapi::{HidApi, HidDevice, HidError};
+use log::{debug, error, info, warn};
 use ordered_float::OrderedFloat;
 use sea_orm::FromJsonQueryResult;
 use serde::{Deserialize, Serialize};
@@ -21,7 +22,44 @@ type UPSRequest = Box<dyn DeviceRequestProxy>;
 
 #[derive(Default)]
 pub struct ResponseCache {
-    pub cache: HashMap<u64, CachedValue>,
+    cache: HashMap<u64, CachedValue>,
+}
+
+impl ResponseCache {
+    const CACHE_TIME: Duration = Duration::from_secs(1);
+
+    pub fn get<T>(&mut self, cache_key: Option<u64>) -> Option<T>
+    where
+        T: Send + Clone + 'static,
+    {
+        let cache_key = cache_key?;
+        let cache_value = self.cache.get(&cache_key)?;
+
+        if cache_value.expires_at <= Instant::now() {
+            self.cache.remove(&cache_key);
+            return None;
+        }
+
+        let value = cache_value.value.downcast_ref::<T>();
+        value.cloned()
+    }
+
+    pub fn insert<T>(&mut self, cache_key: u64, value: &T)
+    where
+        T: Send + Clone + 'static,
+    {
+        let value = value.clone();
+        let cache_value = CachedValue {
+            expires_at: Instant::now() + Self::CACHE_TIME,
+            value: Box::new(value),
+        };
+
+        self.cache.insert(cache_key, cache_value);
+    }
+
+    pub fn remove(&mut self, cache_key: u64) {
+        self.cache.remove(&cache_key);
+    }
 }
 
 pub struct CachedValue {
@@ -40,13 +78,9 @@ impl UPSExecutor {
     pub fn start() -> anyhow::Result<UPSExecutorHandle> {
         let (tx, rx) = mpsc::channel(8);
 
-        let api = HidApi::new().context("Failed to create HID API")?;
-
-        let device = api
-            .open(VENDOR_ID, PRODUCT_ID)
-            .expect("Failed to open device");
-
         let cache = ResponseCache::default();
+
+        let device = Self::try_create_device().context("create device")?;
 
         let executor = UPSExecutor { device, rx, cache };
 
@@ -55,9 +89,55 @@ impl UPSExecutor {
         Ok(UPSExecutorHandle { tx })
     }
 
+    /// Attempts to connect to the HID device
+    fn try_create_device() -> anyhow::Result<HidDevice> {
+        let api = HidApi::new().context("create hid api")?;
+
+        let max_attempts = 5;
+        let mut attempt = 0;
+
+        let mut last_error: Option<HidError> = None;
+
+        while attempt < max_attempts {
+            let device = api.open(VENDOR_ID, PRODUCT_ID);
+
+            match device {
+                Ok(device) => return Ok(device),
+                Err(err) => {
+                    warn!("failed to create device handle, retrying in 5 seconds: {err}");
+                    last_error = Some(err);
+                }
+            }
+
+            std::thread::sleep(Duration::from_secs(5));
+
+            attempt += 1;
+        }
+
+        let last_error = last_error.expect("missing last error");
+
+        Err(anyhow!("failed to acquire device: {}", last_error))
+    }
+
     pub fn process(mut self) {
         while let Some(mut msg) = self.rx.blocking_recv() {
-            msg.handle(&mut self.device, &mut self.cache);
+            while !msg.handle(&mut self.device, &mut self.cache) {
+                // Handle is closed, try and create a new one
+                warn!("lost device handle, attempting to create a new one");
+
+                let device = match Self::try_create_device() {
+                    Ok(device) => device,
+                    Err(err) => {
+                        error!("failed to acquire new handle: {err}");
+                        return;
+                    }
+                };
+
+                info!("acquired new device handle, resuming");
+
+                // Swap device handle
+                self.device = device;
+            }
         }
     }
 }
@@ -190,6 +270,12 @@ impl DeviceState {
     }
 }
 
+/// Sends a command awaiting the response
+fn send_command(device: &mut HidDevice, cmd: &str) -> anyhow::Result<String> {
+    execute_command(device, cmd).context("write request")?;
+    read_response(device).context("read response")
+}
+
 /// Sends a command over the device HID, commands begin with the report ID which
 /// is always zero and end with a carriage return to indicate the end of a command
 fn execute_command(device: &mut HidDevice, cmd: &str) -> anyhow::Result<()> {
@@ -254,34 +340,24 @@ pub trait DeviceCommand: Send + 'static {
     fn cache_key(&self) -> Option<u64> {
         None
     }
+
+    /// Invalidates any cache keys this command will have an affect on.
+    /// Used by queries that manipulate the device in order to discard
+    /// cached device states
+    fn invalidate_cache(&self, _cache: &mut ResponseCache) {}
 }
 
 /// Type erased proxy over [DeviceRequest] to allow them to
 /// be handled and send their response in a dynamic context
 pub trait DeviceRequestProxy: Send + 'static {
     /// Handle the request
-    fn handle(&mut self, device: &mut HidDevice, cache: &mut ResponseCache);
-}
-
-fn get_cached_response<T>(cache_key: Option<u64>, cache: &ResponseCache) -> Option<T>
-where
-    T: Send + Clone + 'static,
-{
-    let cache_key = cache_key?;
-    let cache_value = cache.cache.get(&cache_key)?;
-
-    if cache_value.expires_at <= Instant::now() {
-        return None;
-    }
-
-    let value = cache_value.value.downcast_ref::<T>();
-    value.cloned()
+    fn handle(&mut self, device: &mut HidDevice, cache: &mut ResponseCache) -> bool;
 }
 
 impl<T: Send + Clone + 'static> DeviceRequestProxy for DeviceRequest<T> {
-    fn handle(&mut self, device: &mut HidDevice, cache: &mut ResponseCache) {
+    fn handle(&mut self, device: &mut HidDevice, cache: &mut ResponseCache) -> bool {
         let cache_key = self.command.cache_key();
-        if let Some(cached_response) = get_cached_response(cache_key, cache) {
+        if let Some(cached_response) = cache.get(cache_key) {
             // Send the cached response
             if let Some(tx) = self.tx.take() {
                 _ = tx.send(Ok(cached_response));
@@ -291,23 +367,31 @@ impl<T: Send + Clone + 'static> DeviceRequestProxy for DeviceRequest<T> {
         // Execute the command
         let result = self.command.execute(device);
 
+        if let Err(err) = result.as_ref() {
+            if let Some(err) = err.downcast_ref::<HidError>() {
+                let is_connection_lost = err.to_string().contains("The device is not connected");
+                if is_connection_lost {
+                    return false;
+                }
+            }
+        }
+
         // Store successful responses
         if let Some(cache_key) = cache_key {
             if let Ok(value) = result.as_ref() {
-                let value = value.clone();
-                let cache_value = CachedValue {
-                    expires_at: Instant::now() + Duration::from_secs(1),
-                    value: Box::new(value),
-                };
-
-                cache.cache.insert(cache_key, cache_value);
+                cache.insert(cache_key, value);
             }
         }
+
+        // Invalidate cache keys
+        self.command.invalidate_cache(cache);
 
         // Send the response
         if let Some(tx) = self.tx.take() {
             _ = tx.send(result);
         }
+
+        true
     }
 }
 
@@ -318,8 +402,7 @@ impl DeviceCommand for QueryDeviceBattery {
     type Response = DeviceBattery;
 
     fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
-        execute_command(device, "QI").context("write request")?;
-        let response = read_response(device).context("read response")?;
+        let response = send_command(device, "QI")?;
         parse_device_battery(&response).context("parse response")
     }
 
@@ -358,8 +441,7 @@ impl DeviceCommand for QueryDeviceState {
     type Response = DeviceState;
 
     fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
-        execute_command(device, "QS").context("write request")?;
-        let response = read_response(device).context("read response")?;
+        let response = send_command(device, "QS")?;
         parse_device_state(&response).context("parse response")
     }
 
@@ -471,9 +553,17 @@ impl DeviceCommand for CancelBatteryTest {
     type Response = ExecuteResponse;
 
     fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
-        execute_command(device, "CT").context("write request")?;
-        let response = read_response(device).context("read response")?;
+        let response = send_command(device, "CT")?;
         parse_execute_response(&response).context("parse response")
+    }
+
+    fn invalidate_cache(&self, cache: &mut ResponseCache) {
+        // Clear the device state cache
+        let query = QueryDeviceState;
+
+        if let Some(cache_key) = query.cache_key() {
+            cache.remove(cache_key);
+        }
     }
 }
 
@@ -495,8 +585,9 @@ impl DeviceCommand for ScheduleUPSShutdown {
         let reboot_delay_minutes = self.reboot_delay_minutes.min(9999);
 
         let command = format!("S{}R{:04}", delay_minutes, reboot_delay_minutes);
-        execute_command(device, &command).context("write request")?;
+        let response = send_command(device, &command)?;
 
+        debug!("scheduled shutdown response: {response}");
         Ok(())
     }
 }
@@ -528,8 +619,39 @@ impl DeviceCommand for BatteryTest {
     type Response = ();
 
     fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
-        execute_command(device, "T").context("write request")?;
+        _ = send_command(device, "T")?;
         Ok(())
+    }
+
+    fn invalidate_cache(&self, cache: &mut ResponseCache) {
+        // Clear the device state cache
+        let query = QueryDeviceState;
+
+        if let Some(cache_key) = query.cache_key() {
+            cache.remove(cache_key);
+        }
+    }
+}
+
+/// Toggles the buzzer state
+/// (A.k.a the beep sound to play when the UPS looses power)
+pub struct ToggleBuzzer;
+
+impl DeviceCommand for ToggleBuzzer {
+    type Response = ();
+
+    fn execute(&mut self, device: &mut HidDevice) -> anyhow::Result<Self::Response> {
+        _ = send_command(device, "Q")?;
+        Ok(())
+    }
+
+    fn invalidate_cache(&self, cache: &mut ResponseCache) {
+        // Clear the device state cache
+        let query = QueryDeviceState;
+
+        if let Some(cache_key) = query.cache_key() {
+            cache.remove(cache_key);
+        }
     }
 }
 

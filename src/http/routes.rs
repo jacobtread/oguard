@@ -9,7 +9,8 @@ use crate::database::entities::events::EventModel;
 use crate::database::entities::state_history::StateHistoryModel;
 use crate::http::error::HttpResult;
 use crate::ups::{
-    DeviceBattery, DeviceState, QueryDeviceBattery, QueryDeviceState, UPSExecutorHandle,
+    DeviceBattery, DeviceState, QueryDeviceBattery, QueryDeviceState, ToggleBuzzer,
+    UPSExecutorHandle,
 };
 use crate::watcher::UPSWatcherHandle;
 use anyhow::{anyhow, Context};
@@ -19,9 +20,12 @@ use axum::response::Sse;
 use axum::{Extension, Json};
 use chrono::Utc;
 use futures::Stream;
+use log::debug;
+use reqwest::StatusCode;
 use sea_orm::DatabaseConnection;
 use tokio_stream::StreamExt;
 
+use super::error::HttpStatusResult;
 use super::models::{CreateEventPipeline, RangeQuery, UpdateEventPipeline};
 
 /// GET /api/device-state
@@ -30,9 +34,9 @@ use super::models::{CreateEventPipeline, RangeQuery, UpdateEventPipeline};
 pub async fn device_state(
     Extension(executor): Extension<UPSExecutorHandle>,
 ) -> HttpResult<DeviceState> {
-    let battery = executor.request(QueryDeviceState).await?;
+    let device_state = executor.request(QueryDeviceState).await?;
 
-    Ok(Json(battery))
+    Ok(Json(device_state))
 }
 
 /// GET /api/battery-state
@@ -184,4 +188,20 @@ pub async fn events(
         .throttle(Duration::from_secs(1));
 
     Sse::new(stream).keep_alive(KeepAlive::default())
+}
+
+/// POST /api/toggle-buzzer
+///
+/// Toggle the UPS buzzer state
+pub async fn toggle_buzzer(Extension(executor): Extension<UPSExecutorHandle>) -> HttpStatusResult {
+    executor
+        .request(ToggleBuzzer)
+        .await
+        .context("toggle buzzer request")?;
+
+    let device_state = executor.request(QueryDeviceState).await?;
+
+    debug!("buzzer state: {}", device_state.buzzer_control);
+
+    Ok(StatusCode::OK)
 }

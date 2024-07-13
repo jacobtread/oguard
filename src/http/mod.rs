@@ -1,4 +1,7 @@
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 
 pub mod error;
 pub mod models;
@@ -29,6 +32,7 @@ pub fn router() -> Router {
                         "/:id",
                         get(routes::get_event_pipeline).put(routes::update_event_pipeline),
                     ),
-            ),
+            )
+            .route("/toggle-buzzer", post(routes::toggle_buzzer)),
     )
 }
