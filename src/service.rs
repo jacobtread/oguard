@@ -16,6 +16,7 @@ use crate::config::Config;
 use crate::{config, logging, server::run_server};
 
 pub const SERVICE_NAME: &str = "oguard";
+const SERVICE_DISPLAY_NAME: &str = "OGuard";
 const SERVICE_TYPE: ServiceType = ServiceType::OWN_PROCESS;
 
 // Service entrypoint
@@ -79,8 +80,8 @@ pub fn create_service() -> anyhow::Result<()> {
         .create_service(
             &ServiceInfo {
                 name: OsString::from(SERVICE_NAME),
-                display_name: OsString::from("OGuard"),
-                service_type: ServiceType::OWN_PROCESS,
+                display_name: OsString::from(SERVICE_DISPLAY_NAME),
+                service_type: SERVICE_TYPE,
                 start_type: ServiceStartType::AutoStart,
                 error_control: ServiceErrorControl::Normal,
                 executable_path,
