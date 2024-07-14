@@ -34,6 +34,7 @@ async function requestInner<B>(config: RequestConfig<B>): Promise<Response> {
 	}
 
 	init.headers = headers;
+	init.credentials = 'include';
 
 	// Make the initial request
 	let response: Response;

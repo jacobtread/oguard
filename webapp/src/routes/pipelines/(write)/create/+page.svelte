@@ -170,7 +170,7 @@
 </div>
 
 <style lang="scss">
-	@use '../../../lib/styles/palette.scss' as palette;
+	@use '../../../../lib/styles/palette.scss' as palette;
 
 	.field {
 		&__name {

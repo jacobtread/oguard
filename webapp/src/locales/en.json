@@ -13,6 +13,7 @@
     "load": "Load",
     "input_voltage": "Input: {voltage}",
     "output_voltage": "Output: {voltage}",
+    "login": "Login",
     "event": {
         "columns": {
             "level": "Level",

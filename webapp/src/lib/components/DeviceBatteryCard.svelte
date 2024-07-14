@@ -43,7 +43,7 @@
 
 	<div class="card-content">
 		<p class="battery-last-fetched">
-			{$_('last-fetched', { values: { at: lastUpdatedFormatted } })}
+			{$_('last_fetched', { values: { at: lastUpdatedFormatted } })}
 		</p>
 
 		{#if refreshing}

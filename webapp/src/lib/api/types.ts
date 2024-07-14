@@ -281,3 +281,11 @@ export type UpdateEventPipeline = Partial<{
 	cancellable: boolean;
 	enabled: boolean;
 }>;
+
+export type LoginState = {
+	logged_in: boolean;
+};
+
+export type LoginRequest = {
+	password: string;
+};
