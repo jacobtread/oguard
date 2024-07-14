@@ -10,8 +10,8 @@ use crate::database::entities::events::EventModel;
 use crate::database::entities::state_history::StateHistoryModel;
 use crate::http::error::HttpResult;
 use crate::ups::{
-    BatteryTest, CancelBatteryTest, DeviceBattery, DeviceState, QueryDeviceBattery,
-    QueryDeviceState, ToggleBuzzer, UPSExecutorHandle,
+    BatteryTest, CancelBatteryTest, DeviceBattery, DeviceExecutorHandle, DeviceState,
+    QueryDeviceBattery, QueryDeviceState, ToggleBuzzer,
 };
 use crate::watcher::UPSWatcherHandle;
 use anyhow::{anyhow, Context};
@@ -36,9 +36,9 @@ use super::models::{
 ///
 /// Requests the current state of the device
 pub async fn device_state(
-    Extension(executor): Extension<UPSExecutorHandle>,
+    Extension(executor): Extension<DeviceExecutorHandle>,
 ) -> HttpResult<DeviceState> {
-    let device_state = executor.request(QueryDeviceState).await?;
+    let device_state = executor.send(QueryDeviceState).await?;
 
     Ok(Json(device_state))
 }
@@ -47,9 +47,9 @@ pub async fn device_state(
 ///
 /// Requests the current battery capacity and remaining duration
 pub async fn device_battery(
-    Extension(executor): Extension<UPSExecutorHandle>,
+    Extension(executor): Extension<DeviceExecutorHandle>,
 ) -> HttpResult<DeviceBattery> {
-    let battery = executor.request(QueryDeviceBattery).await?;
+    let battery = executor.send(QueryDeviceBattery).await?;
 
     Ok(Json(battery))
 }
@@ -202,10 +202,10 @@ pub async fn events(
 /// Toggle the UPS buzzer state
 pub async fn toggle_buzzer(
     _: AuthGate,
-    Extension(executor): Extension<UPSExecutorHandle>,
+    Extension(executor): Extension<DeviceExecutorHandle>,
 ) -> HttpStatusResult {
     executor
-        .request(ToggleBuzzer)
+        .send(ToggleBuzzer)
         .await
         .context("toggle buzzer request")?;
 
@@ -217,10 +217,10 @@ pub async fn toggle_buzzer(
 /// Starts a 10s battery test
 pub async fn test_battery_start(
     _: AuthGate,
-    Extension(executor): Extension<UPSExecutorHandle>,
+    Extension(executor): Extension<DeviceExecutorHandle>,
 ) -> HttpStatusResult {
     executor
-        .request(BatteryTest)
+        .send(BatteryTest)
         .await
         .context("battery test request")?;
 
@@ -232,10 +232,10 @@ pub async fn test_battery_start(
 /// Cancels a 10s battery test
 pub async fn test_battery_cancel(
     _: AuthGate,
-    Extension(executor): Extension<UPSExecutorHandle>,
+    Extension(executor): Extension<DeviceExecutorHandle>,
 ) -> HttpStatusResult {
     executor
-        .request(CancelBatteryTest)
+        .send(CancelBatteryTest)
         .await
         .context("cancel battery test request")?;
 

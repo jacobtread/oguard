@@ -4,7 +4,7 @@
 
 use crate::{
     database::entities::{battery_history::BatteryHistoryModel, state_history::StateHistoryModel},
-    ups::{DeviceBattery, DeviceState, QueryDeviceBattery, QueryDeviceState, UPSExecutorHandle},
+    ups::{DeviceBattery, DeviceExecutorHandle, DeviceState, QueryDeviceBattery, QueryDeviceState},
 };
 use chrono::Utc;
 use log::{debug, error};
@@ -23,7 +23,7 @@ pub struct UPSHistoryTracker {
     /// Database connection to store the data
     db: DatabaseConnection,
     /// Executor to execute the requests
-    executor: UPSExecutorHandle,
+    executor: DeviceExecutorHandle,
     /// Last state response
     last_device_state: Option<DeviceState>,
     /// Last battery state response
@@ -31,7 +31,7 @@ pub struct UPSHistoryTracker {
 }
 
 impl UPSHistoryTracker {
-    pub fn start(db: DatabaseConnection, executor: UPSExecutorHandle) -> JoinHandle<()> {
+    pub fn start(db: DatabaseConnection, executor: DeviceExecutorHandle) -> JoinHandle<()> {
         let tracker = Self {
             executor,
             db,
@@ -59,7 +59,7 @@ impl UPSHistoryTracker {
     /// Requests the current device state saving it to the
     /// database
     pub async fn process_device_state(&mut self) {
-        let device_state = match self.executor.request(QueryDeviceState).await {
+        let device_state = match self.executor.send(QueryDeviceState).await {
             Ok(value) => value,
             Err(err) => {
                 error!("Error while requesting UPS device state: {err:?}");
@@ -91,7 +91,7 @@ impl UPSHistoryTracker {
     /// Requests the current device battery state saving it to the
     /// database
     pub async fn process_device_battery(&mut self) {
-        let battery_state = match self.executor.request(QueryDeviceBattery).await {
+        let battery_state = match self.executor.send(QueryDeviceBattery).await {
             Ok(value) => value,
             Err(err) => {
                 error!("Error while requesting UPS device battery: {err:?}");

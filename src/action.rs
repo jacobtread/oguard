@@ -3,7 +3,7 @@ use crate::{
         event_pipeline::{CancellableEventPipeline, EventPipelineId, EventPipelineModel},
         events::UPSEvent,
     },
-    ups::{QueryDeviceBattery, ScheduleUPSShutdown, UPSExecutorHandle},
+    ups::{DeviceExecutorHandle, QueryDeviceBattery, ScheduleUPSShutdown},
     watcher::UPSWatcherHandle,
 };
 use anyhow::{anyhow, Context};
@@ -38,7 +38,7 @@ type SharedActiveTasks = Arc<RwLock<Vec<EventPipelineTask>>>;
 /// Executor for event pipelines
 pub struct EventPipelineRunner {
     /// Executor handle for accessing the UPS
-    executor: UPSExecutorHandle,
+    executor: DeviceExecutorHandle,
     /// Database to load the event pipelines from
     db: DatabaseConnection,
     /// Watcher handle for events
@@ -62,7 +62,7 @@ impl EventPipelineRunner {
     pub fn new(
         db: DatabaseConnection,
         watcher_handle: UPSWatcherHandle,
-        executor: UPSExecutorHandle,
+        executor: DeviceExecutorHandle,
     ) -> Self {
         Self {
             executor,
@@ -76,7 +76,7 @@ impl EventPipelineRunner {
     pub fn start(
         db: DatabaseConnection,
         watcher_handle: UPSWatcherHandle,
-        executor: UPSExecutorHandle,
+        executor: DeviceExecutorHandle,
     ) {
         let runner = Self::new(db, watcher_handle, executor);
         tokio::spawn(runner.run());
@@ -197,7 +197,7 @@ impl EventPipelineRunner {
 async fn run_pipeline(
     db: DatabaseConnection,
     pipeline: EventPipelineModel,
-    executor: UPSExecutorHandle,
+    executor: DeviceExecutorHandle,
     active_tasks: SharedActiveTasks,
     event: UPSEvent,
 ) {
@@ -245,7 +245,7 @@ async fn run_pipeline(
 }
 
 /// Executes the repeated portion of an action
-async fn run_repeated_action(action: Action, event: UPSEvent, executor: UPSExecutorHandle) {
+async fn run_repeated_action(action: Action, event: UPSEvent, executor: DeviceExecutorHandle) {
     let Some(repeat) = action.repeat.as_ref() else {
         panic!("attempted to run non repeating action as repeat action")
     };
@@ -296,7 +296,7 @@ pub struct Action {
 }
 
 /// Awaits the provided action delay
-pub async fn await_action_delay(delay: &ActionDelay, executor: &UPSExecutorHandle) {
+pub async fn await_action_delay(delay: &ActionDelay, executor: &DeviceExecutorHandle) {
     // Await the required delay
     match (delay.duration, delay.below_capacity) {
         // Run below capacity
@@ -321,7 +321,7 @@ pub async fn await_action_delay(delay: &ActionDelay, executor: &UPSExecutorHandl
 
 /// Future that polls the device capacity resolving when the capacity gets
 /// below the provided threshold
-pub async fn await_capacity(executor: &UPSExecutorHandle, capacity: u8) {
+pub async fn await_capacity(executor: &DeviceExecutorHandle, capacity: u8) {
     let poll_interval = Duration::from_secs(1);
 
     let start = Instant::now() + poll_interval;
@@ -330,7 +330,7 @@ pub async fn await_capacity(executor: &UPSExecutorHandle, capacity: u8) {
 
     // Loop until capacity reaches threshold
     loop {
-        let battery_state = match executor.request(QueryDeviceBattery).await {
+        let battery_state = match executor.send(QueryDeviceBattery).await {
             Ok(value) => value,
             Err(err) => {
                 error!("Error while requesting UPS device battery: {err:?}");
@@ -347,7 +347,7 @@ pub async fn await_capacity(executor: &UPSExecutorHandle, capacity: u8) {
 }
 
 /// Awaits the delay before repeating an action
-pub async fn await_repeat_delay(repeat: &ActionRepeat, executor: &UPSExecutorHandle) {
+pub async fn await_repeat_delay(repeat: &ActionRepeat, executor: &DeviceExecutorHandle) {
     match (repeat.interval, repeat.capacity_decrease) {
         // Run when capacity decreases by amount
         (None, Some(capacity)) => {
@@ -370,7 +370,7 @@ pub async fn await_repeat_delay(repeat: &ActionRepeat, executor: &UPSExecutorHan
 }
 
 /// Polls the provided executor until the capacity decreases by the provided amount
-pub async fn await_capacity_decrease(executor: &UPSExecutorHandle, decrease: u8) {
+pub async fn await_capacity_decrease(executor: &DeviceExecutorHandle, decrease: u8) {
     let mut last_highest_capacity: Option<u8> = None;
     let mut last_lowest_capacity: Option<u8> = None;
 
@@ -382,7 +382,7 @@ pub async fn await_capacity_decrease(executor: &UPSExecutorHandle, decrease: u8)
 
     // Loop until capacity reaches threshold
     loop {
-        let battery_state = match executor.request(QueryDeviceBattery).await {
+        let battery_state = match executor.send(QueryDeviceBattery).await {
             Ok(value) => value,
             Err(err) => {
                 error!("Error while requesting UPS device battery: {err:?}");
@@ -427,7 +427,7 @@ pub async fn await_capacity_decrease(executor: &UPSExecutorHandle, decrease: u8)
 impl Action {
     /// Will run the action asynchronously when the action is ready and handle
     /// waiting for repeated delays
-    pub async fn schedule_action(&self, event: UPSEvent, executor: &UPSExecutorHandle) -> bool {
+    pub async fn schedule_action(&self, event: UPSEvent, executor: &DeviceExecutorHandle) -> bool {
         if let Some(delay) = self.delay.as_ref() {
             await_action_delay(delay, executor).await;
         }
@@ -436,7 +436,11 @@ impl Action {
     }
 
     /// Executes the action and handles retry on failure
-    pub async fn execute_with_retry(&self, event: UPSEvent, executor: &UPSExecutorHandle) -> bool {
+    pub async fn execute_with_retry(
+        &self,
+        event: UPSEvent,
+        executor: &DeviceExecutorHandle,
+    ) -> bool {
         let mut attempt = 0;
         let mut last_delay: Option<Duration> = None;
 
@@ -490,7 +494,7 @@ impl Action {
     pub async fn execute_action(
         &self,
         event: UPSEvent,
-        executor: &UPSExecutorHandle,
+        executor: &DeviceExecutorHandle,
     ) -> anyhow::Result<()> {
         match &self.ty {
             ActionType::Notification => execute_notification(event).await,
@@ -762,10 +766,10 @@ pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyho
 /// Triggers the UPS to shutdown
 pub async fn execute_shutdown_ups(
     config: &UPSShutdownAction,
-    executor: &UPSExecutorHandle,
+    executor: &DeviceExecutorHandle,
 ) -> anyhow::Result<()> {
     executor
-        .request(ScheduleUPSShutdown {
+        .send(ScheduleUPSShutdown {
             delay_minutes: config.delay_minutes.0,
             reboot_delay_minutes: 1,
         })
@@ -871,7 +875,7 @@ mod test {
         action::ExecutableAction,
         database::{connect_database, entities::events::UPSEvent},
         logging::setup_test_logging,
-        ups::UPSExecutor,
+        ups::{DeviceExecutor, HidDeviceCreator},
         watcher::UPSWatcherHandle,
     };
     use chrono::Utc;
@@ -890,7 +894,7 @@ mod test {
     ) -> anyhow::Result<()> {
         let (tx, rx) = broadcast::channel(8);
         let watcher_handle = UPSWatcherHandle { rx };
-        let executor = UPSExecutor::start()?;
+        let executor = DeviceExecutor::start(HidDeviceCreator::new()?)?;
 
         // Use in memory database for event pipelines
         let db = connect_database("sqlite::memory:").await;

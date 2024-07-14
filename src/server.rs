@@ -3,9 +3,10 @@ use crate::database;
 use crate::http::router;
 use crate::services::event_tracker::UPSEventTracker;
 use crate::services::history_tracker::UPSHistoryTracker;
-use crate::ups::UPSExecutor;
+use crate::ups::device::HidDeviceCreator;
+use crate::ups::DeviceExecutor;
 use crate::watcher::{UPSWatcher, UPSWatcherHandle};
-use crate::{action::EventPipelineRunner, ups::UPSExecutorHandle};
+use crate::{action::EventPipelineRunner, ups::DeviceExecutorHandle};
 use axum::{http::HeaderValue, Extension};
 use axum_session::{Key, SessionConfig, SessionLayer, SessionMode, SessionNullPool, SessionStore};
 use log::debug;
@@ -27,7 +28,7 @@ pub async fn run_server(config: Config, shutdown_rx: mpsc::Receiver<()>) -> anyh
     let database = database::init().await;
 
     // Start the executor
-    let executor = UPSExecutor::start()?;
+    let executor = DeviceExecutor::start(HidDeviceCreator::new()?)?;
 
     // Start an event watcher
     let watcher_handle = UPSWatcher::start(executor.clone());
@@ -85,7 +86,7 @@ pub async fn run_server(config: Config, shutdown_rx: mpsc::Receiver<()>) -> anyh
 /// Starts background services that depend on the app resources
 fn start_services(
     database: &DatabaseConnection,
-    executor: &UPSExecutorHandle,
+    executor: &DeviceExecutorHandle,
     watcher_handle: &UPSWatcherHandle,
 ) {
     // Start long term watcher that logs state to database

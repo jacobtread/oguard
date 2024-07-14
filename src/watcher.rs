@@ -1,6 +1,10 @@
 use crate::{
     database::entities::events::UPSEvent,
-    ups::{DevicePowerState, DeviceState, QueryDeviceState, UPSExecutorHandle},
+    ups::{
+        commands::QueryDeviceState,
+        executor::DeviceExecutorHandle,
+        models::{DevicePowerState, DeviceState},
+    },
 };
 use log::{error, info, warn};
 use std::time::Duration;
@@ -13,7 +17,7 @@ const POLL_INTERVAL: Duration = Duration::from_secs(3);
 /// Watcher that polls a UPS executor at fixed intervals
 /// to handle changes in the state
 pub struct UPSWatcher {
-    executor: UPSExecutorHandle,
+    executor: DeviceExecutorHandle,
     tx: broadcast::Sender<UPSEvent>,
     last_device_state: Option<DeviceState>,
 }
@@ -43,7 +47,7 @@ impl UPSWatcherHandle {
 }
 
 impl UPSWatcher {
-    pub fn start(executor: UPSExecutorHandle) -> UPSWatcherHandle {
+    pub fn start(executor: DeviceExecutorHandle) -> UPSWatcherHandle {
         let (tx, rx) = broadcast::channel(4);
         let watcher = Self {
             executor,
@@ -73,7 +77,7 @@ impl UPSWatcher {
     /// Requests the current device state from the executor and checks
     /// for any state changes, emits events for changed states
     pub async fn process_device_state(&mut self) {
-        let device_state = match self.executor.request(QueryDeviceState).await {
+        let device_state = match self.executor.send(QueryDeviceState).await {
             Ok(value) => value,
             Err(err) => {
                 error!("Error while requesting UPS device state: {err:?}");
