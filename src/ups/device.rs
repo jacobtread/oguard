@@ -107,48 +107,58 @@ impl Device for HidDevice {
 
 #[cfg(test)]
 pub mod test {
-    use std::sync::Arc;
-
-    use std::sync::Mutex;
+    use anyhow::Context;
+    use tokio::sync::broadcast;
+    use tokio::sync::mpsc;
 
     use super::Device;
     use super::DeviceCreator;
 
     /// Mocking responder implementation that lets you set
     /// the next response the [MockDevice] will respond with
-    #[derive(Default, Clone)]
-    pub struct MockDeviceResponder {
-        /// Next response to use
-        next: Arc<Mutex<String>>,
+    pub struct MockDeviceHandle {
+        /// Sender for the next response
+        tx: broadcast::Sender<String>,
+        /// Receiver for the next command
+        rx: mpsc::Receiver<String>,
     }
 
-    impl MockDeviceResponder {
-        /// Get the next response
-        pub fn next_response(&self) -> String {
-            self.next.lock().unwrap().clone()
+    impl MockDeviceHandle {
+        /// Set the next response
+        pub async fn next_response(&self, next: String) {
+            _ = self.tx.send(next);
         }
 
-        /// Set the next response
-        pub fn set_next_response(&self, next: String) {
-            *self.next.lock().unwrap() = next;
+        /// Await the next executed command
+        pub async fn next_command(&mut self) -> Option<String> {
+            self.rx.recv().await
         }
     }
 
     /// Creator for creating [MockDevice]s that will respond using
     /// the provided shared responder
     pub struct MockDeviceCreator {
-        responder: MockDeviceResponder,
+        /// Sender for command messages
+        tx: mpsc::Sender<String>,
+        /// Receiver for responses
+        rx: broadcast::Receiver<String>,
     }
 
     impl MockDeviceCreator {
         /// Create a new creator, provides the creator itself and the responder handle
-        pub fn new() -> (Self, MockDeviceResponder) {
-            let responder: MockDeviceResponder = Default::default();
+        pub fn new() -> (Self, MockDeviceHandle) {
+            let (tx_cmd, rx_cmd) = mpsc::channel(8);
+            let (tx_res, rx_res) = broadcast::channel(8);
+            let handle: MockDeviceHandle = MockDeviceHandle {
+                tx: tx_res,
+                rx: rx_cmd,
+            };
             let creator = Self {
-                responder: responder.clone(),
+                tx: tx_cmd,
+                rx: rx_res,
             };
 
-            (creator, responder)
+            (creator, handle)
         }
     }
 
@@ -156,23 +166,28 @@ pub mod test {
         type Output = MockDevice;
         fn try_create_device(&self) -> anyhow::Result<Self::Output> {
             Ok(MockDevice {
-                responder: self.responder.clone(),
+                tx: self.tx.clone(),
+                rx: self.rx.resubscribe(),
             })
         }
     }
 
     pub struct MockDevice {
-        responder: MockDeviceResponder,
+        /// Sender for command messages
+        tx: mpsc::Sender<String>,
+        /// Receiver for responses
+        rx: broadcast::Receiver<String>,
     }
 
     impl Device for MockDevice {
         type Creator = MockDeviceCreator;
 
         fn read_response(&mut self) -> anyhow::Result<String> {
-            Ok(self.responder.next_response())
+            self.rx.blocking_recv().context("missing response")
         }
 
-        fn write_command(&mut self, _cmd: &str) -> anyhow::Result<()> {
+        fn write_command(&mut self, cmd: &str) -> anyhow::Result<()> {
+            _ = self.tx.send(cmd.to_string());
             Ok(())
         }
     }
