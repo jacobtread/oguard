@@ -2,14 +2,15 @@ use anyhow::Context;
 use log::{debug, error};
 use std::env;
 use std::ffi::OsString;
-use std::process::Command;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use windows_service::service::{
-    ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus, ServiceType,
+    ServiceAccess, ServiceControl, ServiceControlAccept, ServiceErrorControl, ServiceExitCode,
+    ServiceInfo, ServiceStartType, ServiceState, ServiceStatus, ServiceType,
 };
 use windows_service::service_control_handler;
 use windows_service::service_control_handler::ServiceControlHandlerResult;
+use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 
 use crate::config::Config;
 use crate::{config, logging, server::run_server};
@@ -67,21 +68,30 @@ pub fn create_service() -> anyhow::Result<()> {
     debug!("creating service");
 
     // Get the path to the executable
-    let exe_path = env::current_exe().expect("Failed to get current executable path");
-    let exe_path = exe_path.display();
+    let executable_path = env::current_exe().context("failed to get current executable path")?;
 
-    // Create the service pointing to this executable
-    Command::new("sc")
-        .args([
-            "create",
-            SERVICE_NAME,
-            "start=",
-            "auto",
-            "binPath=",
-            &format!("\"{exe_path}\""),
-        ])
-        .output()
-        .context("failed to start service")?;
+    let manager =
+        ServiceManager::local_computer(None::<&str>, ServiceManagerAccess::CREATE_SERVICE)
+            .context("failed to access service manager")?;
+
+    // Create the service
+    manager
+        .create_service(
+            &ServiceInfo {
+                name: OsString::from(SERVICE_NAME),
+                display_name: OsString::from("OGuard"),
+                service_type: ServiceType::OWN_PROCESS,
+                start_type: ServiceStartType::AutoStart,
+                error_control: ServiceErrorControl::Normal,
+                executable_path,
+                launch_arguments: vec![],
+                dependencies: vec![],
+                account_name: None, // run as System
+                account_password: None,
+            },
+            ServiceAccess::QUERY_STATUS,
+        )
+        .context("failed to create service")?;
 
     Ok(())
 }
@@ -90,10 +100,16 @@ pub fn create_service() -> anyhow::Result<()> {
 pub fn start_service() -> anyhow::Result<()> {
     debug!("starting service");
 
-    Command::new("sc")
-        .args(["start", SERVICE_NAME])
-        .output()
+    let manager = ServiceManager::local_computer(None::<&str>, ServiceManagerAccess::CONNECT)
+        .context("failed to access service manager")?;
+
+    let service = manager
+        .open_service(SERVICE_NAME, ServiceAccess::START)
+        .context("failed to open service")?;
+    service
+        .start::<&str>(&[])
         .context("failed to start service")?;
+
     Ok(())
 }
 
@@ -101,10 +117,14 @@ pub fn start_service() -> anyhow::Result<()> {
 pub fn stop_service() -> anyhow::Result<()> {
     debug!("stopping service");
 
-    Command::new("sc")
-        .args(["stop", SERVICE_NAME])
-        .output()
-        .context("failed to stop service")?;
+    let manager = ServiceManager::local_computer(None::<&str>, ServiceManagerAccess::CONNECT)
+        .context("failed to access service manager")?;
+
+    let service = manager
+        .open_service(SERVICE_NAME, ServiceAccess::STOP)
+        .context("failed to open service")?;
+
+    service.stop().context("failed to stop service")?;
 
     Ok(())
 }
@@ -113,10 +133,14 @@ pub fn stop_service() -> anyhow::Result<()> {
 pub fn delete_service() -> anyhow::Result<()> {
     debug!("deleting service");
 
-    Command::new("sc")
-        .args(["delete", SERVICE_NAME])
-        .output()
-        .context("failed to stop service")?;
+    let manager = ServiceManager::local_computer(None::<&str>, ServiceManagerAccess::CONNECT)
+        .context("failed to access service manager")?;
+
+    let service = manager
+        .open_service(SERVICE_NAME, ServiceAccess::DELETE)
+        .context("failed to open service")?;
+
+    service.delete().context("failed to delete service")?;
 
     Ok(())
 }
