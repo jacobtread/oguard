@@ -861,6 +861,7 @@ mod test {
     use crate::{
         action::ExecutableAction,
         database::{connect_database, entities::events::UPSEvent},
+        logging::setup_test_logging,
         ups::UPSExecutor,
         watcher::UPSWatcherHandle,
     };
@@ -870,9 +871,7 @@ mod test {
     use tokio::{sync::broadcast, time::sleep};
 
     fn setup_tests() {
-        dotenvy::dotenv().unwrap();
-        env_logger::init();
-        log_panics::init();
+        setup_test_logging();
     }
 
     async fn test_pipeline(

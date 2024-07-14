@@ -664,9 +664,12 @@ mod test {
     use ordered_float::OrderedFloat;
     use tokio::time::sleep;
 
-    use crate::ups::{
-        execute_command, BatteryTest, DeviceCommand, DeviceLineType, DevicePowerState, DeviceState,
-        QueryDeviceState, UPSExecutor,
+    use crate::{
+        logging::setup_test_logging,
+        ups::{
+            execute_command, BatteryTest, DeviceCommand, DeviceLineType, DevicePowerState,
+            DeviceState, QueryDeviceState, UPSExecutor,
+        },
     };
 
     use super::{parse_device_battery, parse_device_state, DeviceBattery};
@@ -733,6 +736,8 @@ mod test {
     #[tokio::test]
     #[ignore]
     async fn test_battery_test() {
+        setup_test_logging();
+
         // Start the executor
         let executor = UPSExecutor::start().unwrap();
         executor.request(BatteryTest).await.unwrap();
@@ -751,8 +756,7 @@ mod test {
     #[tokio::test]
     #[ignore]
     async fn test_new_query() {
-        dotenvy::dotenv().unwrap();
-        env_logger::init();
+        setup_test_logging();
 
         // Start the executor
         let executor = UPSExecutor::start().unwrap();

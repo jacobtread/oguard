@@ -1,5 +1,8 @@
 locale = "en"
 
+[logging]
+level = "debug"
+
 [login]
 password = "admin"
 

@@ -5,9 +5,9 @@ use std::{
 };
 
 use anyhow::Context;
-use log::error;
+use log::{error, LevelFilter};
 use serde::Deserialize;
-use tokio::fs::read_to_string;
+use std::fs::read_to_string;
 
 pub type SharedConfig = Arc<Config>;
 
@@ -17,6 +17,7 @@ pub struct Config {
     pub locale: String,
     pub http: HttpConfig,
     pub login: LoginConfig,
+    pub logging: LoggingConfig,
 }
 
 impl Default for Config {
@@ -25,6 +26,22 @@ impl Default for Config {
             locale: "en".to_string(),
             http: Default::default(),
             login: Default::default(),
+            logging: Default::default(),
+        }
+    }
+}
+
+/// Configurations for the HTTP server
+#[derive(Debug, Deserialize)]
+#[serde(default)]
+pub struct LoggingConfig {
+    pub level: LevelFilter,
+}
+
+impl Default for LoggingConfig {
+    fn default() -> Self {
+        Self {
+            level: LevelFilter::Info,
         }
     }
 }
@@ -58,9 +75,9 @@ pub struct LoginConfig {
     pub password: Option<String>,
 }
 
-pub async fn load_default() -> Config {
+pub fn load_default() -> Config {
     let path = Path::new("config.toml");
-    match from_file(path).await {
+    match from_file(path) {
         Ok(value) => value,
         Err(err) => {
             error!("failed to load config file, using defaults: {err}");
@@ -69,8 +86,8 @@ pub async fn load_default() -> Config {
     }
 }
 
-pub async fn from_file(path: &Path) -> anyhow::Result<Config> {
-    let value = read_to_string(path).await.context("read config file")?;
+pub fn from_file(path: &Path) -> anyhow::Result<Config> {
+    let value = read_to_string(path).context("read config file")?;
     from_str(&value)
 }
 
