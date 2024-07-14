@@ -53,6 +53,9 @@ strum = { version = "0.26.3", features = ["derive"] }
 reqwest = "0.12.5"
 uuid = { version = "1.9.1", features = ["v4", "serde"] }
 system_shutdown = "4.0.1"
+axum_session = { version = "0.14.0" }
+
+toml = "0.8.14"
 
 # SeaORM 
 [dependencies.sea-orm]

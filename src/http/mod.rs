@@ -4,6 +4,7 @@ use axum::{
 };
 
 pub mod error;
+pub mod middleware;
 pub mod models;
 mod routes;
 
@@ -39,6 +40,9 @@ pub fn router() -> Router {
                 Router::new()
                     .route("/start", post(routes::test_battery_start))
                     .route("/cancel", post(routes::test_battery_cancel)),
-            ),
+            )
+            .route("/login", post(routes::login))
+            .route("/login-state", get(routes::login_state))
+            .route("/logout", post(routes::logout)),
     )
 }

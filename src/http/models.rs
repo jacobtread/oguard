@@ -1,5 +1,5 @@
 use sea_orm::prelude::DateTimeUtc;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{action::ActionPipeline, database::entities::events::UPSEvent};
 
@@ -23,4 +23,14 @@ pub struct UpdateEventPipeline {
     pub pipeline: Option<ActionPipeline>,
     pub cancellable: Option<bool>,
     pub enabled: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LoginRequest {
+    pub password: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct LoginStateResponse {
+    pub logged_in: bool,
 }

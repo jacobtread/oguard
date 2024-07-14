@@ -47,7 +47,6 @@ impl IntoResponse for DynHttpError {
         // Create the response body
         let body = Json(RawHttpError {
             reason: self.inner.reason(),
-            stack_trace: None,
         });
         let status = self.inner.status();
 
@@ -82,11 +81,6 @@ pub trait HttpError: Error + Send + Sync + 'static {
 }
 
 /// Wrapper around [anyhow::Error] allowing it to be used as a [HttpError]
-/// without exposing the details.
-///
-/// Treats the error as a generic error meaning its still logged but not
-/// used as the HTTP response, since anyhow errors may contain information
-/// that shouldn't be visible to the requester
 #[derive(Debug, Error)]
 #[error(transparent)]
 pub struct AnyhowHttpError(anyhow::Error);
@@ -99,7 +93,7 @@ impl HttpError for AnyhowHttpError {
 
     fn reason(&self) -> String {
         // Anyhow errors use a generic message
-        self.0.to_string()
+        format!("{:?}", self.0)
     }
 }
 
@@ -130,5 +124,4 @@ where
 #[serde(rename_all = "camelCase")]
 pub struct RawHttpError {
     pub reason: String,
-    pub stack_trace: Option<String>,
 }

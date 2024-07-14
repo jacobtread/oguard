@@ -1,6 +1,7 @@
 use std::convert::Infallible;
 use std::time::Duration;
 
+use crate::config::SharedConfig;
 use crate::database::entities::battery_history::BatteryHistoryModel;
 use crate::database::entities::event_pipeline::{
     EventPipelineId, EventPipelineModel, ListEventPipeline,
@@ -18,6 +19,7 @@ use axum::extract::{Path, Query};
 use axum::response::sse::{Event, KeepAlive};
 use axum::response::Sse;
 use axum::{Extension, Json};
+use axum_session::{ReadOnlySession, Session, SessionNullPool};
 use chrono::Utc;
 use futures::Stream;
 use reqwest::StatusCode;
@@ -25,7 +27,10 @@ use sea_orm::DatabaseConnection;
 use tokio_stream::StreamExt;
 
 use super::error::HttpStatusResult;
-use super::models::{CreateEventPipeline, RangeQuery, UpdateEventPipeline};
+use super::middleware::auth_gate::AuthGate;
+use super::models::{
+    CreateEventPipeline, LoginRequest, LoginStateResponse, RangeQuery, UpdateEventPipeline,
+};
 
 /// GET /api/device-state
 ///
@@ -123,6 +128,7 @@ pub async fn get_event_pipeline(
 ///
 /// Updates a event pipeline
 pub async fn update_event_pipeline(
+    _: AuthGate,
     Extension(db): Extension<DatabaseConnection>,
     Path(id): Path<EventPipelineId>,
     Json(request): Json<UpdateEventPipeline>,
@@ -150,6 +156,7 @@ pub async fn update_event_pipeline(
 ///
 /// Creates a new event pipeline
 pub async fn create_event_pipeline(
+    _: AuthGate,
     Extension(db): Extension<DatabaseConnection>,
     Json(request): Json<CreateEventPipeline>,
 ) -> HttpResult<EventPipelineModel> {
@@ -192,7 +199,10 @@ pub async fn events(
 /// POST /api/toggle-buzzer
 ///
 /// Toggle the UPS buzzer state
-pub async fn toggle_buzzer(Extension(executor): Extension<UPSExecutorHandle>) -> HttpStatusResult {
+pub async fn toggle_buzzer(
+    _: AuthGate,
+    Extension(executor): Extension<UPSExecutorHandle>,
+) -> HttpStatusResult {
     executor
         .request(ToggleBuzzer)
         .await
@@ -205,6 +215,7 @@ pub async fn toggle_buzzer(Extension(executor): Extension<UPSExecutorHandle>) ->
 ///
 /// Starts a 10s battery test
 pub async fn test_battery_start(
+    _: AuthGate,
     Extension(executor): Extension<UPSExecutorHandle>,
 ) -> HttpStatusResult {
     executor
@@ -219,6 +230,7 @@ pub async fn test_battery_start(
 ///
 /// Cancels a 10s battery test
 pub async fn test_battery_cancel(
+    _: AuthGate,
     Extension(executor): Extension<UPSExecutorHandle>,
 ) -> HttpStatusResult {
     executor
@@ -226,5 +238,49 @@ pub async fn test_battery_cancel(
         .await
         .context("cancel battery test request")?;
 
+    Ok(StatusCode::OK)
+}
+
+/// GET /api/login-state
+///
+/// Responds with the users current login state
+pub async fn login_state(
+    session: ReadOnlySession<SessionNullPool>,
+) -> HttpResult<LoginStateResponse> {
+    let logged_in = session.get::<String>("login").is_some();
+
+    Ok(Json(LoginStateResponse { logged_in }))
+}
+
+/// POST /api/login
+///
+/// Logs into the API so mutations can be made
+pub async fn login(
+    session: Session<SessionNullPool>,
+    Extension(config): Extension<SharedConfig>,
+    Json(LoginRequest { password }): Json<LoginRequest>,
+) -> HttpStatusResult {
+    // Get the credentials from the config
+    let expected_password = match  config.login.password.as_ref() {
+        Some(password ) => password,
+        _ => return Err(anyhow!("authentication is not setup for this server. please set a password in the configuration file").into()),
+    };
+
+    // Password doesn't match
+    if password.ne(expected_password) {
+        return Err(anyhow!("the provided password is incorrect").into());
+    }
+
+    session.set("login", "true".to_string());
+    session.set_store(true);
+
+    Ok(StatusCode::OK)
+}
+
+/// POST /api/logout
+///
+/// Logs out the user clearing their session
+pub async fn logout(session: Session<SessionNullPool>) -> HttpStatusResult {
+    session.clear();
     Ok(StatusCode::OK)
 }
