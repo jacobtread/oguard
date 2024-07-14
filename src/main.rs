@@ -8,9 +8,9 @@ pub mod config;
 pub mod database;
 pub mod http;
 pub mod logging;
-pub mod persistent_watcher;
 pub mod server;
 pub mod service;
+pub mod services;
 pub mod ups;
 pub mod watcher;
 

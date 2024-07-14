@@ -60,9 +60,9 @@ struct EventPipelineTask {
 impl EventPipelineRunner {
     /// Creates a new event pipeline runner
     pub fn new(
-        executor: UPSExecutorHandle,
         db: DatabaseConnection,
         watcher_handle: UPSWatcherHandle,
+        executor: UPSExecutorHandle,
     ) -> Self {
         Self {
             executor,
@@ -71,6 +71,15 @@ impl EventPipelineRunner {
             active_tasks: Default::default(),
             join_set: Default::default(),
         }
+    }
+
+    pub fn start(
+        db: DatabaseConnection,
+        watcher_handle: UPSWatcherHandle,
+        executor: UPSExecutorHandle,
+    ) {
+        let runner = Self::new(db, watcher_handle, executor);
+        tokio::spawn(runner.run());
     }
 
     /// Runs the event pipelines
@@ -897,7 +906,7 @@ mod test {
         .await?;
         debug!("spawning runner");
 
-        tokio::spawn(EventPipelineRunner::new(executor, db, watcher_handle).run());
+        tokio::spawn(EventPipelineRunner::new(db, watcher_handle, executor).run());
 
         debug!("sending event");
 

@@ -1,3 +1,7 @@
+//! Service that polls the UPS device at fixed intervals obtaining the
+//! current device state and battery persisting them to the database for
+//! historical tracking
+
 use crate::{
     database::entities::{battery_history::BatteryHistoryModel, state_history::StateHistoryModel},
     ups::{DeviceBattery, DeviceState, QueryDeviceBattery, QueryDeviceState, UPSExecutorHandle},
@@ -14,28 +18,27 @@ use tokio::{
 /// Interval between each device state poll
 const POLL_INTERVAL: Duration = Duration::from_secs(60);
 
-/// Watcher that polls a UPS executor at fixed intervals logging the state
-/// to the database
-pub struct UPSPersistentWatcher {
-    /// Executor to execute the requests
-    executor: UPSExecutorHandle,
+/// Tracks UPS history over time persisting it to the database
+pub struct UPSHistoryTracker {
     /// Database connection to store the data
     db: DatabaseConnection,
+    /// Executor to execute the requests
+    executor: UPSExecutorHandle,
     /// Last state response
     last_device_state: Option<DeviceState>,
     /// Last battery state response
     last_battery_state: Option<DeviceBattery>,
 }
 
-impl UPSPersistentWatcher {
-    pub fn start(executor: UPSExecutorHandle, db: DatabaseConnection) -> JoinHandle<()> {
-        let watcher = Self {
+impl UPSHistoryTracker {
+    pub fn start(db: DatabaseConnection, executor: UPSExecutorHandle) -> JoinHandle<()> {
+        let tracker = Self {
             executor,
             db,
             last_device_state: None,
             last_battery_state: None,
         };
-        tokio::spawn(watcher.process())
+        tokio::spawn(tracker.process())
     }
 
     /// Handle polling the device state at the expected interval

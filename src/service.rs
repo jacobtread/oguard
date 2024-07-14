@@ -17,15 +17,9 @@ use crate::{config, logging, server::run_server};
 pub const SERVICE_NAME: &str = "oguard";
 const SERVICE_TYPE: ServiceType = ServiceType::OWN_PROCESS;
 
+// Service entrypoint
 pub fn service_main(_arguments: Vec<OsString>) {
-    // Get the path to the executable
-    let exe_path = env::current_exe().expect("Failed to get current executable path");
-
-    // Navigate to the directory containing the executable
-    let exe_dir = exe_path.parent().expect("Failed to get parent directory");
-
-    // Set the working directory to the executable's directory
-    env::set_current_dir(exe_dir).expect("Failed to set current directory");
+    setup_working_directory().expect("failed to setup working directory");
 
     // Load the configuration
     let config = config::load_default();
@@ -36,6 +30,29 @@ pub fn service_main(_arguments: Vec<OsString>) {
     if let Err(err) = run_service(config) {
         error!("error running service: {err}")
     }
+}
+
+/// Sets up the working directory for the service.
+///
+/// Services run with the working directory set to C:/Windows/System32 which
+/// is not where we want to store and load our application files from. We
+/// replace this with the executable path
+fn setup_working_directory() -> anyhow::Result<()> {
+    // Get the path to the executable
+    let exe_path = env::current_exe().context("failed to get current executable path")?;
+
+    // Get the directory containing the executable
+    let exe_dir = exe_path
+        .parent()
+        .context("Failed to get parent directory")?;
+
+    // Set the working directory to the executable's directory
+    env::set_current_dir(exe_dir).context("failed to set current directory")?;
+
+    // Set the working directory to the executable's directory
+    env::set_current_dir(exe_dir).context("failed to set current directory")?;
+
+    Ok(())
 }
 
 /// Restarts the windows service
@@ -104,6 +121,7 @@ pub fn delete_service() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Runs the service and handles service events
 fn run_service(config: Config) -> anyhow::Result<()> {
     // Create a channel to be able to poll a stop event from the service worker loop.
     let (shutdown_tx, shutdown_rx) = mpsc::channel(1);
@@ -148,11 +166,13 @@ fn run_service(config: Config) -> anyhow::Result<()> {
         process_id: None,
     })?;
 
+    // Create the async runtime
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .expect("Failed building the Runtime");
 
+    // Block on the server future
     runtime.block_on(run_server(config, shutdown_rx))?;
 
     // Tell the system that service has stopped.
