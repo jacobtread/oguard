@@ -113,6 +113,7 @@ pub async fn get_event_pipelines(
 ///
 /// Requests a specific event pipeline
 pub async fn get_event_pipeline(
+    _: AuthGate,
     Extension(db): Extension<DatabaseConnection>,
     Path(id): Path<EventPipelineId>,
 ) -> HttpResult<EventPipelineModel> {
