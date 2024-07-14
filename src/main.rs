@@ -1,11 +1,12 @@
 use action::EventPipelineRunner;
-use axum::Extension;
+use axum::{http::HeaderValue, Extension};
 use axum_session::{Key, SessionConfig, SessionLayer, SessionMode, SessionNullPool, SessionStore};
 use chrono::Utc;
 use database::entities::events::EventModel;
 use http::router;
 use log::{debug, error};
 use persistent_watcher::UPSPersistentWatcher;
+use reqwest::{header, Method};
 use rust_i18n::{i18n, t};
 use sea_orm::DatabaseConnection;
 use std::{net::SocketAddr, sync::Arc};
@@ -63,13 +64,30 @@ async fn main() -> anyhow::Result<()> {
     let session_store = SessionStore::<SessionNullPool>::new(None, session_config).await?;
 
     // build our application with a single route
-    let app = router()
-        .layer(CorsLayer::permissive())
+    let mut app = router()
         .layer(SessionLayer::new(session_store))
         .layer(Extension(database))
         .layer(Extension(executor))
         .layer(Extension(watcher_handle))
         .layer(Extension(config.clone()));
+
+    // CORS layer required for development access
+    #[cfg(debug_assertions)]
+    {
+        app = app.layer(
+            CorsLayer::new()
+                .allow_methods([
+                    Method::GET,
+                    Method::POST,
+                    Method::PUT,
+                    Method::PATCH,
+                    Method::DELETE,
+                ])
+                .allow_headers([header::ACCEPT, header::CONTENT_TYPE])
+                .allow_origin("http://localhost:5173".parse::<HeaderValue>()?)
+                .allow_credentials(true),
+        )
+    }
 
     // Create the address to bind the server on
     let address = SocketAddr::new(config.http.host, config.http.port);
