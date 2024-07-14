@@ -1,7 +1,6 @@
 use anyhow::Context;
 use clap::{Args, Parser, Subcommand};
 use rust_i18n::i18n;
-use service::{restart_service, start_service, stop_service};
 use tokio::sync::mpsc;
 
 pub mod action;
@@ -27,6 +26,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Interact with the oguard system service
     Service(ServiceArgs),
 }
 
@@ -39,9 +39,16 @@ struct ServiceArgs {
 
 #[derive(Debug, Subcommand)]
 enum ServiceCommands {
+    /// Create the service (Will fail if the service is already created)
+    Create,
+    /// Start the service
     Start,
+    /// Stop the service
     Stop,
+    /// Restart the service
     Restart,
+    /// Delete the service
+    Delete,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -57,9 +64,11 @@ fn main() -> anyhow::Result<()> {
 
         return match command {
             Commands::Service(service) => match service.command {
-                ServiceCommands::Start => start_service(),
-                ServiceCommands::Stop => stop_service(),
-                ServiceCommands::Restart => restart_service(),
+                ServiceCommands::Create => service::create_service(),
+                ServiceCommands::Start => service::start_service(),
+                ServiceCommands::Stop => service::stop_service(),
+                ServiceCommands::Restart => service::restart_service(),
+                ServiceCommands::Delete => service::delete_service(),
             },
         };
     }

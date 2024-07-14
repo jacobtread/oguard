@@ -38,12 +38,38 @@ pub fn service_main(_arguments: Vec<OsString>) {
     }
 }
 
+/// Restarts the windows service
 pub fn restart_service() -> anyhow::Result<()> {
     stop_service()?;
     start_service()?;
     Ok(())
 }
 
+/// Creates a new windows service for the oguard exe using sc.exe
+pub fn create_service() -> anyhow::Result<()> {
+    debug!("creating service");
+
+    // Get the path to the executable
+    let exe_path = env::current_exe().expect("Failed to get current executable path");
+    let exe_path = exe_path.display();
+
+    // Create the service pointing to this executable
+    Command::new("sc")
+        .args([
+            "create",
+            SERVICE_NAME,
+            "start=",
+            "auto",
+            "binPath=",
+            &format!("\"{exe_path}\""),
+        ])
+        .output()
+        .context("failed to start service")?;
+
+    Ok(())
+}
+
+/// Starts the windows service
 pub fn start_service() -> anyhow::Result<()> {
     debug!("starting service");
 
@@ -54,11 +80,24 @@ pub fn start_service() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Stops the windows service
 pub fn stop_service() -> anyhow::Result<()> {
     debug!("stopping service");
 
     Command::new("sc")
         .args(["stop", SERVICE_NAME])
+        .output()
+        .context("failed to stop service")?;
+
+    Ok(())
+}
+
+/// Deletes the windows service
+pub fn delete_service() -> anyhow::Result<()> {
+    debug!("deleting service");
+
+    Command::new("sc")
+        .args(["delete", SERVICE_NAME])
         .output()
         .context("failed to stop service")?;
 

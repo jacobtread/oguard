@@ -15,20 +15,16 @@ Source: ".\target\release\oguard.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Create the service
 [Run]
-Filename: "sc.exe"; Parameters: "create oguard start= auto binPath= ""{app}\oguard.exe"""; StatusMsg: "Installing service..."; Flags: runhidden waituntilterminated
-
-; Setup service working directory
-[Run]
-Filename: "sc.exe"; Parameters: "config oguardWh obj= LocalSystem depend= """" start= auto AppDirectory= ""{app}"""; Flags: runhidden
+Filename: "{app}\oguard.exe"; Parameters: "service create"; StatusMsg: "Installing service..."; Flags: runhidden waituntilterminated
 
 ; Start the service
 [Run]
-Filename: "sc.exe"; Parameters: "start oguard"; StatusMsg: "Starting service..."; Flags: runhidden waituntilterminated
+Filename: "{app}\oguard.exe"; Parameters: "service start"; StatusMsg: "Starting service..."; Flags: runhidden waituntilterminated
 
 ; Define the uninstall procedure
 [UninstallRun]
-Filename: "sc.exe"; Parameters: "stop oguard"; StatusMsg: "Stopping service..."; Flags: runhidden waituntilterminated
-Filename: "sc.exe"; Parameters: "delete oguard"; StatusMsg: "Deleting service..."; Flags: runhidden waituntilterminated
+Filename: "{app}\oguard.exe"; Parameters: "service stop"; StatusMsg: "Stopping service..."; Flags: runhidden waituntilterminated
+Filename: "{app}\oguard.exe"; Parameters: "service delete"; StatusMsg: "Deleting service..."; Flags: runhidden waituntilterminated
 
 ; Optional: define the messages for the user
 [Messages]
