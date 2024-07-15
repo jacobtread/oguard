@@ -7,37 +7,37 @@
 	const removeTimeout = () => (config.timeout = null);
 </script>
 
-<p>Shutdown config</p>
-
-<div>
+<div class="field">
 	<h4>Message</h4>
 
-	<p>Message to show in the shutdown dialog, will only appear if a timeout is set</p>
+	<p class="field__description">
+		Message to show in the shutdown dialog, will only appear if a timeout is set
+	</p>
 
-	<input type="text" bind:value={config.message} />
+	<input class="input" type="text" bind:value={config.message} />
 </div>
 
-<div>
+<div class="field">
 	<h4>Timeout</h4>
 
-	<p>Timer shown on the device before the system will shutdown</p>
+	<p class="field__description">Timer shown on the device before the system will shutdown</p>
 
 	{#if config.timeout === null}
-		<button on:click={addTimeout}>Add Timeout</button>
+		<button class="button" on:click={addTimeout}>Add Timeout</button>
 	{:else}
-		<label>
+		<label class="field__label">
 			Seconds:
-			<input type="number" bind:value={config.timeout.secs} min="0" max="20" />
+			<input class="input" type="number" bind:value={config.timeout.secs} min="0" max="20" />
 		</label>
 
-		<button on:click={removeTimeout}>Remove Timeout</button>
+		<button class="button" on:click={removeTimeout}>Remove Timeout</button>
 	{/if}
 </div>
 
 <div>
 	<h4>Force close apps</h4>
 
-	<p>Forcefully terminate running apps to shutdown</p>
+	<p class="field__description">Forcefully terminate running apps to shutdown</p>
 
 	<input type="checkbox" bind:checked={config.force_close_apps} />
 </div>

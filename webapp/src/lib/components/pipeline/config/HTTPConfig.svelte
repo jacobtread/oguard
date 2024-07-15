@@ -42,77 +42,75 @@
 	$: headers, updateHeaders();
 </script>
 
-<p>HTTP config</p>
-
-<div>
+<div class="field">
 	<h4>URL</h4>
 
-	<p>URL to send the request to</p>
+	<p class="field__description">URL to send the request to</p>
 
-	<input type="text" bind:value={config.url} required />
+	<input class="input" type="url" bind:value={config.url} required />
 </div>
 
-<div>
+<div class="field">
 	<h4>Method</h4>
 
-	<p>HTTP method to use</p>
+	<p class="field__description">HTTP method to use</p>
 
-	<select bind:value={config.method}>
+	<select class="input" bind:value={config.method}>
 		{#each HTTP_METHODS as method}
 			<option value={method}>{method}</option>
 		{/each}
 	</select>
 </div>
 
-<div>
+<div class="field">
 	<h4>Headers</h4>
 
-	<p>Headers to put on the request</p>
+	<p class="field__description">Headers to put on the request</p>
 	<ul>
 		{#each headers as header, index}
 			<li>
-				<input type="text" bind:value={header[0]} required />
-				<input type="text" bind:value={header[1]} required />
+				<input class="input" type="text" bind:value={header[0]} required />
+				<input class="input" type="text" bind:value={header[1]} required />
 
 				{#if headers.length > 0}
-					<button on:click={() => removeHeader(index)}>Remove</button>
+					<button class="button" on:click={() => removeHeader(index)}>Remove</button>
 				{/if}
 			</li>
 		{/each}
 	</ul>
 
-	<button on:click={addHeader}>Add Header</button>
+	<button class="button" on:click={addHeader}>Add Header</button>
 </div>
 
-<div>
+<div class="field">
 	<h4>Body</h4>
 
-	<p>
+	<p class="field__description">
 		Add a request body to send, will only be used for POST, PUT, PATCH, and DELETE requests supports
 		OGuard variables
 	</p>
 
 	{#if config.body === null}
-		<button on:click={addBody}>Add Body</button>
+		<button class="button" on:click={addBody}>Add Body</button>
 	{:else}
-		<textarea name="" id="" bind:value={config.body.payload}></textarea>
-		<input name="" id="" bind:value={config.body.content_type} />
-		<button on:click={removeBody}>Remove Body</button>
+		<textarea class="input" name="" id="" bind:value={config.body.payload}></textarea>
+		<input class="input" name="" id="" bind:value={config.body.content_type} />
+		<button class="button" on:click={removeBody}>Remove Body</button>
 	{/if}
 </div>
 
-<div>
+<div class="field">
 	<h4>Timeout</h4>
 
-	<p>
+	<p class="field__description">
 		If the request/response takes longer than this timeout the request will fail and be considered a
 		failed run
 	</p>
 
 	{#if config.timeout === null}
-		<button on:click={addTimeout}>Add Timeout</button>
+		<button class="button" on:click={addTimeout}>Add Timeout</button>
 	{:else}
 		<DurationInput bind:duration={config.timeout} />
-		<button on:click={removeTimeout}>Remove Timeout</button>
+		<button class="button" on:click={removeTimeout}>Remove Timeout</button>
 	{/if}
 </div>

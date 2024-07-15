@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ActionRepeat } from '$lib/api/types';
-	import DurationInput from '../DurationInput.svelte';
+	import DurationInput from '../../DurationInput.svelte';
 
 	export let repeat: ActionRepeat;
 
@@ -14,59 +14,61 @@
 	const removeLimit = () => (repeat.limit = null);
 </script>
 
-<p>
+<p class="field__description">
 	The initial execution of the action will happen in the defined order, any repeated executions will
 	not maintain order and will run when one of their conditions is met
 </p>
 
-<p>
+<p class="field__description">
 	Providing multiple repeat conditions will repeat the action when any of the conditions are met
 </p>
 
-<div>
+<div class="field">
 	<h4>Fixed Interval</h4>
 
-	<p>Repeat the action at a fixed timing interval</p>
+	<p class="field__description">Repeat the action at a fixed timing interval</p>
 
 	{#if repeat.interval === null}
-		<button on:click={addFixedInterval}>Add Fixed Interval</button>
+		<button class="button" on:click={addFixedInterval}>Add Fixed Interval</button>
 	{:else}
 		<DurationInput bind:duration={repeat.interval} />
-		<button on:click={removeFixedInterval}>Remove Fixed Interval</button>
+		<button class="button" on:click={removeFixedInterval}>Remove Fixed Interval</button>
 	{/if}
 </div>
 
-<div>
+<div class="field">
 	<h4>Capacity Decrease %</h4>
 
-	<p>Run the action whenever the UPS battery goes down by a specific percentage</p>
+	<p class="field__description">
+		Run the action whenever the UPS battery goes down by a specific percentage
+	</p>
 
 	{#if repeat.capacity_decrease === null}
-		<button on:click={addCapacityDecrease}>Add Capacity Decrease</button>
+		<button class="button" on:click={addCapacityDecrease}>Add Capacity Decrease</button>
 	{:else}
-		<label>
+		<label class="field__label">
 			Capacity:
-			<input type="number" bind:value={repeat.capacity_decrease} min="0" max="100" />
+			<input class="input" type="number" bind:value={repeat.capacity_decrease} min="0" max="100" />
 		</label>
-		<button on:click={removeCapacityDecrease}>Remove Capacity Decrease</button>
+		<button class="button" on:click={removeCapacityDecrease}>Remove Capacity Decrease</button>
 	{/if}
 </div>
 
-<div>
+<div class="field">
 	<h4>Limit</h4>
 
-	<p>
+	<p class="field__description">
 		Set a limit on how many times this action will repeat, an action will repeat indefinitely
 		without a limit
 	</p>
 
 	{#if repeat.limit === null}
-		<button on:click={addLimit}>Add Limit</button>
+		<button class="button" on:click={addLimit}>Add Limit</button>
 	{:else}
 		<label>
 			Limit:
-			<input type="number" bind:value={repeat.limit} min="0" />
+			<input class="input" type="number" bind:value={repeat.limit} min="0" />
 		</label>
-		<button on:click={removeLimit}>Remove Limit</button>
+		<button class="button" on:click={removeLimit}>Remove Limit</button>
 	{/if}
 </div>

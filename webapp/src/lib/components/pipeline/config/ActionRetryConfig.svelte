@@ -6,7 +6,7 @@
 		type ActionRetry
 	} from '$lib/api/types';
 	import { Select } from 'bits-ui';
-	import DurationInput from '../DurationInput.svelte';
+	import DurationInput from '../../DurationInput.svelte';
 	import { _ } from 'svelte-i18n';
 
 	export let retry: ActionRetry;
@@ -28,10 +28,10 @@
 	}
 </script>
 
-<div>
+<div class="field">
 	<h4>Retry Delay</h4>
 
-	<p>Method of delaying the next retry attempt</p>
+	<p class="field__description">Method of delaying the next retry attempt</p>
 
 	<Select.Root items={options} onSelectedChange={onChangeType} {selected}>
 		<Select.Trigger>{$_(`action.retry_keys.${retry.delay.type}.label`)}</Select.Trigger>
@@ -47,57 +47,55 @@
 		</Select.Content>
 		<Select.Input value={retry.delay.type} />
 	</Select.Root>
-
-	{#if retry.delay.type === ActionRetryDelayKey.Fixed}
-		<div>
-			<h4>Fixed Duration</h4>
-
-			<p>Maximum number of times to retry before failing</p>
-
-			<DurationInput bind:duration={retry.delay.delay} />
-		</div>
-	{:else if retry.delay.type === ActionRetryDelayKey.LinearBackoff}
-		<div>
-			<h4>Initial Delay</h4>
-
-			<p>Starting delay to wait before first retry</p>
-
-			<DurationInput bind:duration={retry.delay.initial} />
-		</div>
-		<div>
-			<h4>Increment</h4>
-
-			<p>Amount to increase by after each failed attempt</p>
-
-			<DurationInput bind:duration={retry.delay.increment} />
-		</div>
-	{:else if retry.delay.type === ActionRetryDelayKey.ExponentialBackoff}
-		<div>
-			<h4>Initial Delay</h4>
-
-			<p>Starting delay to wait before first retry</p>
-
-			<DurationInput bind:duration={retry.delay.initial} />
-		</div>
-		<div>
-			<h4>Exponent</h4>
-
-			<p>Exponent to multiply the previous delay by</p>
-
-			<input bind:value={retry.delay.exponent} min="2" />
-		</div>
-	{/if}
 </div>
 
-<div>
+{#if retry.delay.type === ActionRetryDelayKey.Fixed}
+	<div class="field">
+		<h4>Fixed Duration</h4>
+
+		<p class="field__description">Maximum number of times to retry before failing</p>
+
+		<DurationInput bind:duration={retry.delay.delay} />
+	</div>
+{:else if retry.delay.type === ActionRetryDelayKey.LinearBackoff}
+	<div class="field">
+		<h4>Initial Delay</h4>
+
+		<p class="field__description">Starting delay to wait before first retry</p>
+
+		<DurationInput bind:duration={retry.delay.initial} />
+	</div>
+	<div class="field">
+		<h4>Increment</h4>
+
+		<p class="field__description">Amount to increase by after each failed attempt</p>
+
+		<DurationInput bind:duration={retry.delay.increment} />
+	</div>
+{:else if retry.delay.type === ActionRetryDelayKey.ExponentialBackoff}
+	<div class="field">
+		<h4>Initial Delay</h4>
+
+		<p class="field__description">Starting delay to wait before first retry</p>
+
+		<DurationInput bind:duration={retry.delay.initial} />
+	</div>
+	<div class="field">
+		<h4>Exponent</h4>
+
+		<p class="field__description">Exponent to multiply the previous delay by</p>
+
+		<input bind:value={retry.delay.exponent} min="2" />
+	</div>
+{/if}
+
+<div class="field">
 	<h4>Max Attempts</h4>
 
-	<p>Maximum number of times to retry before failing</p>
+	<p class="field__description">Maximum number of times to retry before failing</p>
 
-	<label>
-		Max Attempts:
-		<input type="number" bind:value={retry.max_attempts} min="1" />
-	</label>
+	<label class="field__label" for="maxAttempts"> Max Attempts: </label>
+	<input id="maxAttempts" class="input" type="number" bind:value={retry.max_attempts} min="1" />
 </div>
 
 <style lang="scss">
