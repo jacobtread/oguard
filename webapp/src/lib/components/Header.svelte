@@ -8,6 +8,10 @@
 	import PipelineIcon from '~icons/solar/square-sort-horizontal-bold-duotone';
 	import { page } from '$app/stores';
 	import { _ } from 'svelte-i18n';
+	import LogoutButton from './LogoutButton.svelte';
+	import { createLoginStateQuery } from '$lib/api/login';
+
+	const loginStateQuery = createLoginStateQuery();
 </script>
 
 <div class="header">
@@ -67,6 +71,12 @@
 			</li>
 		</ul>
 	</nav>
+
+	{#if $loginStateQuery.data !== undefined && $loginStateQuery.data.logged_in}
+		<div class="end-actions">
+			<LogoutButton />
+		</div>
+	{/if}
 </div>
 
 <style lang="scss">
@@ -83,6 +93,14 @@
 		flex-flow: row;
 		gap: 1rem;
 		padding-left: 1rem;
+	}
+
+	.end-actions {
+		padding-right: 0.5rem;
+	}
+
+	.nav {
+		flex: auto;
 	}
 
 	.nav-list {

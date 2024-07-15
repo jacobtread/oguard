@@ -1,0 +1,36 @@
+<script lang="ts">
+	import { _ } from 'svelte-i18n';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { HttpMethod, requestText } from '$lib/api/utils';
+	import type { LoginRequest } from '$lib/api/types';
+
+	const client = useQueryClient();
+
+	export let open = true;
+	export let onClose: () => void = () => (open = false);
+
+	// Mutation to update the player details
+	const logoutMutation = createMutation({
+		mutationFn: async () =>
+			await requestText<LoginRequest>({
+				method: HttpMethod.POST,
+				route: `/api/logout`
+			}),
+
+		// Invalidate the current player details
+		onSuccess: () => {
+			client.invalidateQueries({ queryKey: ['login-state'] });
+			onClose();
+		}
+	});
+</script>
+
+<button
+	disabled={$logoutMutation.isPending}
+	class="button"
+	on:click={() => $logoutMutation.mutate()}>{$_('logout')}</button
+>
+
+<style lang="scss">
+	@use '../styles/palette.scss' as palette;
+</style>

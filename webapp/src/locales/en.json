@@ -14,6 +14,8 @@
     "input_voltage": "Input: {voltage}",
     "output_voltage": "Output: {voltage}",
     "login": "Login",
+    "login_description": "This area is protected. You must login to access this page",
+    "logout": "Logout",
     "event": {
         "columns": {
             "level": "Level",

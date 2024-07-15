@@ -1,17 +1,8 @@
 <script lang="ts">
-	import { createQuery } from '@tanstack/svelte-query';
-	import { HttpMethod, requestJson } from '$lib/api/utils';
-	import type { LoginState } from '$lib/api/types';
 	import LoginDialog from './LoginDialog.svelte';
+	import { createLoginStateQuery } from '$lib/api/login';
 
-	const loginStateQuery = createQuery<LoginState>({
-		queryKey: ['login-state'],
-		queryFn: async () =>
-			await requestJson<LoginState>({
-				method: HttpMethod.GET,
-				route: '/api/login-state'
-			})
-	});
+	const loginStateQuery = createLoginStateQuery();
 </script>
 
 {#if $loginStateQuery.isError}

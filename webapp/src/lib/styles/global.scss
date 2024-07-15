@@ -25,6 +25,20 @@
 	padding: 1rem;
 }
 
+.field {
+	display: flex;
+	flex-flow: column;
+	gap: 0.5rem;
+}
+
+.field__label {
+	font-size: 0.9rem;
+	color: palette.$gray-900;
+}
+
+.field__input {
+}
+
 .input {
 	padding: 0.5rem 0.75rem;
 	font-size: 0.9rem;
