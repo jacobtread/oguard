@@ -3,6 +3,8 @@ use axum::{
     Router,
 };
 
+use crate::ups::device::DefaultDevice;
+
 mod auth;
 mod history;
 mod pipelines;
@@ -13,8 +15,11 @@ pub fn router() -> Router {
     Router::new().nest(
         "/api",
         Router::new()
-            .route("/device-state", get(state::device_state))
-            .route("/battery-state", get(state::device_battery))
+            .route("/device-state", get(state::device_state::<DefaultDevice>))
+            .route(
+                "/battery-state",
+                get(state::device_battery::<DefaultDevice>),
+            )
             .route("/events", get(state::events))
             .nest(
                 "/history",

@@ -1,6 +1,6 @@
 use super::{
     command::{FromDeviceResponse, IntoDeviceCommand, ResponseCache},
-    device::{Device, DeviceCreator},
+    device::{DefaultDevice, Device, DeviceCreator},
 };
 use anyhow::{anyhow, Context};
 use hidapi::{HidDevice, HidError};
@@ -21,7 +21,7 @@ pub struct DeviceCommand<R: FromDeviceResponse> {
 }
 
 /// Executor that can run commands on a device
-pub struct DeviceExecutor<D: Device = HidDevice> {
+pub struct DeviceExecutor<D: Device = DefaultDevice> {
     /// Device to execute commands on
     device: D,
 
@@ -114,7 +114,7 @@ impl<D: Device> DeviceExecutor<D> {
 }
 
 /// Handle to a [DeviceExecutor] for sending commands
-pub struct DeviceExecutorHandle<D: Device = HidDevice> {
+pub struct DeviceExecutorHandle<D: Device = DefaultDevice> {
     /// Channel to send commands
     tx: mpsc::Sender<DeviceCommandDyn<D>>,
 }

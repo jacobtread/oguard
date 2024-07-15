@@ -1,6 +1,8 @@
 use anyhow::Context;
 use hidapi::{HidApi, HidDevice};
 
+pub type DefaultDevice = HidDevice;
+
 /// Creator for devices
 pub trait DeviceCreator: Sized + Send + 'static {
     type Output: Device;
@@ -125,7 +127,7 @@ pub mod test {
 
     impl MockDeviceHandle {
         /// Set the next response
-        pub async fn next_response(&self, next: String) {
+        pub fn next_response(&self, next: String) {
             _ = self.tx.send(next);
         }
 
@@ -187,7 +189,7 @@ pub mod test {
         }
 
         fn write_command(&mut self, cmd: &str) -> anyhow::Result<()> {
-            _ = self.tx.send(cmd.to_string());
+            _ = self.tx.blocking_send(cmd.to_string());
             Ok(())
         }
     }
