@@ -3,7 +3,7 @@ use super::{
     device::{DefaultDevice, Device, DeviceCreator},
 };
 use anyhow::{anyhow, Context};
-use hidapi::{HidDevice, HidError};
+use hidapi::HidError;
 use log::{error, info, warn};
 use std::time::Duration;
 use tokio::sync::{mpsc, oneshot};
