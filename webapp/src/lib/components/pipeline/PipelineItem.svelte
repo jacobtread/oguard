@@ -131,6 +131,11 @@
 		margin-bottom: 0.25rem;
 	}
 
+	.item__timestamps {
+		display: flex;
+		gap: 0.5rem;
+	}
+
 	// Pipeline item timestamps list
 	.item__timestamp {
 		font-size: 0.9rem;
