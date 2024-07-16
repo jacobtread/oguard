@@ -1,7 +1,5 @@
-import { base } from '$app/paths';
-
 // Base url segment
-const BASE_URL = import.meta.env.VITE_SERVER_URL ?? `${base}/api/`;
+const BASE_URL = import.meta.env.VITE_SERVER_URL ?? `${window.location.origin}/api/`;
 
 // Constant enum for the different HTTP verbs
 export const enum HttpMethod {
@@ -42,6 +40,7 @@ async function requestInner<B>(config: RequestConfig<B>): Promise<Response> {
 		const url = new URL(config.route, BASE_URL);
 		response = await fetch(url, init);
 	} catch (error) {
+		console.error(error);
 		throw new Error('Failed to connect', { cause: error });
 	}
 
