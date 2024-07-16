@@ -18,6 +18,7 @@
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { HttpMethod, requestJson } from '$lib/api/utils';
+	import { toast } from 'svelte-sonner';
 
 	let eventType: EventType = EventType.ACFailure;
 	let name: string = '';
@@ -55,6 +56,8 @@
 			goto(`${base}/pipelines`);
 
 			client.invalidateQueries({ queryKey: ['event-pipelines'] });
+
+			toast.info('Created new pipeline.');
 		}
 	});
 </script>

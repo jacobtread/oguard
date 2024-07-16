@@ -14,6 +14,7 @@
 	import timezone from 'dayjs/plugin/timezone';
 	import Header from '$lib/components/Header.svelte';
 	import { getLocaleFromNavigator, init, register } from 'svelte-i18n';
+	import { Toaster } from 'svelte-sonner';
 
 	register('en', () => import('../locales/en.json'));
 
@@ -86,6 +87,8 @@
 	{:catch error}
 		<p>Failed to load translations: {error.messages}</p>
 	{/await}
+
+	<Toaster />
 
 	<SvelteQueryDevtools />
 </QueryClientProvider>
