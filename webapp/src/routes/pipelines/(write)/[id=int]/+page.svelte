@@ -1,17 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import type { EventPipeline, Action, UpdateEventPipeline } from '$lib/api/types';
+	import type { EventPipeline } from '$lib/api/types';
 	import { HttpMethod, requestJson } from '$lib/api/utils';
-	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
-	import { base } from '$app/paths';
-	import ActionItem from '$lib/components/pipeline/ActionItem.svelte';
-	import CreateActionForm from '$lib/components/pipeline/CreateActionForm.svelte';
-	import EditActionForm from '$lib/components/pipeline/EditActionForm.svelte';
-
-	let addAction = false;
-	let editAction: number | null = null;
-
-	const client = useQueryClient();
+	import { createQuery } from '@tanstack/svelte-query';
+	import PipelineNewEditForm from '$lib/components/pipeline/PipelineNewEditForm.svelte';
 
 	$: pipelineId = parseInt($page.params.id);
 
@@ -24,189 +16,13 @@
 			}),
 		retry: false
 	});
-
-	// Mutation to update the player details
-	$: updateMutation = createMutation({
-		mutationFn: async ({ name, pipeline, cancellable }: UpdateEventPipeline) =>
-			await requestJson<EventPipeline, UpdateEventPipeline>({
-				method: HttpMethod.PUT,
-				route: `/api/event-pipelines/${pipelineId}`,
-				body: { name, pipeline, cancellable }
-			}),
-
-		// Invalidate the current player details
-		onSuccess: () => {
-			client.invalidateQueries({ queryKey: ['event-pipelines'] });
-		}
-	});
-
-	let actions: Action[] = [];
-
-	$: {
-		let actions = $pipelineQuery.data?.pipeline.actions ?? [];
-		setActions([...actions]);
-	}
-
-	$: editingAction = editAction === null ? null : actions[editAction];
-
-	const setActions = (values: Action[]) => {
-		actions = [...values];
-	};
-
-	const removeAction = (index: number) => {
-		actions.splice(index, 1);
-		actions = actions;
-	};
-
-	const onReset = () => {
-		actions = [...($pipelineQuery.data?.pipeline.actions ?? [])];
-	};
 </script>
 
-<div class="wrapper">
-	<div class="container">
-		{#if $pipelineQuery.isPending}
-			Loading...
-		{:else if $pipelineQuery.error}
-			An error has occurred:
-			{$pipelineQuery.error.message}
-		{:else if $pipelineQuery.isSuccess}
-			{@const pipeline = $pipelineQuery.data}
-
-			<div class="container__header">
-				<h2 class="title">Editing Pipeline <span class="pipeline-name">{pipeline.name}</span></h2>
-			</div>
-			<div class="container__content">
-				{#each actions as action, index}
-					<ActionItem
-						{index}
-						item={action}
-						onEdit={() => (editAction = index)}
-						onRemove={() => removeAction(index)}
-					/>
-				{:else}
-					<p class="empty">
-						You don't have any actions in this pipeline, press <b>Add Action</b> to add an action
-					</p>
-				{/each}
-			</div>
-			<div class="container__footer">
-				<div class="container__footer__actions">
-					<button class="button" on:click={() => (addAction = true)}>Add Action</button>
-					<div style="flex: auto;"></div>
-					<button
-						class="button"
-						on:click={() => {
-							$updateMutation.mutate({
-								name: $pipelineQuery.data.name,
-								cancellable: $pipelineQuery.data.cancellable,
-								pipeline: {
-									actions
-								}
-							});
-						}}>Save</button
-					>
-					<button class="button button--secondary" on:click={onReset}>Reset</button>
-					<a class="button button--secondary" href="{base}/pipelines">Back</a>
-				</div>
-			</div>
-		{/if}
-	</div>
-</div>
-
-{#if addAction}
-	<CreateActionForm
-		onSubmit={(action) => {
-			addAction = false;
-			actions.push(action);
-			actions = actions;
-		}}
-		onCancel={() => (addAction = false)}
-	/>
+{#if $pipelineQuery.isPending}
+	Loading...
+{:else if $pipelineQuery.error}
+	An error has occurred:
+	{$pipelineQuery.error.message}
+{:else if $pipelineQuery.isSuccess}
+	<PipelineNewEditForm existing={$pipelineQuery.data} />
 {/if}
-
-{#if editingAction !== null && editAction !== null}
-	<EditActionForm
-		action={editingAction}
-		onSubmit={(action) => {
-			if (editAction !== null) {
-				actions[editAction] = action;
-				actions = actions;
-			}
-
-			editAction = null;
-		}}
-		onCancel={() => (editAction = null)}
-	/>
-{/if}
-
-<style lang="scss">
-	@use '../../../../lib/styles/palette.scss' as palette;
-
-	$borderWidth: 0.1rem;
-	$borderStyle: solid;
-	$borderColor: #dfe3e8;
-	$border: $borderWidth $borderStyle $borderColor;
-
-	.wrapper {
-		padding: 1rem;
-	}
-
-	.container {
-		width: 100%;
-		max-width: 70rem;
-		margin: 0 auto;
-
-		background-color: #fff;
-		border: $border;
-		border-radius: 0.25rem;
-	}
-
-	.container__header {
-		display: flex;
-		padding: 1rem;
-
-		justify-content: space-between;
-		align-items: center;
-
-		border-bottom: $border;
-	}
-
-	.container__footer {
-		display: flex;
-		padding: 1rem;
-
-		justify-content: space-between;
-
-		border-top: $border;
-	}
-
-	.container__footer__actions {
-		display: flex;
-		flex: auto;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	.container__content {
-	}
-
-	.title {
-		font-size: 1.25rem;
-		color: palette.$gray-800;
-	}
-
-	.pipeline-name {
-		background-color: palette.$gray-200;
-		padding: 0.5rem;
-		margin-left: 0.25rem;
-		font-size: 0.9rem;
-		border-radius: 0.25rem;
-	}
-
-	.empty {
-		display: block;
-		padding: 1rem;
-		color: palette.$gray-800;
-	}
-</style>

@@ -1,0 +1,431 @@
+<script lang="ts">
+	import {
+		type EventPipeline,
+		type Action,
+		type UpdateEventPipeline,
+		EventLevel,
+		EVENT_TYPES,
+		EVENT_TYPE_DATA,
+		EventType,
+		type CreateEventPipeline
+	} from '$lib/api/types';
+	import { HttpMethod, requestJson } from '$lib/api/utils';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { base } from '$app/paths';
+	import ActionItem from '$lib/components/pipeline/ActionItem.svelte';
+	import CreateActionForm from '$lib/components/pipeline/CreateActionForm.svelte';
+	import EditActionForm from '$lib/components/pipeline/EditActionForm.svelte';
+	import { Combobox, Label, Switch } from 'bits-ui';
+	import InfoIcon from '~icons/solar/info-circle-bold-duotone';
+	import WarningIcon from '~icons/solar/danger-triangle-bold-duotone';
+	import ErrorIcon from '~icons/solar/bug-bold-duotone';
+	import SuccessIcon from '~icons/solar/check-circle-bold-duotone';
+	import { _ } from 'svelte-i18n';
+	import { toast } from 'svelte-sonner';
+	import { goto } from '$app/navigation';
+
+	// Existing pipeline to edit if editing
+	export let existing: EventPipeline | undefined = undefined;
+
+	let addAction = false;
+	let editAction: number | null = null;
+
+	const client = useQueryClient();
+
+	type UpdateData = { id: number; data: UpdateEventPipeline };
+
+	type CreateData = { data: CreateEventPipeline };
+
+	// Mutation to update an existing pipeline
+	const updateMutation = createMutation({
+		mutationFn: async ({ id, data }: UpdateData) =>
+			await requestJson<EventPipeline, UpdateEventPipeline>({
+				method: HttpMethod.PUT,
+				route: `/api/event-pipelines/${id}`,
+				body: data
+			}),
+
+		// Invalidate the current player details
+		onSuccess: () => {
+			client.invalidateQueries({ queryKey: ['event-pipelines'] });
+		}
+	});
+
+	// Mutation to create the pipeline
+	const createPipelineMutation = createMutation({
+		mutationFn: async ({ data }: CreateData) =>
+			await requestJson<EventPipeline, CreateEventPipeline>({
+				method: HttpMethod.POST,
+				route: '/api/event-pipelines',
+				body: data
+			}),
+
+		onSuccess: () => {
+			goto(`${base}/pipelines`);
+
+			client.invalidateQueries({ queryKey: ['event-pipelines'] });
+
+			toast.info('Created new pipeline.');
+		}
+	});
+
+	let eventType: EventType = EventType.ACFailure;
+	let name: string = '';
+	let cancellable: boolean = false;
+	let actions: Action[] = [];
+
+	$: {
+		setDefaultState(existing);
+	}
+
+	$: editingAction = editAction === null ? null : actions[editAction];
+
+	const removeAction = (index: number) => {
+		actions.splice(index, 1);
+		actions = actions;
+	};
+
+	const setDefaultState = (existing?: EventPipeline) => {
+		if (existing) {
+			eventType = existing.event;
+			name = existing.name;
+			cancellable = existing.cancellable;
+			actions = [...existing.pipeline.actions];
+		} else {
+			eventType = EventType.ACFailure;
+			name = '';
+			cancellable = false;
+			actions = [];
+		}
+	};
+
+	$: values = EVENT_TYPES.map((eventType) => ({
+		value: eventType,
+		label: $_(`events.${eventType}.label`),
+		description: $_(`events.${eventType}.description`)
+	}));
+
+	let inputValue = '';
+	let touchedInput = false;
+
+	$: filteredValues =
+		inputValue && touchedInput
+			? values.filter((value) => value.label.toLowerCase().includes(inputValue.toLowerCase()))
+			: values;
+</script>
+
+<div class="wrapper">
+	<div class="container">
+		<div class="container__header">
+			<h2 class="title">
+				{#if existing !== undefined}
+					Editing Pipeline <span class="pipeline-name">{existing.name}</span>
+				{:else}
+					Create Event Pipeline
+				{/if}
+			</h2>
+		</div>
+
+		<div class="container__content settings">
+			{#if existing === undefined}
+				<div class="field">
+					<h3 class="field__name">Event</h3>
+					<div class="field__content">
+						<Label.Root
+							id="eventTypeLabel"
+							for="eventType"
+							class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+						>
+							Choose an event this pipeline should run on
+						</Label.Root>
+						<Combobox.Root items={filteredValues} bind:inputValue bind:touchedInput>
+							<Combobox.Input placeholder="Select an event">Test</Combobox.Input>
+							<Combobox.Label id="eventType" />
+
+							<Combobox.Content sideOffset={8} sameWidth={false} class="flex flex-col gap-4">
+								{#each filteredValues as eventType}
+									{@const typeData = EVENT_TYPE_DATA[eventType.value]}
+									{#if typeData !== undefined}
+										<Combobox.Item value={eventType.value}>
+											<Combobox.ItemIndicator />
+											<div class="event-item">
+												<div class="event-item__icon">
+													{#if typeData.level === EventLevel.Info}
+														<span class="level level--info">
+															<InfoIcon />
+														</span>
+													{:else if typeData.level === EventLevel.Success}
+														<span class="level level--success">
+															<SuccessIcon />
+														</span>
+													{:else if typeData.level === EventLevel.Warning}
+														<span class="level level--warning">
+															<WarningIcon />
+														</span>
+													{:else if typeData.level === EventLevel.Severe}
+														<span class="level level--severe">
+															<ErrorIcon />
+														</span>
+													{/if}
+												</div>
+
+												<div class="event-item__text">
+													<p class="event-item__label">{eventType.label}</p>
+													<p class="event-item__description">{eventType.description}</p>
+												</div>
+											</div>
+										</Combobox.Item>
+									{/if}
+								{:else}
+									<span> No results found </span>
+								{/each}
+							</Combobox.Content>
+							<Combobox.Arrow />
+							<Combobox.HiddenInput bind:value={eventType} />
+						</Combobox.Root>
+					</div>
+				</div>
+			{/if}
+
+			<div class="field">
+				<h3 class="field__name">Name</h3>
+				<div class="field__content">
+					<Label.Root
+						id="eventTypeLabel"
+						for="eventType"
+						class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+					>
+						Choose a name for this pipeline
+					</Label.Root>
+					<input class="input" id="name" type="text" required maxlength="100" bind:value={name} />
+				</div>
+			</div>
+			<div class="field">
+				<h3 class="field__name">Cancellable</h3>
+				<div class="field__content">
+					<Label.Root
+						id="eventTypeLabel"
+						for="eventType"
+						class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+					>
+						When cancelling is enabled if this task is running and the opposite of the event is
+						received the current execution will be canceled
+					</Label.Root>
+					<Switch.Root
+						checked={cancellable}
+						onCheckedChange={(value) => {
+							cancellable = value;
+						}}
+					>
+						<Switch.Thumb />
+					</Switch.Root>
+				</div>
+			</div>
+		</div>
+
+		<div class="container__content">
+			{#each actions as action, index}
+				<ActionItem
+					{index}
+					item={action}
+					onEdit={() => (editAction = index)}
+					onRemove={() => removeAction(index)}
+				/>
+			{:else}
+				<p class="empty">
+					You don't have any actions in this pipeline, press <b>Add Action</b> to add an action
+				</p>
+			{/each}
+		</div>
+		<div class="container__footer">
+			<div class="container__footer__actions">
+				<button class="button" on:click={() => (addAction = true)}>Add Action</button>
+				<div style="flex: auto;"></div>
+				{#if existing !== undefined}
+					<button
+						class="button"
+						on:click={() => {
+							$updateMutation.mutate({
+								id: existing.id,
+								data: {
+									name,
+									cancellable,
+									pipeline: {
+										actions
+									}
+								}
+							});
+						}}
+					>
+						Save
+					</button>
+
+					<button class="button button--secondary" on:click={() => setDefaultState(existing)}>
+						Reset
+					</button>
+				{:else}
+					<button
+						class="button"
+						on:click={() => {
+							$createPipelineMutation.mutate({
+								data: { name, event: eventType, pipeline: { actions }, cancellable }
+							});
+						}}
+					>
+						Create
+					</button>
+				{/if}
+				<a class="button button--secondary" href="{base}/pipelines">Back</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+{#if addAction}
+	<CreateActionForm
+		onSubmit={(action) => {
+			addAction = false;
+			actions.push(action);
+			actions = actions;
+		}}
+		onCancel={() => (addAction = false)}
+	/>
+{/if}
+
+{#if editingAction !== null && editAction !== null}
+	<EditActionForm
+		action={editingAction}
+		onSubmit={(action) => {
+			if (editAction !== null) {
+				actions[editAction] = action;
+				actions = actions;
+			}
+
+			editAction = null;
+		}}
+		onCancel={() => (editAction = null)}
+	/>
+{/if}
+
+<style lang="scss">
+	@use '../../styles/palette.scss' as palette;
+
+	$borderWidth: 0.1rem;
+	$borderStyle: solid;
+	$borderColor: #dfe3e8;
+	$border: $borderWidth $borderStyle $borderColor;
+
+	.wrapper {
+		padding: 1rem;
+	}
+
+	.container {
+		width: 100%;
+		max-width: 70rem;
+		margin: 0 auto;
+
+		background-color: #fff;
+		border: $border;
+		border-radius: 0.25rem;
+	}
+
+	.container__header {
+		display: flex;
+		padding: 1rem;
+
+		justify-content: space-between;
+		align-items: center;
+
+		border-bottom: $border;
+	}
+
+	.container__footer {
+		display: flex;
+		padding: 1rem;
+
+		justify-content: space-between;
+
+		border-top: $border;
+	}
+
+	.container__footer__actions {
+		display: flex;
+		flex: auto;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.container__content {
+	}
+
+	.settings {
+		padding: 1rem;
+		display: flex;
+		flex-flow: column;
+		gap: 0.5rem;
+		border-bottom: $border;
+	}
+
+	.title {
+		font-size: 1.25rem;
+		color: palette.$gray-800;
+	}
+
+	.pipeline-name {
+		background-color: palette.$gray-200;
+		padding: 0.5rem;
+		margin-left: 0.25rem;
+		font-size: 0.9rem;
+		border-radius: 0.25rem;
+	}
+
+	.empty {
+		display: block;
+		padding: 1rem;
+		color: palette.$gray-800;
+	}
+
+	.event-item {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+		padding: 0.5rem 1rem;
+
+		&__icon {
+		}
+
+		&__text {
+			display: flex;
+			flex-flow: column;
+			gap: 0.25rem;
+		}
+
+		&__label {
+			font-weight: bold;
+		}
+		&__description {
+			font-size: 0.9rem;
+		}
+	}
+
+	.level {
+		font-size: 1.25rem;
+		line-height: 1;
+
+		&--info {
+			color: #34495e;
+		}
+
+		&--success {
+			color: #30b455;
+		}
+
+		&--warning {
+			color: #efaf13;
+		}
+
+		&--severe {
+			color: #aa1109;
+		}
+	}
+</style>
