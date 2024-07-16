@@ -14,6 +14,8 @@ windows-service = "0.7"
 # Web framework
 axum = "0.7"
 tower-http = { version = "0.5.2", features = ["cors"] }
+tower = "0.4.13"
+hyper = "1.4.1"
 
 # Environment variables
 dotenvy = "0.15.7"
@@ -42,10 +44,6 @@ tokio = { version = "1", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["sync", "full"] }
 futures = "0.3.30"
 
-
-chrono = { version = "0.4.38", features = ["serde"] }
-ordered-float = { version = "4.2.1", features = ["serde"] }
-
 # Localization
 rust-i18n = "3"
 strum = { version = "0.26.3", features = ["derive"] }
@@ -56,9 +54,17 @@ uuid = { version = "1.9.1", features = ["v4", "serde"] }
 system_shutdown = "4.0.1"
 axum_session = { version = "0.14.0" }
 
+# Resource embedding
+embeddy = "0.1"
+
 toml = "0.8.14"
 clap = { version = "4.5.9", features = ["derive"] }
 humantime = "2.1.0"
+chrono = { version = "0.4.38", features = ["serde"] }
+ordered-float = { version = "4.2.1", features = ["serde"] }
+mime = "0.3.17"
+mime_guess = "2.0.5"
+
 
 # SeaORM 
 [dependencies.sea-orm]

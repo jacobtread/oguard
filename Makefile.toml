@@ -1,0 +1,15 @@
+# Build the web app
+[tasks.build-webapp]
+script_runner = "@shell"
+script = "cd webapp && npm run build"
+
+# Copy the built web app into the embedded server resources
+[tasks.embed-webapp]
+script_runner = "@shell"
+script = "mv webapp/build ./src/resources/web"
+dependencies = ["build-webapp", "delete-embedded-webapp"]
+
+# Delete the old web ap presources
+[tasks.delete-embedded-webapp]
+script_runner = "@shell"
+script = "rm -rf ./src/resources/web/"

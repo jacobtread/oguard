@@ -974,6 +974,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "embeddy"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0d04be9188776729de8d4f5ef682f7dbfd8e86221c7284b6415b2ef86d83283"
+dependencies = [
+ "embeddy-derive",
+]
+
+[[package]]
+name = "embeddy-derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf0fab0b584e67341bbfedce7c8d59d9cebaa9088fa494338ed4f8be92130bd3"
+dependencies = [
+ "quote",
+ "syn 2.0.68",
+ "walkdir",
+]
+
+[[package]]
 name = "encoding_rs"
 version = "0.8.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1533,9 +1553,9 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hyper"
-version = "1.4.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4fe55fb7a772d59a5ff1dfbff4fe0258d19b89fec4b233e75d35d5d2316badc"
+checksum = "50dfd22e0e76d0f662d429a5f80fcaf3855009297eab6a0a9f8543834744ba05"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1944,6 +1964,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
+name = "mime_guess"
+version = "2.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7c44f8e672c00fe5308fa235f821cb4198414e1c77935c1ab6948d3fd78550e"
+dependencies = [
+ "mime",
+ "unicase",
+]
+
+[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2183,12 +2213,16 @@ dependencies = [
  "chrono",
  "clap",
  "dotenvy",
+ "embeddy",
  "futures",
  "hidapi",
  "humantime",
+ "hyper",
  "log",
  "log-panics",
  "log4rs",
+ "mime",
+ "mime_guess",
  "native-dialog",
  "notify-rust",
  "ordered-float 4.2.1",
@@ -2204,6 +2238,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "toml 0.8.14",
+ "tower",
  "tower-http",
  "uuid",
  "windows-service",
@@ -4011,6 +4046,15 @@ dependencies = [
  "memoffset 0.9.1",
  "tempfile",
  "winapi",
+]
+
+[[package]]
+name = "unicase"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7d2d4dafb69621809a81864c9c1b864479e1235c0dd4e199924b9742439ed89"
+dependencies = [
+ "version_check",
 ]
 
 [[package]]

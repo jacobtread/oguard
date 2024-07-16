@@ -25,3 +25,6 @@ target/
 /data
 
 setup.exe
+
+# Exclude compiled web app from git
+/src/resources/web/** 
