@@ -16,6 +16,10 @@
     "login": "Login",
     "login_description": "This area is protected. You must login to access this page",
     "logout": "Logout",
+    "delete_pipeline": {
+        "title": "Delete Pipeline",
+        "message": "Are you sure you want to delete this pipeline?"
+    },
     "event": {
         "columns": {
             "level": "Level",

@@ -24,10 +24,12 @@
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 	import Breadcrumbs from '../Breadcrumbs.svelte';
+	import DeletePipelineDialog from './DeletePipelineDialog.svelte';
 
 	// Existing pipeline to edit if editing
 	export let existing: EventPipeline | undefined = undefined;
 
+	let confirmDelete = false;
 	let addAction = false;
 	let editAction: number | null = null;
 
@@ -52,7 +54,7 @@
 			// Update the local state for the pipeline using the remote state
 			client.setQueryData(['event-pipelines', pipeline.id], pipeline);
 
-			toast.info('Saved changes.');
+			toast.success('Saved changes.');
 		}
 	});
 
@@ -73,7 +75,7 @@
 			// We can preload the data for this since the server gives it back
 			client.setQueryData(['event-pipelines', pipeline.id], pipeline);
 
-			toast.info('Created new pipeline.');
+			toast.success('Created new pipeline.');
 		}
 	});
 
@@ -285,6 +287,14 @@
 					>
 						Reset
 					</button>
+					<button
+						class="button button--secondary"
+						on:click={() => {
+							confirmDelete = true;
+						}}
+					>
+						Delete
+					</button>
 				{:else}
 					<button
 						class="button"
@@ -327,6 +337,10 @@
 		}}
 		onCancel={() => (editAction = null)}
 	/>
+{/if}
+
+{#if confirmDelete && existing !== undefined}
+	<DeletePipelineDialog pipeline={existing} onClose={() => (confirmDelete = false)} />
 {/if}
 
 <style lang="scss">
