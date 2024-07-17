@@ -3,6 +3,7 @@ use crate::database::DbResult;
 use axum::async_trait;
 use chrono::Utc;
 use futures::future::BoxFuture;
+use log::debug;
 use sea_orm::entity::prelude::*;
 use sea_orm::{
     ActiveModelTrait,
@@ -148,6 +149,12 @@ impl Model {
 
     pub async fn find_by_event(db: &DatabaseConnection, event: UPSEvent) -> DbResult<Vec<Self>> {
         Entity::find().filter(Column::Event.eq(event)).all(db).await
+    }
+
+    pub async fn delete(db: &DatabaseConnection, id: EventPipelineId) -> DbResult<bool> {
+        let res = Entity::delete_by_id(id).exec(db).await?;
+        debug!("affected {}", res.rows_affected);
+        Ok(res.rows_affected != 0)
     }
 
     pub async fn find_by_event_enabled(

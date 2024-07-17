@@ -41,7 +41,8 @@ pub fn router() -> Router {
                         .route(
                             "/:id",
                             get(pipelines::get_event_pipeline)
-                                .put(pipelines::update_event_pipeline),
+                                .put(pipelines::update_event_pipeline)
+                                .delete(pipelines::delete_event_pipeline),
                         ),
                 )
                 .route("/toggle-buzzer", post(realtime::toggle_buzzer))
