@@ -46,9 +46,12 @@
 				body: data
 			}),
 
-		// Invalidate the current player details
-		onSuccess: () => {
+		onSuccess: (pipeline) => {
 			client.invalidateQueries({ queryKey: ['event-pipelines'] });
+
+			// Update the local state for the pipeline using the remote state
+			client.setQueryData(['event-pipelines', pipeline.id], pipeline);
+
 			toast.info('Saved changes.');
 		}
 	});
@@ -62,10 +65,13 @@
 				body: data
 			}),
 
-		onSuccess: () => {
-			goto(`${base}/pipelines`);
+		onSuccess: (pipeline) => {
+			goto(`${base}/pipelines/${pipeline.id}`);
 
 			client.invalidateQueries({ queryKey: ['event-pipelines'] });
+
+			// We can preload the data for this since the server gives it back
+			client.setQueryData(['event-pipelines', pipeline.id], pipeline);
 
 			toast.info('Created new pipeline.');
 		}

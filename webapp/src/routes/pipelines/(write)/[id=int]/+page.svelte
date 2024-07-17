@@ -8,7 +8,7 @@
 	$: pipelineId = parseInt($page.params.id);
 
 	$: pipelineQuery = createQuery<EventPipeline>({
-		queryKey: ['player', pipelineId],
+		queryKey: ['event-pipelines', pipelineId],
 		queryFn: async () =>
 			await requestJson<EventPipeline>({
 				method: HttpMethod.GET,

@@ -14,7 +14,6 @@
 
 	const client = useQueryClient();
 
-	// Mutation to update the player details
 	const changeEnabledMutation = createMutation({
 		mutationFn: async (enabled: boolean) =>
 			await requestJson<EventPipeline, UpdateEventPipeline>({
@@ -23,7 +22,6 @@
 				body: { enabled }
 			}),
 
-		// Invalidate the current player details
 		onSuccess: () => {
 			client.invalidateQueries({ queryKey: ['event-pipelines'] });
 		}

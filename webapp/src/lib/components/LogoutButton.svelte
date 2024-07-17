@@ -9,7 +9,6 @@
 	export let open = true;
 	export let onClose: () => void = () => (open = false);
 
-	// Mutation to update the player details
 	const logoutMutation = createMutation({
 		mutationFn: async () =>
 			await requestText<LoginRequest>({
@@ -17,7 +16,6 @@
 				route: `/api/logout`
 			}),
 
-		// Invalidate the current player details
 		onSuccess: () => {
 			client.invalidateQueries({ queryKey: ['login-state'] });
 			onClose();

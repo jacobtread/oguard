@@ -80,7 +80,6 @@ pub enum Relation {}
 impl ActiveModelBehavior for ActiveModel {}
 
 impl Model {
-    /// Creates a new player from the provided details
     pub fn create(
         db: &DatabaseConnection,
         ty: UPSEvent,

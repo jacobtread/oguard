@@ -108,7 +108,6 @@ pub struct ListEventPipeline {
 }
 
 impl Model {
-    /// Creates a new player from the provided details
     pub fn create(
         db: &DatabaseConnection,
         name: String,

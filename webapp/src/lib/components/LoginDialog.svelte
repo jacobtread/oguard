@@ -9,7 +9,6 @@
 	export let open = true;
 	export let onClose: () => void = () => (open = false);
 
-	// Mutation to update the player details
 	const loginMutation = createMutation({
 		mutationFn: async (password: string) =>
 			await requestText<LoginRequest>({
@@ -18,7 +17,6 @@
 				body: { password }
 			}),
 
-		// Invalidate the current player details
 		onSuccess: () => {
 			client.invalidateQueries({ queryKey: ['login-state'] });
 			onClose();
