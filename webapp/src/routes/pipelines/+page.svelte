@@ -3,6 +3,7 @@
 	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import { createQuery } from '@tanstack/svelte-query';
 	import PipelineItem from '$lib/components/pipeline/PipelineItem.svelte';
+	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 
 	const eventPipelinesQuery = createQuery<ListEventPipeline[]>({
 		queryKey: ['event-pipelines'],
@@ -15,6 +16,8 @@
 </script>
 
 <div class="content">
+	<Breadcrumbs parts={[{ label: 'Event Pipelines' }]} />
+
 	<div class="actions">
 		<div class="actions__header">
 			<h2 class="actions__header__title">Actions</h2>
@@ -49,11 +52,10 @@
 	@use '../../lib/styles/palette.scss' as palette;
 
 	.actions {
+		margin-top: 1rem;
 		background-color: #fff;
 		border: 0.1rem solid #dfe3e8;
 		border-radius: 0.25rem;
-		margin: 0 auto;
-		max-width: 70rem;
 
 		&__header {
 			border-bottom: 0.1rem solid #dfe3e8;
@@ -91,6 +93,8 @@
 
 	.content {
 		padding: 1rem;
+		margin: 0 auto;
+		max-width: 80rem;
 	}
 
 	.actions-create {

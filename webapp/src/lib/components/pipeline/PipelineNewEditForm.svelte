@@ -23,6 +23,7 @@
 	import { _ } from 'svelte-i18n';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
+	import Breadcrumbs from '../Breadcrumbs.svelte';
 
 	// Existing pipeline to edit if editing
 	export let existing: EventPipeline | undefined = undefined;
@@ -48,6 +49,7 @@
 		// Invalidate the current player details
 		onSuccess: () => {
 			client.invalidateQueries({ queryKey: ['event-pipelines'] });
+			toast.info('Saved changes.');
 		}
 	});
 
@@ -115,6 +117,13 @@
 </script>
 
 <div class="wrapper">
+	<Breadcrumbs
+		parts={[
+			{ label: 'Event Pipelines', href: `${base}/pipelines` },
+			existing !== undefined ? { label: existing.name } : { label: 'Create' }
+		]}
+	/>
+
 	<div class="container">
 		<div class="container__header">
 			<h2 class="title">
@@ -244,6 +253,7 @@
 				{#if existing !== undefined}
 					<button
 						class="button"
+						disabled={$updateMutation.isPending}
 						on:click={() => {
 							$updateMutation.mutate({
 								id: existing.id,
@@ -260,7 +270,13 @@
 						Save
 					</button>
 
-					<button class="button button--secondary" on:click={() => setDefaultState(existing)}>
+					<button
+						class="button button--secondary"
+						on:click={() => {
+							setDefaultState(existing);
+							toast.info('Reverted changes.');
+						}}
+					>
 						Reset
 					</button>
 				{:else}
@@ -317,12 +333,15 @@
 
 	.wrapper {
 		padding: 1rem;
+		width: 100%;
+		max-width: 80rem;
+		margin: 0 auto;
 	}
 
 	.container {
 		width: 100%;
-		max-width: 70rem;
 		margin: 0 auto;
+		margin-top: 1rem;
 
 		background-color: #fff;
 		border: $border;
