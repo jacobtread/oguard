@@ -9,6 +9,7 @@ use crate::{
 use anyhow::{anyhow, Context};
 use axum::extract::Path;
 use axum::{Extension, Json};
+use axum_valid::Garde;
 use chrono::Utc;
 use hyper::StatusCode;
 use sea_orm::DatabaseConnection;
@@ -49,7 +50,7 @@ pub async fn update_event_pipeline(
     _: AuthGate,
     Extension(db): Extension<DatabaseConnection>,
     Path(id): Path<EventPipelineId>,
-    Json(request): Json<UpdateEventPipeline>,
+    Garde(Json(request)): Garde<Json<UpdateEventPipeline>>,
 ) -> HttpResult<EventPipelineModel> {
     let event_pipeline = EventPipelineModel::find_by_id(&db, id)
         .await
@@ -76,7 +77,7 @@ pub async fn update_event_pipeline(
 pub async fn create_event_pipeline(
     _: AuthGate,
     Extension(db): Extension<DatabaseConnection>,
-    Json(request): Json<CreateEventPipeline>,
+    Garde(Json(request)): Garde<Json<CreateEventPipeline>>,
 ) -> HttpResult<EventPipelineModel> {
     let current_time = Utc::now();
     let event_pipeline = EventPipelineModel::create(

@@ -12,6 +12,7 @@ pub mod server;
 pub mod service;
 pub mod services;
 pub mod ups;
+pub mod utils;
 pub mod watcher;
 
 // Initialize localization

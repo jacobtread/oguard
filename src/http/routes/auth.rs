@@ -5,6 +5,7 @@ use crate::http::models::{LoginRequest, LoginStateResponse};
 use anyhow::anyhow;
 use axum::{Extension, Json};
 use axum_session::{ReadOnlySession, Session, SessionNullPool};
+use axum_valid::Garde;
 use reqwest::StatusCode;
 
 /// GET /api/login-state
@@ -24,7 +25,7 @@ pub async fn login_state(
 pub async fn login(
     session: Session<SessionNullPool>,
     Extension(config): Extension<SharedConfig>,
-    Json(LoginRequest { password }): Json<LoginRequest>,
+    Garde(Json(LoginRequest { password })): Garde<Json<LoginRequest>>,
 ) -> HttpStatusResult {
     // Get the credentials from the config
     let expected_password = match  config.login.password.as_ref() {

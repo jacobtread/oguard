@@ -64,6 +64,8 @@ chrono = { version = "0.4.38", features = ["serde"] }
 ordered-float = { version = "4.2.1", features = ["serde"] }
 mime = "0.3.17"
 mime_guess = "2.0.5"
+garde = { version = "0.20.0", features = ["derive", "full"] }
+axum-valid = { version = "0.19.0", default-features = false, features = ["garde", "basic", "full_garde"] }
 
 
 # SeaORM 

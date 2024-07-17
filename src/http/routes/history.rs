@@ -7,6 +7,7 @@ use crate::{
 use anyhow::Context;
 use axum::extract::Query;
 use axum::{Extension, Json};
+use axum_valid::Garde;
 use sea_orm::DatabaseConnection;
 
 /// GET /api/history/battery-state
@@ -14,7 +15,7 @@ use sea_orm::DatabaseConnection;
 /// Requests the battery state history for the provided range
 pub async fn battery_state_history(
     Extension(db): Extension<DatabaseConnection>,
-    Query(RangeQuery { start, end }): Query<RangeQuery>,
+    Garde(Query(RangeQuery { start, end })): Garde<Query<RangeQuery>>,
 ) -> HttpResult<Vec<BatteryHistoryModel>> {
     let history = BatteryHistoryModel::get_range(&db, start, end)
         .await
@@ -28,7 +29,7 @@ pub async fn battery_state_history(
 /// Requests the device state history for the provided range
 pub async fn device_state_history(
     Extension(db): Extension<DatabaseConnection>,
-    Query(RangeQuery { start, end }): Query<RangeQuery>,
+    Garde(Query(RangeQuery { start, end })): Garde<Query<RangeQuery>>,
 ) -> HttpResult<Vec<StateHistoryModel>> {
     let history = StateHistoryModel::get_range(&db, start, end)
         .await
@@ -42,7 +43,7 @@ pub async fn device_state_history(
 /// Requests the device state history for the provided range
 pub async fn event_history(
     Extension(db): Extension<DatabaseConnection>,
-    Query(RangeQuery { start, end }): Query<RangeQuery>,
+    Garde(Query(RangeQuery { start, end })): Garde<Query<RangeQuery>>,
 ) -> HttpResult<Vec<EventModel>> {
     let history = EventModel::get_range(&db, start, end)
         .await

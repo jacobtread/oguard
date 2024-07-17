@@ -4,12 +4,14 @@ use crate::{
         events::UPSEvent,
     },
     ups::{DeviceExecutorHandle, QueryDeviceBattery, ScheduleUPSShutdown},
+    utils::validate::is_non_zero_duration,
     watcher::UPSWatcherHandle,
 };
 use anyhow::{anyhow, Context};
 use axum::http::{HeaderMap, HeaderName, HeaderValue};
 use chrono::Utc;
 use futures::{stream::FuturesUnordered, StreamExt};
+use garde::Validate;
 use log::{debug, error, warn};
 use native_dialog::{MessageDialog, MessageType};
 use notify_rust::Notification;
@@ -276,22 +278,27 @@ async fn run_repeated_action(action: Action, event: UPSEvent, executor: DeviceEx
 }
 
 /// Pipeline of actions to execute
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
+#[derive(Debug, Validate, Clone, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct ActionPipeline {
     /// Actions this pipeline will execute
+    #[garde(dive)]
     actions: Vec<Action>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Validate, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Action {
     /// Action type
+    #[garde(dive)]
     pub ty: ActionType,
     /// Delay for the action
+    #[garde(dive)]
     pub delay: Option<ActionDelay>,
     /// Optionally repeat, initial action run will be in the defined action pipeline
     /// order any additional repeat runs will happen out of order
+    #[garde(dive)]
     pub repeat: Option<ActionRepeat>,
     /// Optionally retry
+    #[garde(dive)]
     pub retry: Option<ActionRetry>,
 }
 
@@ -477,7 +484,7 @@ impl Action {
                 }
                 ActionRetryDelay::ExponentialBackoff { initial, exponent } => {
                     let current_delay = last_delay
-                        .map(|last_delay| last_delay.saturating_mul(exponent))
+                        .map(|last_delay| last_delay.saturating_mul(exponent as u32))
                         .unwrap_or(initial);
 
                     last_delay = Some(current_delay);
@@ -509,7 +516,7 @@ impl Action {
 }
 
 /// Actions the task executor can perform
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Validate, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum ActionType {
     /// Send desktop notification
@@ -522,59 +529,74 @@ pub enum ActionType {
     Sleep,
 
     /// Shutdown the device
-    Shutdown(ShutdownAction),
+    Shutdown(#[garde(dive)] ShutdownAction),
 
     /// Shutdown the UPS itself
-    USPShutdown(UPSShutdownAction),
+    USPShutdown(#[garde(dive)] UPSShutdownAction),
 
     /// Run an executable
-    Executable(ExecutableAction),
+    Executable(#[garde(dive)] ExecutableAction),
 
     /// Send an HTTP request
-    HttpRequest(HttpRequestAction),
+    HttpRequest(#[garde(dive)] HttpRequestAction),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Validate, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ShutdownAction {
     /// Optional message to show
+    #[garde(inner(length(min = 1)))]
     message: Option<String>,
 
-    /// Timeout before shutdown
+    /// Timeout before shutdown,
+    ///
+    /// WARNING: Should cap this duration to the max windows
+    /// shutdown duration, otherwise shutdown will error
+    #[garde(inner(custom(is_non_zero_duration)))]
     timeout: Option<Duration>,
 
     /// Whether to force close apps
+    #[garde(skip)]
     force_close_apps: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Validate, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UPSShutdownAction {
     /// Delay in minutes before shutting down the UPS
+    #[garde(skip)]
     delay_minutes: OrderedFloat<f32>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Validate, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ExecutableAction {
     /// Executable to run
+    #[garde(length(min = 1))]
     exe: String,
 
     /// Arguments for the program
+    #[garde(inner(length(min = 1)))]
     args: Vec<String>,
 
     /// Timeout for the program run
+    #[garde(inner(custom(is_non_zero_duration)))]
     timeout: Option<Duration>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Validate, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HttpRequestAction {
     /// URL to send the request to
+    #[garde(url)]
     url: String,
     /// HTTP method to use
+    #[garde(skip)]
     method: String,
     /// Headers to put on the request
+    #[garde(skip)]
     headers: HashMap<String, String>,
     /// Optional request body
+    #[garde(skip)]
     body: Option<HttpRequestActionBody>,
     /// Optional request timeout
+    #[garde(inner(custom(is_non_zero_duration)))]
     timeout: Option<Duration>,
 }
 
@@ -594,57 +616,72 @@ pub struct HttpRequestJsonBody {
 }
 
 /// Configuration for the delay of an actions execution
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Validate, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ActionDelay {
     /// Run the action after a fix duration
+    #[garde(inner(custom(is_non_zero_duration)))]
     pub duration: Option<Duration>,
 
     /// Run immediately if the capacity is less that or equal to this amount
     /// overrides the duration delay
+    #[garde(range(min = 1, max = 100))]
     pub below_capacity: Option<u8>,
 }
 
 /// Configuration for how an action should repeat
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Validate, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ActionRepeat {
     /// Run at a fixed interval
+    #[garde(inner(custom(is_non_zero_duration)))]
     pub interval: Option<Duration>,
 
     /// Every time the capacity decreases by minimum this amount
+    #[garde(range(min = 1, max = 100))]
     pub capacity_decrease: Option<u8>,
 
     /// Maximum number of times to repeat
+    #[garde(range(min = 0, max = 255))]
     pub limit: Option<u8>,
 }
 
 /// Configuration for how an action should retry
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Validate, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ActionRetry {
     /// Mode for the retry delay
+    #[garde(dive)]
     pub delay: ActionRetryDelay,
     /// Maximum number of retry attempts
+    #[garde(range(min = 1))]
     pub max_attempts: u8,
 }
 
 /// Options for how a retry delay should be determined
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Validate, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum ActionRetryDelay {
     /// Retry at fixed intervals
-    Fixed { delay: Duration },
+    Fixed {
+        /// Delay duration, must be greater than zero
+        #[garde(custom(is_non_zero_duration))]
+        delay: Duration,
+    },
     /// Retry at a linearly increasing rate (5s, 10s, 15s, 20s)
     LinearBackoff {
         /// Initial backoff duration
+        #[garde(skip)]
         initial: Duration,
         /// Amount to add per failed attempt
+        #[garde(custom(is_non_zero_duration))]
         increment: Duration,
     },
     // Retry at a exponentially increasing rate (5s, 10s, 20s, 40s)
     ExponentialBackoff {
-        /// Initial backoff duration
+        /// Initial backoff duration, must be greater than zero
+        #[garde(custom(is_non_zero_duration))]
         initial: Duration,
         /// Exponent to multiply by
-        exponent: u32,
+        #[garde(range(min = 2, max = 10))]
+        exponent: u8,
     },
 }
 
