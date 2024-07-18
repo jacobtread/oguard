@@ -15,9 +15,7 @@ pub fn is_non_zero_duration(value: &Duration, _ctx: &()) -> garde::Result {
 pub fn valid_range(start: &DateTimeUtc) -> impl FnOnce(&DateTimeUtc, &()) -> garde::Result + '_ {
     move |end, _| {
         if end.lt(start) {
-            return Err(garde::Error::new(
-                "end timestamp cannot be before start".to_string(),
-            ));
+            return Err(garde::Error::new("end timestamp cannot be before start"));
         }
 
         Ok(())
