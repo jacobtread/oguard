@@ -171,6 +171,7 @@ impl Model {
         self,
         db: &DatabaseConnection,
         name: Option<String>,
+        event: Option<UPSEvent>,
         pipeline: Option<ActionPipeline>,
         cancellable: Option<bool>,
         enabled: Option<bool>,
@@ -178,6 +179,10 @@ impl Model {
         let mut active_model = self.into_active_model();
         if let Some(name) = name {
             active_model.name = Set(name);
+        }
+
+        if let Some(event) = event {
+            active_model.event = Set(event);
         }
 
         if let Some(pipeline) = pipeline {

@@ -61,6 +61,7 @@ pub async fn update_event_pipeline(
         .update(
             &db,
             request.name,
+            request.event,
             request.pipeline,
             request.cancellable,
             request.enabled,

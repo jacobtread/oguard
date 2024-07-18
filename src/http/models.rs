@@ -30,6 +30,8 @@ pub struct CreateEventPipeline {
 pub struct UpdateEventPipeline {
     #[garde(inner(length(min = 1)))]
     pub name: Option<String>,
+    #[garde(skip)]
+    pub event: Option<UPSEvent>,
     #[garde(dive)]
     pub pipeline: Option<ActionPipeline>,
     #[garde(skip)]
