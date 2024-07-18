@@ -4,6 +4,8 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import PipelineItem from '$lib/components/pipeline/PipelineItem.svelte';
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+	import { Container } from '$lib/components';
+	import { _ } from 'svelte-i18n';
 
 	const eventPipelinesQuery = createQuery<ListEventPipeline[]>({
 		queryKey: ['event-pipelines'],
@@ -15,67 +17,50 @@
 	});
 </script>
 
-<div class="content">
+<Container.Wrapper>
 	<Breadcrumbs parts={[{ label: 'Event Pipelines' }]} />
 
-	<div class="actions">
-		<div class="actions__header">
-			<h2 class="actions__header__title">Actions</h2>
+	<Container.Root>
+		<Container.Header title={$_('actions_title')}>
+			<a class="button" href="/pipelines/create">{$_('create')}</a>
+		</Container.Header>
 
-			<div class="action__buttons">
-				<a class="actions-create" href="/pipelines/create">Create</a>
+		<div class="content">
+			<div class="items">
+				{#if $eventPipelinesQuery.isPending}
+					Loading...
+				{:else if $eventPipelinesQuery.error}
+					An error has occurred:
+					{$eventPipelinesQuery.error.message}
+				{:else if $eventPipelinesQuery.isSuccess}
+					{#each $eventPipelinesQuery.data as row}
+						<PipelineItem item={row} />
+					{:else}
+						<div class="empty">
+							<p class="empty__text">
+								{$_('pipelines.empty')}
+							</p>
+						</div>
+					{/each}
+				{/if}
 			</div>
 		</div>
-		{#if $eventPipelinesQuery.isPending}
-			Loading...
-		{:else if $eventPipelinesQuery.error}
-			An error has occurred:
-			{$eventPipelinesQuery.error.message}
-		{:else if $eventPipelinesQuery.isSuccess}
-			{#each $eventPipelinesQuery.data as row}
-				<PipelineItem item={row} />
-			{:else}
-				<div class="empty">
-					<p class="empty__text">
-						You don't have any event pipelines press
-						<a class="empty__link" href="/pipelines/create"> Create </a>
-						to create a new one
-					</p>
-				</div>
-			{/each}
-		{/if}
-		<div class="actions__footer"></div>
-	</div>
-</div>
+
+		<Container.Footer></Container.Footer>
+	</Container.Root>
+</Container.Wrapper>
 
 <style lang="scss">
 	@use '../../lib/styles/palette.scss' as palette;
 
-	.actions {
-		margin-top: 1rem;
+	.items {
 		background-color: #fff;
-		border: 0.1rem solid #dfe3e8;
-		border-radius: 0.25rem;
+		border: 0.1rem solid palette.$gray-300;
+	}
 
-		&__header {
-			border-bottom: 0.1rem solid #dfe3e8;
-			padding: 1rem;
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-
-			&__title {
-				font-size: 1.25rem;
-				color: palette.$gray-800;
-			}
-		}
-
-		&__footer {
-			border-top: 0.1rem solid #dfe3e8;
-			padding: 1.5rem;
-			display: flex;
-			justify-content: space-between;
-		}
+	.content {
+		padding: 1rem;
+		background-color: palette.$gray-200;
 	}
 
 	.empty {
@@ -84,27 +69,5 @@
 		&__text {
 			color: palette.$gray-800;
 		}
-
-		&__link {
-			color: palette.$gray-700;
-			font-weight: bold;
-		}
-	}
-
-	.content {
-		padding: 1rem;
-		margin: 0 auto;
-		max-width: 80rem;
-	}
-
-	.actions-create {
-		border: none;
-		padding: 0.5rem 0.75rem;
-		font-size: 0.9rem;
-		border-radius: 0.25rem;
-		cursor: pointer;
-		background-color: palette.$gray-700;
-		color: white;
-		text-decoration: none;
 	}
 </style>

@@ -94,6 +94,10 @@
 		gap: 0.5rem;
 		padding: 1rem;
 		align-items: center;
+
+		&:not(:last-child) {
+			border-bottom: 0.1rem solid palette.$gray-300;
+		}
 	}
 
 	// Icon wrapper

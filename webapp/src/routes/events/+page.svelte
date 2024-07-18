@@ -11,6 +11,7 @@
 	import ErrorIcon from '~icons/solar/bug-bold-duotone';
 	import SuccessIcon from '~icons/solar/check-circle-bold-duotone';
 	import { _ } from 'svelte-i18n';
+	import { Container } from '$lib/components';
 
 	const currentDate = dayjs();
 	let start = currentDate.startOf('month').toDate();
@@ -38,80 +39,89 @@
 	);
 </script>
 
-<div class="content">
-	<div class="filters">
-		<div class="card date-input">
-			<label class="date-input__label" for="startDate">
-				<DateIcon />
-				{$_('event.filters.start')}
-			</label>
-			<DateInput id="startDate" timePrecision="minute" bind:value={start} />
-		</div>
+<Container.Wrapper>
+	<Container.Root>
+		<Container.Header></Container.Header>
+		<Container.Section>
+			<div class="filters">
+				<div class=" date-input">
+					<label class="date-input__label" for="startDate">
+						<DateIcon />
+						{$_('event.filters.start')}
+					</label>
+					<DateInput id="startDate" timePrecision="minute" bind:value={start} />
+				</div>
 
-		<div class="card date-input">
-			<label class="date-input__label" for="endDate">
-				<DateIcon />
-				{$_('event.filters.end')}
-			</label>
-			<DateInput id="endDate" timePrecision="minute" bind:value={end} />
-		</div>
-	</div>
+				<div class=" date-input">
+					<label class="date-input__label" for="endDate">
+						<DateIcon />
+						{$_('event.filters.end')}
+					</label>
+					<DateInput id="endDate" timePrecision="minute" bind:value={end} />
+				</div>
+			</div>
+		</Container.Section>
 
-	{#if $eventHistory.isPending}
-		Loading...
-	{/if}
-	{#if $eventHistory.error}
-		An error has occurred:
-		{$eventHistory.error.message}
-	{/if}
-	{#if $eventHistory.isSuccess}
-		<div>
-			<table>
-				<thead>
-					<tr>
-						<th class="column column--level">{$_('event.columns.level')}</th>
-						<th>{$_('event.columns.type')}</th>
-						<th>{$_('event.columns.description')}</th>
-						<th>{$_('event.columns.timestamp')}</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each $eventHistory.data as row}
-						{@const typeData = EVENT_TYPE_DATA[row.type]}
-						{#if typeData !== undefined}
+		<Container.Section>
+			{#if $eventHistory.isPending}
+				Loading...
+			{/if}
+			{#if $eventHistory.error}
+				An error has occurred:
+				{$eventHistory.error.message}
+			{/if}
+			{#if $eventHistory.isSuccess}
+				<div>
+					<table>
+						<thead>
 							<tr>
-								<td class="column column--level">
-									{#if typeData.level === EventLevel.Info}
-										<span class="level level--info">
-											<InfoIcon />
-										</span>
-									{:else if typeData.level === EventLevel.Success}
-										<span class="level level--success">
-											<SuccessIcon />
-										</span>
-									{:else if typeData.level === EventLevel.Warning}
-										<span class="level level--warning">
-											<WarningIcon />
-										</span>
-									{:else if typeData.level === EventLevel.Severe}
-										<span class="level level--severe">
-											<ErrorIcon />
-										</span>
-									{/if}
-								</td>
-
-								<td class="column column--type">{$_(`events.${row.type}.label`)}</td>
-								<td class="column column--description">{$_(`events.${row.type}.description`)}</td>
-
-								<td>{dayjs(row.created_at).format('L LT')}</td>
+								<th class="column column--level">{$_('event.columns.level')}</th>
+								<th>{$_('event.columns.type')}</th>
+								<th>{$_('event.columns.description')}</th>
+								<th>{$_('event.columns.timestamp')}</th>
 							</tr>
-						{/if}
-					{/each}
-				</tbody>
-			</table>
-		</div>
-	{/if}
-</div>
+						</thead>
+						<tbody>
+							{#each $eventHistory.data as row}
+								{@const typeData = EVENT_TYPE_DATA[row.type]}
+								{#if typeData !== undefined}
+									<tr>
+										<td class="column column--level">
+											{#if typeData.level === EventLevel.Info}
+												<span class="level level--info">
+													<InfoIcon />
+												</span>
+											{:else if typeData.level === EventLevel.Success}
+												<span class="level level--success">
+													<SuccessIcon />
+												</span>
+											{:else if typeData.level === EventLevel.Warning}
+												<span class="level level--warning">
+													<WarningIcon />
+												</span>
+											{:else if typeData.level === EventLevel.Severe}
+												<span class="level level--severe">
+													<ErrorIcon />
+												</span>
+											{/if}
+										</td>
+
+										<td class="column column--type">{$_(`events.${row.type}.label`)}</td>
+										<td class="column column--description"
+											>{$_(`events.${row.type}.description`)}</td
+										>
+
+										<td>{dayjs(row.created_at).format('L LT')}</td>
+									</tr>
+								{/if}
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{/if}
+		</Container.Section>
+	</Container.Root>
+</Container.Wrapper>
 
 <style lang="scss">
 	.column {
@@ -183,17 +193,9 @@
 		color: white;
 	}
 
-	.content {
-		display: flex;
-		gap: 1rem;
-		padding: 1rem;
-		flex-flow: column;
-	}
-
 	.filters {
 		display: flex;
 		gap: 1rem;
-		margin-bottom: 1rem;
 	}
 
 	.date-input {

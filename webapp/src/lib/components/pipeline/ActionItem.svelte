@@ -102,7 +102,10 @@
 		gap: 0.5rem;
 		padding: 1rem;
 		align-items: center;
-		border-bottom: 0.1rem solid palette.$gray-300;
+
+		&:not(:last-child) {
+			border-bottom: 0.1rem solid palette.$gray-300;
+		}
 	}
 
 	.item__index {

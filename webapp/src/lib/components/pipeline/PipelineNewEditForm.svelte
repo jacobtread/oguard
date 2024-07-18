@@ -25,6 +25,7 @@
 	import { goto } from '$app/navigation';
 	import Breadcrumbs from '../Breadcrumbs.svelte';
 	import DeletePipelineDialog from './DeletePipelineDialog.svelte';
+	import { Container } from '..';
 
 	// Existing pipeline to edit if editing
 	export let existing: EventPipeline | undefined = undefined;
@@ -124,7 +125,7 @@
 			: values;
 </script>
 
-<div class="wrapper">
+<Container.Wrapper>
 	<Breadcrumbs
 		parts={[
 			{ label: 'Event Pipelines', href: `${base}/pipelines` },
@@ -132,8 +133,8 @@
 		]}
 	/>
 
-	<div class="container">
-		<div class="container__header">
+	<Container.Root>
+		<Container.Header>
 			<h2 class="title">
 				{#if existing !== undefined}
 					Editing Pipeline <span class="pipeline-name">{existing.name}</span>
@@ -141,9 +142,9 @@
 					Create Event Pipeline
 				{/if}
 			</h2>
-		</div>
+		</Container.Header>
 
-		<div class="container__content settings">
+		<div class="settings">
 			{#if existing === undefined}
 				<div class="field">
 					<h3 class="field__name">Event</h3>
@@ -240,22 +241,25 @@
 			</div>
 		</div>
 
-		<div class="container__content">
-			{#each actions as action, index}
-				<ActionItem
-					{index}
-					item={action}
-					onEdit={() => (editAction = index)}
-					onRemove={() => removeAction(index)}
-				/>
-			{:else}
-				<p class="empty">
-					You don't have any actions in this pipeline, press <b>Add Action</b> to add an action
-				</p>
-			{/each}
+		<div class="content">
+			<div class="items">
+				{#each actions as action, index}
+					<ActionItem
+						{index}
+						item={action}
+						onEdit={() => (editAction = index)}
+						onRemove={() => removeAction(index)}
+					/>
+				{:else}
+					<p class="empty">
+						You don't have any actions in this pipeline, press <b>Add Action</b> to add an action
+					</p>
+				{/each}
+			</div>
 		</div>
-		<div class="container__footer">
-			<div class="container__footer__actions">
+
+		<Container.Footer>
+			<svelte:fragment slot="actions">
 				<button class="button" on:click={() => (addAction = true)}>Add Action</button>
 				<div style="flex: auto;"></div>
 				{#if existing !== undefined}
@@ -308,10 +312,10 @@
 					</button>
 				{/if}
 				<a class="button button--secondary" href="{base}/pipelines">Back</a>
-			</div>
-		</div>
-	</div>
-</div>
+			</svelte:fragment>
+		</Container.Footer>
+	</Container.Root>
+</Container.Wrapper>
 
 {#if addAction}
 	<CreateActionForm
@@ -351,50 +355,14 @@
 	$borderColor: #dfe3e8;
 	$border: $borderWidth $borderStyle $borderColor;
 
-	.wrapper {
-		padding: 1rem;
-		width: 100%;
-		max-width: 80rem;
-		margin: 0 auto;
-	}
-
-	.container {
-		width: 100%;
-		margin: 0 auto;
-		margin-top: 1rem;
-
+	.items {
 		background-color: #fff;
-		border: $border;
-		border-radius: 0.25rem;
+		border: 0.1rem solid palette.$gray-300;
 	}
 
-	.container__header {
-		display: flex;
+	.content {
 		padding: 1rem;
-
-		justify-content: space-between;
-		align-items: center;
-
-		border-bottom: $border;
-	}
-
-	.container__footer {
-		display: flex;
-		padding: 1rem;
-
-		justify-content: space-between;
-
-		border-top: $border;
-	}
-
-	.container__footer__actions {
-		display: flex;
-		flex: auto;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	.container__content {
+		background-color: palette.$gray-200;
 	}
 
 	.settings {
@@ -429,9 +397,6 @@
 		gap: 1rem;
 		align-items: center;
 		padding: 0.5rem 1rem;
-
-		&__icon {
-		}
 
 		&__text {
 			display: flex;

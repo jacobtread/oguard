@@ -20,7 +20,8 @@
 
 	const i18nPromise = init({
 		fallbackLocale: 'en',
-		initialLocale: getLocaleFromNavigator() ?? 'en'
+		initialLocale: getLocaleFromNavigator() ?? 'en',
+		ignoreTag: false
 	});
 
 	const queryClient = new QueryClient({
@@ -100,5 +101,10 @@
 		width: 100%;
 		background-color: #f4f6f8;
 		height: 100vh;
+	}
+
+	.main {
+		flex: auto;
+		overflow: auto;
 	}
 </style>
