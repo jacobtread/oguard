@@ -16,5 +16,5 @@
 {/if}
 
 <style lang="scss">
-	@use '../styles/palette.scss' as palette;
+	@use '../../styles/palette.scss' as palette;
 </style>
