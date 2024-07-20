@@ -22,8 +22,7 @@
 		if (selected !== undefined) {
 			value = selected.value;
 		}
-	}}
->
+	}}>
 	<Select.Trigger aria-label={$t('event.select')}>
 		<div class="event-current-item">
 			<EventLevelIcon level={EVENT_TYPE_DATA[value].level} />
@@ -60,7 +59,7 @@
 </Select.Root>
 
 <style lang="scss">
-	@use '../../styles/palette.scss' as palette;
+	@use '$lib/styles/palette.scss' as palette;
 
 	.event-item {
 		display: flex;

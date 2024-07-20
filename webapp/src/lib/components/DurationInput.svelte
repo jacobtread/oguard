@@ -28,8 +28,7 @@
 			bind:value={minutes}
 			min="0"
 			max="59"
-			on:input={updateDuration}
-		/>
+			on:input={updateDuration} />
 	</label>
 	<label class="part">
 		Seconds
@@ -39,13 +38,12 @@
 			bind:value={seconds}
 			min="0"
 			max="59"
-			on:input={updateDuration}
-		/>
+			on:input={updateDuration} />
 	</label>
 </div>
 
 <style lang="scss">
-	@use '../styles/palette.scss' as palette;
+	@use '$lib/styles/palette.scss' as palette;
 
 	.part__input {
 		padding: 0.5rem 0.75rem;

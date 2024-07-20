@@ -40,8 +40,7 @@
 	open
 	onOpenChange={(open) => {
 		if (!open) onCancel();
-	}}
->
+	}}>
 	<Dialog.Portal>
 		<Dialog.Overlay transition={fly} transitionConfig={{ duration: 300, y: -10 }} />
 		<Dialog.Content transition={fly} transitionConfig={{ duration: 300, y: -10 }}>
@@ -53,8 +52,7 @@
 							<ActionTypeItem
 								{actionType}
 								selected={action.ty.type === actionType}
-								onClick={() => onChangeActionType(actionType)}
-							/>
+								onClick={() => onChangeActionType(actionType)} />
 						{/each}
 					</div>
 				</div>
@@ -92,7 +90,7 @@
 </Dialog.Root>
 
 <style lang="scss">
-	@use '../../styles/palette.scss' as palette;
+	@use '$lib/styles/palette.scss' as palette;
 
 	$borderWidth: 0.1rem;
 	$borderStyle: solid;

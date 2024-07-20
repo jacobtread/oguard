@@ -78,15 +78,14 @@
 			checked={item.enabled}
 			onCheckedChange={() => {
 				onChangeEnabled(item.enabled);
-			}}
-		>
+			}}>
 			<Switch.Thumb />
 		</Switch.Root>
 	</div>
 </div>
 
 <style lang="scss">
-	@use '../../styles/palette.scss' as palette;
+	@use '$lib/styles/palette.scss' as palette;
 
 	// Pipeline item
 	.item {

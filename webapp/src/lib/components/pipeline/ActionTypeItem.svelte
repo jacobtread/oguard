@@ -13,8 +13,7 @@
 	class="item"
 	class:item--selected={selected}
 	data-action-type={actionType}
-	on:click={onClick}
->
+	on:click={onClick}>
 	<div class="item__icon"><ActionTypeIcon {actionType} /></div>
 	<div class="item__content">
 		<p class="item__name">{$_(`actions.${actionType}.label`)}</p>
@@ -23,7 +22,7 @@
 </button>
 
 <style lang="scss">
-	@use '../../styles/palette.scss' as palette;
+	@use '$lib/styles/palette.scss' as palette;
 
 	.item {
 		$borderWidth: 0.1rem;

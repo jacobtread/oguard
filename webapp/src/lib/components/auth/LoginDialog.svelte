@@ -30,8 +30,7 @@
 	<form
 		on:submit|preventDefault={() => {
 			$loginMutation.mutate(password);
-		}}
-	>
+		}}>
 		<div class="dialog__header"><h3>{$_('login')}</h3></div>
 
 		<div class="dialog__content">
@@ -46,8 +45,7 @@
 				<button
 					type="submit"
 					class="button"
-					disabled={password.length === 0 || $loginMutation.isPending}>Login</button
-				>
+					disabled={password.length === 0 || $loginMutation.isPending}>Login</button>
 				<div style="flex: auto;"></div>
 				<slot name="actions" />
 			</div>
@@ -56,7 +54,7 @@
 </div>
 
 <style lang="scss">
-	@use '../../styles/palette.scss' as palette;
+	@use '$lib/styles/palette.scss' as palette;
 
 	$borderWidth: 0.1rem;
 	$borderStyle: solid;

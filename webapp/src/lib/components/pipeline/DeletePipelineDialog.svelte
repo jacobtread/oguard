@@ -44,8 +44,7 @@
 	open
 	onOpenChange={(open) => {
 		if (!open) onClose();
-	}}
->
+	}}>
 	<Dialog.Portal>
 		<Dialog.Overlay transition={fly} transitionConfig={{ duration: 300, y: -10 }} />
 		<Dialog.Content transition={fly} transitionConfig={{ duration: 300, y: -10 }}>
@@ -63,8 +62,7 @@
 					<button
 						class="button"
 						disabled={$deleteMutation.isPending}
-						on:click={() => $deleteMutation.mutate()}>Delete</button
-					>
+						on:click={() => $deleteMutation.mutate()}>Delete</button>
 					<div style="flex: auto;"></div>
 					<button class="button button--secondary" on:click={onClose}>Cancel</button>
 				</div>
@@ -74,7 +72,7 @@
 </Dialog.Root>
 
 <style lang="scss">
-	@use '../../styles/palette.scss' as palette;
+	@use '$lib/styles/palette.scss' as palette;
 
 	$borderWidth: 0.1rem;
 	$borderStyle: solid;

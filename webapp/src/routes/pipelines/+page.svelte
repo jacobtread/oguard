@@ -51,7 +51,7 @@
 </Container.Wrapper>
 
 <style lang="scss">
-	@use '../../lib/styles/palette.scss' as palette;
+	@use '$lib/styles/palette.scss' as palette;
 
 	.items {
 		background-color: #fff;

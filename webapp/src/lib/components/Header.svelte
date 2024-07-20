@@ -33,8 +33,7 @@
 				<a
 					class="nav-link"
 					href="{base}/events"
-					class:nav-link--selected={$page.route.id == '/events'}
-				>
+					class:nav-link--selected={$page.route.id == '/events'}>
 					<EventsIcon class="nav-link__item" />
 					{$_('pages.events')}
 				</a>
@@ -43,8 +42,7 @@
 				<a
 					class="nav-link"
 					href="{base}/history"
-					class:nav-link--selected={$page.route.id == '/history'}
-				>
+					class:nav-link--selected={$page.route.id == '/history'}>
 					<HistoryIcon class="nav-link__item" />
 					{$_('pages.history')}
 				</a>
@@ -53,8 +51,7 @@
 				<a
 					class="nav-link"
 					href="{base}/pipelines"
-					class:nav-link--selected={$page.route.id?.startsWith('/pipelines')}
-				>
+					class:nav-link--selected={$page.route.id?.startsWith('/pipelines')}>
 					<PipelineIcon class="nav-link__item" />
 					{$_('pages.pipelines')}
 				</a>
@@ -63,8 +60,7 @@
 				<a
 					class="nav-link"
 					href="{base}/configure"
-					class:nav-link--selected={$page.route.id == '/configure'}
-				>
+					class:nav-link--selected={$page.route.id == '/configure'}>
 					<ConfigureIcon class="nav-link__item" />
 					{$_('pages.configure')}
 				</a>
@@ -80,7 +76,7 @@
 </div>
 
 <style lang="scss">
-	@use '../styles/palette.scss' as palette;
+	@use '$lib/styles/palette.scss' as palette;
 
 	.header {
 		background-color: #fff;

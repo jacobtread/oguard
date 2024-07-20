@@ -143,13 +143,11 @@
 		parts={[
 			{ label: 'Event Pipelines', href: `${base}/pipelines` },
 			existing !== undefined ? { label: existing.name } : { label: 'Create' }
-		]}
-	/>
+		]} />
 
 	<Container.Root>
 		<Container.Header
-			title={existing !== undefined ? $t('pipelines.editing_title') : $t('pipelines.create_title')}
-		>
+			title={existing !== undefined ? $t('pipelines.editing_title') : $t('pipelines.create_title')}>
 			<div class="actions">
 				{#if existing !== undefined}
 					<span class="pipeline-name">{existing.name}</span>
@@ -190,8 +188,7 @@
 							checked={cancellable}
 							onCheckedChange={(value) => {
 								cancellable = value;
-							}}
-						>
+							}}>
 							<Switch.Thumb />
 						</Switch.Root>
 					</div>
@@ -211,8 +208,7 @@
 								checked={enabled}
 								onCheckedChange={(value) => {
 									enabled = value;
-								}}
-							>
+								}}>
 								<Switch.Thumb />
 							</Switch.Root>
 						</div>
@@ -228,8 +224,7 @@
 						{index}
 						item={action}
 						onEdit={() => (editAction = index)}
-						onRemove={() => removeAction(index)}
-					/>
+						onRemove={() => removeAction(index)} />
 				{:else}
 					<p class="empty">
 						You don't have any actions in this pipeline, press <b>Add Action</b> to add an action
@@ -259,8 +254,7 @@
 									}
 								}
 							});
-						}}
-					>
+						}}>
 						Save
 					</button>
 
@@ -269,24 +263,21 @@
 						on:click={() => {
 							setDefaultState(existing);
 							toast.info('Reverted changes.');
-						}}
-					>
+						}}>
 						Reset
 					</button>
 					<button
 						class="button button--secondary"
 						on:click={() => {
 							confirmTest = true;
-						}}
-					>
+						}}>
 						Test
 					</button>
 					<button
 						class="button button--secondary"
 						on:click={() => {
 							confirmDelete = true;
-						}}
-					>
+						}}>
 						Delete
 					</button>
 				{:else}
@@ -296,8 +287,7 @@
 							$createPipelineMutation.mutate({
 								data: { name, event: eventType, pipeline: { actions }, cancellable }
 							});
-						}}
-					>
+						}}>
 						Create
 					</button>
 				{/if}
@@ -315,8 +305,7 @@
 			$testMutation.mutate({ id: existing.id });
 			confirmTest = false;
 		}}
-		onCancel={() => (confirmTest = false)}
-	/>
+		onCancel={() => (confirmTest = false)} />
 {/if}
 
 {#if addAction}
@@ -326,8 +315,7 @@
 			actions.push(action);
 			actions = actions;
 		}}
-		onCancel={() => (addAction = false)}
-	/>
+		onCancel={() => (addAction = false)} />
 {/if}
 
 {#if editingAction !== null && editAction !== null}
@@ -341,8 +329,7 @@
 
 			editAction = null;
 		}}
-		onCancel={() => (editAction = null)}
-	/>
+		onCancel={() => (editAction = null)} />
 {/if}
 
 {#if confirmDelete && existing !== undefined}
@@ -350,7 +337,7 @@
 {/if}
 
 <style lang="scss">
-	@use '../../styles/palette.scss' as palette;
+	@use '$lib/styles/palette.scss' as palette;
 
 	$borderWidth: 0.1rem;
 	$borderStyle: solid;
