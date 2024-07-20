@@ -8,7 +8,7 @@
 	import PipelineIcon from '~icons/solar/square-sort-horizontal-bold-duotone';
 	import { page } from '$app/stores';
 	import { _ } from 'svelte-i18n';
-	import LogoutButton from './LogoutButton.svelte';
+	import LogoutButton from './auth/LogoutButton.svelte';
 	import { createLoginStateQuery } from '$lib/api/login';
 
 	const loginStateQuery = createLoginStateQuery();

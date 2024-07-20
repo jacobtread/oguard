@@ -26,9 +26,8 @@
 <button
 	disabled={$logoutMutation.isPending}
 	class="button"
-	on:click={() => $logoutMutation.mutate()}>{$_('logout')}</button
->
+	on:click={() => $logoutMutation.mutate()}>{$_('logout')}</button>
 
 <style lang="scss">
-	@use '../../styles/palette.scss' as palette;
+	@use '$lib/styles/palette.scss' as palette;
 </style>
