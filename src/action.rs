@@ -259,7 +259,7 @@ pub async fn run_pipeline_test<D: Device>(
 
     for action in pipeline.pipeline.actions {
         // Attempt to run the action
-        if action.execute_with_retry(event, &executor).await {
+        if !action.execute_with_retry(event, &executor).await {
             return;
         }
     }
