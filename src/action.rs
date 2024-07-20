@@ -185,6 +185,7 @@ impl EventPipelineRunner {
             self.executor.clone(),
             self.active_tasks.clone(),
             event,
+            true,
         ));
 
         // Add to the active tasks
@@ -202,6 +203,7 @@ async fn run_pipeline(
     executor: DeviceExecutorHandle,
     active_tasks: SharedActiveTasks,
     event: UPSEvent,
+    allow_repeat: bool,
 ) {
     let name = &pipeline.name;
 
@@ -229,13 +231,15 @@ async fn run_pipeline(
         );
     }
 
-    // Futures that can be repeated are handled out of orde
-    let mut repeated_futures: FuturesUnordered<_> = repeated
-        .into_iter()
-        .map(|action| run_repeated_action(action, event, executor.clone()))
-        .collect();
+    if allow_repeat {
+        // Futures that can be repeated are handled out of order
+        let mut repeated_futures: FuturesUnordered<_> = repeated
+            .into_iter()
+            .map(|action| run_repeated_action(action, event, executor.clone()))
+            .collect();
 
-    while repeated_futures.next().await.is_some() {}
+        while repeated_futures.next().await.is_some() {}
+    }
 
     debug!("\"{name}\" ({event})  pipeline complete");
 
