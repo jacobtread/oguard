@@ -1,10 +1,11 @@
 <script lang="ts">
 	export let title: string | undefined = undefined;
+	export let dark: boolean = false;
 
 	console.log(title);
 </script>
 
-<div class="container__header">
+<div class="container__header" class:container__header--dark={dark}>
 	{#if title !== undefined}
 		<h2 class="container__header__title">{title}</h2>
 	{/if}
@@ -28,10 +29,18 @@
 		align-items: center;
 
 		border-bottom: $border;
+
+		&--dark {
+			background-color: palette.$gray-200;
+		}
 	}
 
 	.container__header__title {
 		font-size: 1.25rem;
 		color: palette.$gray-800;
+	}
+
+	.container__header--dark .container__header__title {
+		color: palette.$gray-700;
 	}
 </style>
