@@ -15,7 +15,15 @@
 	$: selected = values.find((otherValue) => otherValue.value === value);
 </script>
 
-<Select.Root items={values} {selected}>
+<Select.Root
+	items={values}
+	{selected}
+	onSelectedChange={(selected) => {
+		if (selected !== undefined) {
+			value = selected.value;
+		}
+	}}
+>
 	<Select.Trigger aria-label={$t('event.select')}>
 		<Select.Value placeholder={$t('event.select')} />
 	</Select.Trigger>
