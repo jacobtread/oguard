@@ -3,9 +3,6 @@
 		type EventPipeline,
 		type Action,
 		type UpdateEventPipeline,
-		EventLevel,
-		EVENT_TYPES,
-		EVENT_TYPE_DATA,
 		EventType,
 		type CreateEventPipeline
 	} from '$lib/api/types';
@@ -15,30 +12,39 @@
 	import ActionItem from '$lib/components/pipeline/ActionItem.svelte';
 	import CreateActionForm from '$lib/components/pipeline/CreateActionForm.svelte';
 	import EditActionForm from '$lib/components/pipeline/EditActionForm.svelte';
-	import { Combobox, Label, Switch } from 'bits-ui';
-	import InfoIcon from '~icons/solar/info-circle-bold-duotone';
-	import WarningIcon from '~icons/solar/danger-triangle-bold-duotone';
-	import ErrorIcon from '~icons/solar/bug-bold-duotone';
-	import SuccessIcon from '~icons/solar/check-circle-bold-duotone';
-	import { _ } from 'svelte-i18n';
+	import { Label, Switch } from 'bits-ui';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 	import Breadcrumbs from '../Breadcrumbs.svelte';
 	import DeletePipelineDialog from './DeletePipelineDialog.svelte';
 	import { Container } from '..';
+	import EventInput from './EventInput.svelte';
+
+	// Mutation arg types
+	type UpdateData = { id: number; data: UpdateEventPipeline };
+	type CreateData = { data: CreateEventPipeline };
 
 	// Existing pipeline to edit if editing
 	export let existing: EventPipeline | undefined = undefined;
 
+	// Local dialog and editing state
 	let confirmDelete = false;
 	let addAction = false;
 	let editAction: number | null = null;
 
+	// Local state for updates
+	let eventType: EventType = EventType.ACFailure;
+	let name: string = '';
+	let cancellable: boolean = false;
+	let actions: Action[] = [];
+
+	// Setup default state
+	$: setDefaultState(existing);
+
+	// Determine the current editing action from its index
+	$: editingAction = editAction === null ? null : actions[editAction];
+
 	const client = useQueryClient();
-
-	type UpdateData = { id: number; data: UpdateEventPipeline };
-
-	type CreateData = { data: CreateEventPipeline };
 
 	// Mutation to update an existing pipeline
 	const updateMutation = createMutation({
@@ -80,23 +86,24 @@
 		}
 	});
 
-	let eventType: EventType = EventType.ACFailure;
-	let name: string = '';
-	let cancellable: boolean = false;
-	let actions: Action[] = [];
-
-	$: {
-		setDefaultState(existing);
-	}
-
-	$: editingAction = editAction === null ? null : actions[editAction];
-
-	const removeAction = (index: number) => {
+	/**
+	 * Removes the action at the provided index
+	 *
+	 * @param index The index of the action to remove
+	 */
+	function removeAction(index: number) {
 		actions.splice(index, 1);
 		actions = actions;
-	};
+	}
 
-	const setDefaultState = (existing?: EventPipeline) => {
+	/**
+	 * Sets the options and actions back to the default
+	 * values, uses the values from the existing pipeline
+	 * if one is provided
+	 *
+	 * @param existing Existing pipeline to reset to
+	 */
+	function setDefaultState(existing?: EventPipeline) {
 		if (existing) {
 			eventType = existing.event;
 			name = existing.name;
@@ -108,21 +115,7 @@
 			cancellable = false;
 			actions = [];
 		}
-	};
-
-	$: values = EVENT_TYPES.map((eventType) => ({
-		value: eventType,
-		label: $_(`events.${eventType}.label`),
-		description: $_(`events.${eventType}.description`)
-	}));
-
-	let inputValue = '';
-	let touchedInput = false;
-
-	$: filteredValues =
-		inputValue && touchedInput
-			? values.filter((value) => value.label.toLowerCase().includes(inputValue.toLowerCase()))
-			: values;
+	}
 </script>
 
 <Container.Wrapper>
@@ -145,65 +138,20 @@
 		</Container.Header>
 
 		<div class="settings">
-			{#if existing === undefined}
-				<div class="field">
-					<h3 class="field__name">Event</h3>
-					<div class="field__content">
-						<Label.Root
-							id="eventTypeLabel"
-							for="eventType"
-							class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-						>
-							Choose an event this pipeline should run on
-						</Label.Root>
-						<Combobox.Root items={filteredValues} bind:inputValue bind:touchedInput>
-							<Combobox.Input placeholder="Select an event">Test</Combobox.Input>
-							<Combobox.Label id="eventType" />
+			<div class="field">
+				<h3 class="field__name">Event</h3>
+				<div class="field__content">
+					<Label.Root
+						id="eventTypeLabel"
+						for="eventType"
+						class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+					>
+						Choose an event this pipeline should run on
+					</Label.Root>
 
-							<Combobox.Content sideOffset={8} sameWidth={false} class="flex flex-col gap-4">
-								{#each filteredValues as eventType}
-									{@const typeData = EVENT_TYPE_DATA[eventType.value]}
-									{#if typeData !== undefined}
-										<Combobox.Item value={eventType.value}>
-											<Combobox.ItemIndicator />
-											<div class="event-item">
-												<div class="event-item__icon">
-													{#if typeData.level === EventLevel.Info}
-														<span class="level level--info">
-															<InfoIcon />
-														</span>
-													{:else if typeData.level === EventLevel.Success}
-														<span class="level level--success">
-															<SuccessIcon />
-														</span>
-													{:else if typeData.level === EventLevel.Warning}
-														<span class="level level--warning">
-															<WarningIcon />
-														</span>
-													{:else if typeData.level === EventLevel.Severe}
-														<span class="level level--severe">
-															<ErrorIcon />
-														</span>
-													{/if}
-												</div>
-
-												<div class="event-item__text">
-													<p class="event-item__label">{eventType.label}</p>
-													<p class="event-item__description">{eventType.description}</p>
-												</div>
-											</div>
-										</Combobox.Item>
-									{/if}
-								{:else}
-									<span> No results found </span>
-								{/each}
-							</Combobox.Content>
-							<Combobox.Arrow />
-							<Combobox.HiddenInput bind:value={eventType} />
-						</Combobox.Root>
-					</div>
+					<EventInput bind:value={eventType} />
 				</div>
-			{/if}
+			</div>
 
 			<div class="field">
 				<h3 class="field__name">Name</h3>
@@ -270,6 +218,7 @@
 							$updateMutation.mutate({
 								id: existing.id,
 								data: {
+									event: eventType,
 									name,
 									cancellable,
 									pipeline: {
@@ -390,46 +339,5 @@
 		display: block;
 		padding: 1rem;
 		color: palette.$gray-800;
-	}
-
-	.event-item {
-		display: flex;
-		gap: 1rem;
-		align-items: center;
-		padding: 0.5rem 1rem;
-
-		&__text {
-			display: flex;
-			flex-flow: column;
-			gap: 0.25rem;
-		}
-
-		&__label {
-			font-weight: bold;
-		}
-		&__description {
-			font-size: 0.9rem;
-		}
-	}
-
-	.level {
-		font-size: 1.25rem;
-		line-height: 1;
-
-		&--info {
-			color: #34495e;
-		}
-
-		&--success {
-			color: #30b455;
-		}
-
-		&--warning {
-			color: #efaf13;
-		}
-
-		&--severe {
-			color: #aa1109;
-		}
 	}
 </style>
