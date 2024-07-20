@@ -20,9 +20,11 @@
 	import { Container } from '..';
 	import { t } from 'svelte-i18n';
 	import EventInput from './EventInput.svelte';
+	import ConfirmDialog from '../ConfirmDialog.svelte';
 
 	// Mutation arg types
 	type UpdateData = { id: number; data: UpdateEventPipeline };
+	type TestData = { id: number };
 	type CreateData = { data: CreateEventPipeline };
 
 	// Existing pipeline to edit if editing
@@ -30,6 +32,7 @@
 
 	// Local dialog and editing state
 	let confirmDelete = false;
+	let confirmTest = false;
 	let addAction = false;
 	let editAction: number | null = null;
 
@@ -84,6 +87,19 @@
 			client.setQueryData(['event-pipelines', pipeline.id], pipeline);
 
 			toast.success('Created new pipeline.');
+		}
+	});
+
+	// Mutation to test an existing pipeline
+	const testMutation = createMutation({
+		mutationFn: async ({ id }: TestData) =>
+			await requestJson({
+				method: HttpMethod.POST,
+				route: `/api/event-pipelines/${id}/test`
+			}),
+
+		onSuccess: () => {
+			toast.success('Test started.');
 		}
 	});
 
@@ -244,6 +260,14 @@
 					<button
 						class="button button--secondary"
 						on:click={() => {
+							confirmTest = true;
+						}}
+					>
+						Test
+					</button>
+					<button
+						class="button button--secondary"
+						on:click={() => {
 							confirmDelete = true;
 						}}
 					>
@@ -266,6 +290,19 @@
 		</Container.Footer>
 	</Container.Root>
 </Container.Wrapper>
+
+{#if confirmTest && existing !== undefined}
+	<ConfirmDialog
+		title="Confirm Test"
+		content="Are you sure you want to test this pipeline? This will ignore delays and repeated actions and execute all actions you've listed including shutdown actions, it's recommend you save any changes if you have destructive actions. Only saved actions will be executed"
+		onConfirm={() => {
+			toast.info('Starting pipeline test..');
+			$testMutation.mutate({ id: existing.id });
+			confirmTest = false;
+		}}
+		onCancel={() => (confirmTest = false)}
+	/>
+{/if}
 
 {#if addAction}
 	<CreateActionForm
