@@ -25,7 +25,11 @@
 	}}
 >
 	<Select.Trigger aria-label={$t('event.select')}>
-		<Select.Value placeholder={$t('event.select')} />
+		<div class="event-current-item">
+			<EventLevelIcon level={EVENT_TYPE_DATA[value].level} />
+
+			<Select.Value placeholder={$t('event.select')} />
+		</div>
 	</Select.Trigger>
 	<Select.Content sideOffset={8} sameWidth={false}>
 		{#each values as eventType}
@@ -86,5 +90,11 @@
 		&__description {
 			font-size: 0.9rem;
 		}
+	}
+
+	.event-current-item {
+		display: inline-flex;
+		gap: 0.5rem;
+		align-items: center;
 	}
 </style>
