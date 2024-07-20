@@ -12,7 +12,7 @@
 	import ActionItem from '$lib/components/pipeline/ActionItem.svelte';
 	import CreateActionForm from '$lib/components/pipeline/CreateActionForm.svelte';
 	import EditActionForm from '$lib/components/pipeline/EditActionForm.svelte';
-	import { Label, Switch } from 'bits-ui';
+	import { Switch } from 'bits-ui';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 	import Breadcrumbs from '../Breadcrumbs.svelte';
@@ -40,6 +40,7 @@
 	let eventType: EventType = EventType.ACFailure;
 	let name: string = '';
 	let cancellable: boolean = false;
+	let enabled: boolean = true;
 	let actions: Action[] = [];
 
 	// Setup default state
@@ -125,11 +126,13 @@
 			eventType = existing.event;
 			name = existing.name;
 			cancellable = existing.cancellable;
+			enabled = existing.enabled;
 			actions = [...existing.pipeline.actions];
 		} else {
 			eventType = EventType.ACFailure;
 			name = '';
 			cancellable = false;
+			enabled = true;
 			actions = [];
 		}
 	}
@@ -147,62 +150,74 @@
 		<Container.Header
 			title={existing !== undefined ? $t('pipelines.editing_title') : $t('pipelines.create_title')}
 		>
-			<h2 class="title">
+			<div class="actions">
 				{#if existing !== undefined}
 					<span class="pipeline-name">{existing.name}</span>
 				{/if}
-			</h2>
+				<a class="button button--secondary" href="{base}/pipelines">Back</a>
+			</div>
 		</Container.Header>
 
 		<div class="settings">
-			<div class="field">
-				<h3 class="field__name">Event</h3>
-				<div class="field__content">
-					<Label.Root
-						id="eventTypeLabel"
-						for="eventType"
-						class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-					>
-						Choose an event this pipeline should run on
-					</Label.Root>
-
+			<div class="fls">
+				<div class="fl">
+					<div class="fl__text">
+						<h3 class="fl__name">Event</h3>
+						<p class="fl__description">Choose an event this pipeline should run on</p>
+					</div>
 					<EventInput bind:value={eventType} />
 				</div>
-			</div>
 
-			<div class="field">
-				<h3 class="field__name">Name</h3>
-				<div class="field__content">
-					<Label.Root
-						id="eventTypeLabel"
-						for="eventType"
-						class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-					>
-						Choose a name for this pipeline
-					</Label.Root>
+				<div class="fl">
+					<div class="fl__text">
+						<h3 class="fl__name">Name</h3>
+						<p class="fl__description">Choose a name for this pipeline</p>
+					</div>
 					<input class="input" id="name" type="text" required maxlength="100" bind:value={name} />
 				</div>
-			</div>
-			<div class="field">
-				<h3 class="field__name">Cancellable</h3>
-				<div class="field__content">
-					<Label.Root
-						id="eventTypeLabel"
-						for="eventType"
-						class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-					>
-						When cancelling is enabled if this task is running and the opposite of the event is
-						received the current execution will be canceled
-					</Label.Root>
-					<Switch.Root
-						checked={cancellable}
-						onCheckedChange={(value) => {
-							cancellable = value;
-						}}
-					>
-						<Switch.Thumb />
-					</Switch.Root>
+
+				<div class="fl">
+					<div class="fl__text">
+						<h3 class="fl__name">Cancellable</h3>
+						<p class="fl__description">
+							When cancelling is enabled if this pipeline is running and the opposite of the event
+							is received the current execution will be canceled
+						</p>
+					</div>
+
+					<div>
+						<Switch.Root
+							checked={cancellable}
+							onCheckedChange={(value) => {
+								cancellable = value;
+							}}
+						>
+							<Switch.Thumb />
+						</Switch.Root>
+					</div>
 				</div>
+
+				{#if existing !== undefined}
+					<div class="fl">
+						<div class="fl__text">
+							<h3 class="fl__name">Enabled</h3>
+							<p class="fl__description">
+								Whether this event pipeline is enabled, the pipeline will not run if it is not
+								enabled
+							</p>
+						</div>
+						<div>
+							<Switch.Root
+								checked={enabled}
+								onCheckedChange={(value) => {
+									enabled = value;
+								}}
+							>
+								<Switch.Thumb />
+							</Switch.Root>
+						</div>
+					</div>
+				{/if}
 			</div>
 		</div>
 
@@ -238,6 +253,7 @@
 									event: eventType,
 									name,
 									cancellable,
+									enabled,
 									pipeline: {
 										actions
 									}
@@ -285,7 +301,6 @@
 						Create
 					</button>
 				{/if}
-				<a class="button button--secondary" href="{base}/pipelines">Back</a>
 			</svelte:fragment>
 		</Container.Footer>
 	</Container.Root>
@@ -342,6 +357,42 @@
 	$borderColor: #dfe3e8;
 	$border: $borderWidth $borderStyle $borderColor;
 
+	.fls {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1rem;
+	}
+
+	// Span the columns for the last child when theres an odd number of items
+	.fl:nth-child(odd):last-child {
+		grid-column: 1/3;
+	}
+
+	.fl {
+		border: $border;
+		background-color: palette.$gray-100;
+		padding: 1rem;
+		border-radius: 0.125rem;
+		display: flex;
+		gap: 1rem;
+		width: 100%;
+		align-items: center;
+
+		&__text {
+			flex: auto;
+		}
+
+		&__name {
+			font-size: 1rem;
+			margin-bottom: 0.25rem;
+		}
+
+		&__description {
+			font-size: 0.9rem;
+			color: palette.$gray-700;
+		}
+	}
+
 	.items {
 		background-color: #fff;
 		border: 0.1rem solid palette.$gray-300;
@@ -360,11 +411,6 @@
 		border-bottom: $border;
 	}
 
-	.title {
-		font-size: 1.25rem;
-		color: palette.$gray-800;
-	}
-
 	.pipeline-name {
 		background-color: palette.$gray-200;
 		padding: 0.5rem;
@@ -377,5 +423,13 @@
 		display: block;
 		padding: 1rem;
 		color: palette.$gray-800;
+	}
+
+	.actions {
+		font-size: 1.25rem;
+		color: palette.$gray-800;
+		display: flex;
+		gap: 1rem;
+		align-items: center;
 	}
 </style>
