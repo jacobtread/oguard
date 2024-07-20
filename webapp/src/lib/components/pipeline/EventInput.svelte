@@ -1,13 +1,10 @@
 <script lang="ts">
-	import { EVENT_TYPE_DATA, EVENT_TYPES, type EventType } from '$lib/api/types';
-	import { Combobox } from 'bits-ui';
+	import { EVENT_TYPE_DATA, EVENT_TYPES, EventType } from '$lib/api/types';
+	import { Select } from 'bits-ui';
 	import { t } from 'svelte-i18n';
 	import EventLevelIcon from './EventLevelIcon.svelte';
 
-	export let value: EventType;
-
-	let inputValue = '';
-	let touchedInput = false;
+	export let value: EventType = EventType.ACFailure;
 
 	$: values = EVENT_TYPES.map((eventType) => ({
 		value: eventType,
@@ -15,23 +12,19 @@
 		description: $t(`events.${eventType}.description`)
 	}));
 
-	$: filteredValues =
-		inputValue && touchedInput
-			? values.filter((value) => value.label.toLowerCase().includes(inputValue.toLowerCase()))
-			: values;
+	$: selected = values.find((otherValue) => otherValue.value === value);
 </script>
 
-<Combobox.Root items={filteredValues} bind:inputValue bind:touchedInput>
-	<Combobox.Input placeholder="Select an event" bind:value></Combobox.Input>
-	<Combobox.Label id="eventType" />
-
-	<Combobox.Content sideOffset={8} sameWidth={false} class="flex flex-col gap-4">
-		{#each filteredValues as eventType}
+<Select.Root items={values} {selected}>
+	<Select.Trigger aria-label={$t('event.select')}>
+		<Select.Value placeholder={$t('event.select')} />
+	</Select.Trigger>
+	<Select.Content sideOffset={8} sameWidth={false}>
+		{#each values as eventType}
 			{@const typeData = EVENT_TYPE_DATA[eventType.value]}
 			{#if typeData !== undefined}
-				<Combobox.Item value={eventType.value}>
-					<Combobox.ItemIndicator />
-					<div class="event-item">
+				<Select.Item value={eventType.value} label={eventType.label} let:isSelected>
+					<div class="event-item" class:event-item--selected={isSelected}>
 						<div class="event-item__icon">
 							<EventLevelIcon level={typeData.level} />
 						</div>
@@ -40,16 +33,19 @@
 							<p class="event-item__label">{eventType.label}</p>
 							<p class="event-item__description">{eventType.description}</p>
 						</div>
+						<Select.ItemIndicator asChild={false}>
+							<!-- <Check /> -->
+							&larr;
+						</Select.ItemIndicator>
 					</div>
-				</Combobox.Item>
+				</Select.Item>
 			{/if}
 		{:else}
-			<span> No results found </span>
+			<span>{$t('no_results')}</span>
 		{/each}
-	</Combobox.Content>
-	<Combobox.Arrow />
-	<Combobox.HiddenInput bind:value />
-</Combobox.Root>
+	</Select.Content>
+	<Select.Input bind:value />
+</Select.Root>
 
 <style lang="scss">
 	@use '../../styles/palette.scss' as palette;
@@ -59,6 +55,16 @@
 		gap: 1rem;
 		align-items: center;
 		padding: 0.5rem 1rem;
+		cursor: pointer;
+		width: 100%;
+
+		&--selected {
+			background-color: palette.$gray-300;
+
+			&:hover {
+				background-color: palette.$gray-400;
+			}
+		}
 
 		&__text {
 			display: flex;

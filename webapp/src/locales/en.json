@@ -20,7 +20,9 @@
     "pipelines_title": "Event Pipelines",
     "pipelines": {
         "title": "Event Pipelines",
-        "empty": "You don't have any event pipelines, press Create to create a new one."
+        "empty": "You don't have any event pipelines, press Create to create a new one.",
+        "editing_title": "Editing Pipeline",
+        "create_title": "Create Event Pipeline"
     },
     "create": "Create",
     "delete_pipeline": {
@@ -37,8 +39,10 @@
         "filters": {
             "start": "Start",
             "end": "End"
-        }
+        },
+        "select": "Select an event"
     },
+    "no_results": "No results found",
     "events": {
         "ACFailure": {
             "label": "AC Power Failure",

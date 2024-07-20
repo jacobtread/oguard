@@ -18,6 +18,7 @@
 	import Breadcrumbs from '../Breadcrumbs.svelte';
 	import DeletePipelineDialog from './DeletePipelineDialog.svelte';
 	import { Container } from '..';
+	import { t } from 'svelte-i18n';
 	import EventInput from './EventInput.svelte';
 
 	// Mutation arg types
@@ -127,12 +128,12 @@
 	/>
 
 	<Container.Root>
-		<Container.Header>
+		<Container.Header
+			title={existing !== undefined ? $t('pipelines.editing_title') : $t('pipelines.create_title')}
+		>
 			<h2 class="title">
 				{#if existing !== undefined}
-					Editing Pipeline <span class="pipeline-name">{existing.name}</span>
-				{:else}
-					Create Event Pipeline
+					<span class="pipeline-name">{existing.name}</span>
 				{/if}
 			</h2>
 		</Container.Header>
