@@ -38,11 +38,19 @@ pub fn router() -> Router {
                             get(pipelines::get_event_pipelines)
                                 .post(pipelines::create_event_pipeline),
                         )
-                        .route(
+                        .nest(
                             "/:id",
-                            get(pipelines::get_event_pipeline)
-                                .put(pipelines::update_event_pipeline)
-                                .delete(pipelines::delete_event_pipeline),
+                            Router::new()
+                                .route(
+                                    "/",
+                                    get(pipelines::get_event_pipeline)
+                                        .put(pipelines::update_event_pipeline)
+                                        .delete(pipelines::delete_event_pipeline),
+                                )
+                                .route(
+                                    "/test",
+                                    post(pipelines::test_event_pipeline::<DefaultDevice>),
+                                ),
                         ),
                 )
                 .route("/toggle-buzzer", post(realtime::toggle_buzzer))

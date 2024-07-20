@@ -1,10 +1,12 @@
 use crate::{
+    action::run_pipeline_test,
     database::entities::event_pipeline::{EventPipelineId, EventPipelineModel, ListEventPipeline},
     http::{
         error::{HttpResult, HttpStatusResult},
         middleware::auth_gate::AuthGate,
         models::{CreateEventPipeline, UpdateEventPipeline},
     },
+    ups::{device::Device, DeviceExecutorHandle},
 };
 use anyhow::{anyhow, Context};
 use axum::extract::Path;
@@ -110,6 +112,32 @@ pub async fn delete_event_pipeline(
     if !deleted {
         return Err(anyhow!("unknown event pipeline").into());
     }
+
+    Ok(StatusCode::OK)
+}
+
+/// POST /api/event-pipelines/:id/test
+///
+/// Tests a pipeline by running it once, does not run
+/// repeated actions and skips any delays
+pub async fn test_event_pipeline<D: Device>(
+    _: AuthGate,
+    Extension(db): Extension<DatabaseConnection>,
+    Extension(executor): Extension<DeviceExecutorHandle<D>>,
+    Path(id): Path<EventPipelineId>,
+) -> HttpStatusResult {
+    let event_pipeline = EventPipelineModel::find_by_id(&db, id)
+        .await
+        .context("failed to find event pipeline")?
+        .ok_or(anyhow!("unknown event pipeline"))?;
+
+    let event = event_pipeline.event;
+
+    tokio::spawn(async move {
+        let executor = executor;
+        let pipeline = event_pipeline;
+        run_pipeline_test(pipeline, executor, event).await;
+    });
 
     Ok(StatusCode::OK)
 }

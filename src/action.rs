@@ -3,7 +3,7 @@ use crate::{
         event_pipeline::{CancellableEventPipeline, EventPipelineId, EventPipelineModel},
         events::UPSEvent,
     },
-    ups::{DeviceExecutorHandle, QueryDeviceBattery, ScheduleUPSShutdown},
+    ups::{device::Device, DeviceExecutorHandle, QueryDeviceBattery, ScheduleUPSShutdown},
     utils::validate::is_non_zero_duration,
     watcher::UPSWatcherHandle,
 };
@@ -185,7 +185,6 @@ impl EventPipelineRunner {
             self.executor.clone(),
             self.active_tasks.clone(),
             event,
-            true,
         ));
 
         // Add to the active tasks
@@ -203,7 +202,6 @@ async fn run_pipeline(
     executor: DeviceExecutorHandle,
     active_tasks: SharedActiveTasks,
     event: UPSEvent,
-    allow_repeat: bool,
 ) {
     let name = &pipeline.name;
 
@@ -231,15 +229,13 @@ async fn run_pipeline(
         );
     }
 
-    if allow_repeat {
-        // Futures that can be repeated are handled out of order
-        let mut repeated_futures: FuturesUnordered<_> = repeated
-            .into_iter()
-            .map(|action| run_repeated_action(action, event, executor.clone()))
-            .collect();
+    // Futures that can be repeated are handled out of order
+    let mut repeated_futures: FuturesUnordered<_> = repeated
+        .into_iter()
+        .map(|action| run_repeated_action(action, event, executor.clone()))
+        .collect();
 
-        while repeated_futures.next().await.is_some() {}
-    }
+    while repeated_futures.next().await.is_some() {}
 
     debug!("\"{name}\" ({event})  pipeline complete");
 
@@ -248,6 +244,27 @@ async fn run_pipeline(
         .write()
         .await
         .retain(|task| pipeline.id != task.id);
+}
+
+/// Runs an event pipeline ignoring any delays and without
+/// running repeated tasks
+pub async fn run_pipeline_test<D: Device>(
+    pipeline: EventPipelineModel,
+    executor: DeviceExecutorHandle<D>,
+    event: UPSEvent,
+) {
+    let name = &pipeline.name;
+
+    debug!("starting \"{name}\" ({event}) task pipeline test");
+
+    for action in pipeline.pipeline.actions {
+        // Attempt to run the action
+        if action.execute_with_retry(event, &executor).await {
+            return;
+        }
+    }
+
+    debug!("\"{name}\" ({event}) pipeline test complete");
 }
 
 /// Executes the repeated portion of an action
@@ -447,10 +464,10 @@ impl Action {
     }
 
     /// Executes the action and handles retry on failure
-    pub async fn execute_with_retry(
+    pub async fn execute_with_retry<D: Device>(
         &self,
         event: UPSEvent,
-        executor: &DeviceExecutorHandle,
+        executor: &DeviceExecutorHandle<D>,
     ) -> bool {
         let mut attempt = 0;
         let mut last_delay: Option<Duration> = None;
@@ -502,10 +519,10 @@ impl Action {
     }
 
     /// Executes the action
-    pub async fn execute_action(
+    pub async fn execute_action<D: Device>(
         &self,
         event: UPSEvent,
-        executor: &DeviceExecutorHandle,
+        executor: &DeviceExecutorHandle<D>,
     ) -> anyhow::Result<()> {
         match &self.ty {
             ActionType::Notification => execute_notification(event).await,
@@ -805,9 +822,9 @@ pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyho
 }
 
 /// Triggers the UPS to shutdown
-pub async fn execute_shutdown_ups(
+pub async fn execute_shutdown_ups<D: Device>(
     config: &UPSShutdownAction,
-    executor: &DeviceExecutorHandle,
+    executor: &DeviceExecutorHandle<D>,
 ) -> anyhow::Result<()> {
     executor
         .send(ScheduleUPSShutdown {
