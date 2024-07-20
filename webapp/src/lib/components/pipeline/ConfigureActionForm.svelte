@@ -15,6 +15,7 @@
 	import ActionRepeatConfig from './config/ActionRepeatConfig.svelte';
 	import ActionRetryConfig from './config/ActionRetryConfig.svelte';
 	import ExpandIcon from '~icons/solar/double-alt-arrow-down-bold-duotone';
+	import { slide } from 'svelte/transition';
 
 	export let action: Action;
 
@@ -72,7 +73,7 @@
 				})}
 				<span data-collapsible-icon> <ExpandIcon /> </span>
 			</Collapsible.Trigger>
-			<Collapsible.Content>
+			<Collapsible.Content transition={slide}>
 				<div class="section__content">
 					<CurrentConfigScreen bind:config={action.ty} />
 				</div>
@@ -96,7 +97,7 @@
 					<button class="button" on:click={removeDelay}>Remove</button>
 				</div>
 			</Collapsible.Trigger>
-			<Collapsible.Content>
+			<Collapsible.Content transition={slide}>
 				<div class="section__content">
 					<ActionDelayConfig bind:delay={action.delay} />
 				</div>
@@ -119,7 +120,7 @@
 					<button class="button" on:click={removeRepeat}>Remove</button>
 				</div>
 			</Collapsible.Trigger>
-			<Collapsible.Content>
+			<Collapsible.Content transition={slide}>
 				<div class="section__content">
 					<ActionRepeatConfig bind:repeat={action.repeat} />
 				</div>
@@ -142,12 +143,13 @@
 					<button class="button" on:click={removeRetry}>Remove</button>
 				</div>
 			</Collapsible.Trigger>
-			<Collapsible.Content>
+			<Collapsible.Content transition={slide}>
 				<div class="section__content">
 					<ActionRetryConfig bind:retry={action.retry} />
 				</div>
 			</Collapsible.Content>
-		</Collapsible.Root>{/if}
+		</Collapsible.Root>
+	{/if}
 </div>
 
 <style lang="scss">
