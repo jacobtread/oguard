@@ -35,3 +35,5 @@ Below is a screenshot of the WIP web UI for the app to monitor the capacity and 
 ![Home screenshot](assets/image.png)
 ![Events screenshot](assets/image-1.png)
 ![Pipeline screenshot](assets/image-2.png)
+![Pipeline screenshot](assets/image-3.png)
+![Pipeline screenshot](assets/image-4.png)
