@@ -799,6 +799,7 @@ pub async fn execute_sleep() -> anyhow::Result<()> {
 }
 
 /// Executes a shutdown
+#[cfg(target_os = "windows")]
 pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyhow::Result<()> {
     let message = config
         .message
@@ -817,6 +818,17 @@ pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyho
     .await
     .context("failed to join shutdown task")?
     .context("failed to shutdown")?;
+
+    Ok(())
+}
+
+/// Executes a shutdown
+#[cfg(target_os = "linux")]
+pub async fn execute_shutdown(_event: UPSEvent, _config: &ShutdownAction) -> anyhow::Result<()> {
+    spawn_blocking(system_shutdown::shutdown)
+        .await
+        .context("failed to join shutdown task")?
+        .context("failed to shutdown")?;
 
     Ok(())
 }

@@ -9,6 +9,7 @@ pub mod database;
 pub mod http;
 pub mod logging;
 pub mod server;
+#[cfg(target_os = "windows")]
 pub mod service;
 pub mod services;
 pub mod ups;
@@ -28,9 +29,11 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Interact with the oguard system service
+    #[cfg(target_os = "windows")]
     Service(ServiceArgs),
 }
 
+#[cfg(target_os = "windows")]
 #[derive(Debug, Args)]
 #[command(args_conflicts_with_subcommands = true)]
 struct ServiceArgs {
@@ -38,6 +41,7 @@ struct ServiceArgs {
     command: ServiceCommands,
 }
 
+#[cfg(target_os = "windows")]
 #[derive(Debug, Subcommand)]
 enum ServiceCommands {
     /// Create the service (Will fail if the service is already created)
@@ -63,7 +67,9 @@ fn main() -> anyhow::Result<()> {
         // Setup logging
         logging::setup(&config.logging).expect("failed to setup logging");
 
+        #[allow(unreachable_code)]
         return match command {
+            #[cfg(target_os = "windows")]
             Commands::Service(service) => match service.command {
                 ServiceCommands::Create => service::create_service(),
                 ServiceCommands::Start => service::start_service(),
@@ -74,17 +80,25 @@ fn main() -> anyhow::Result<()> {
         };
     }
 
-    // Debug builds run the server directly
-    #[cfg(debug_assertions)]
+    #[cfg(target_os = "windows")]
     {
-        server_main()?;
+        // Debug builds run the server directly
+        #[cfg(debug_assertions)]
+        {
+            server_main()?;
+        }
+
+        // Production builds start the service logic
+        #[cfg(not(debug_assertions))]
+        {
+            windows_service::service_dispatcher::start(service::SERVICE_NAME, ffi_service_main)
+                .context("failed to start service")?;
+        }
     }
 
-    // Production builds start the service logic
-    #[cfg(not(debug_assertions))]
+    #[cfg(target_os = "linux")]
     {
-        windows_service::service_dispatcher::start(service::SERVICE_NAME, ffi_service_main)
-            .context("failed to start service")?;
+        server_main()?;
     }
 
     Ok(())
