@@ -1,5 +1,5 @@
 use anyhow::Context;
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 use rust_i18n::i18n;
 use tokio::sync::mpsc;
 
@@ -34,7 +34,7 @@ enum Commands {
 }
 
 #[cfg(target_os = "windows")]
-#[derive(Debug, Args)]
+#[derive(Debug, clap::Args)]
 #[command(args_conflicts_with_subcommands = true)]
 struct ServiceArgs {
     #[command(subcommand)]
