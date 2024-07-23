@@ -39,8 +39,34 @@ Below is a screenshot of the WIP web UI for the app to monitor the capacity and 
 ![Pipeline screenshot](assets/image-4.png)
 
 
-## Linux deps 
+## Linux Notes
 
-libudev
+I have only tested development on Fedora, you will need to adjust these to be relevant for your distro
 
+## Dependencies
+
+libudev - Used for USB device access
+
+```sh
 sudo dnf install libudev-devel 
+```
+
+## Unprivileged USB access
+
+By default linux will not allow access to HID devices without sudo which makes it hard to debug and develop this program.
+
+You can allow unprivileged access to the UPS HID device by doing the following
+
+Create a rules file at `/etc/udev/rules.d/50-oguard.rules` in this file put the following line:
+
+```
+KERNEL=="hidraw*", ATTRS{idVendor}=="0665", ATTRS{idProduct}=="5161", TAG+="uaccess"
+```
+
+Then, replug your device or run:
+
+```sh
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+You should now be able to run the program without privileges
