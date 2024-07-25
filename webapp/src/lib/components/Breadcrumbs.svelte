@@ -34,6 +34,8 @@
 		padding: 0.5em 0.75em;
 		font-size: 1rem;
 		border-radius: 0.25rem;
+
+		margin-bottom: 1rem;
 	}
 
 	.breadcrumbs__crumb {

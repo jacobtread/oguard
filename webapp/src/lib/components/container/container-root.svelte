@@ -1,4 +1,3 @@
-
 <div class="container">
 	<slot />
 </div>
@@ -14,7 +13,6 @@
 	.container {
 		width: 100%;
 		margin: 0 auto;
-		margin-top: 1rem;
 
 		background-color: #fff;
 		border: $border;

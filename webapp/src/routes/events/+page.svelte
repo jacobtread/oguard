@@ -10,10 +10,12 @@
 	import WarningIcon from '~icons/solar/danger-triangle-bold-duotone';
 	import ErrorIcon from '~icons/solar/bug-bold-duotone';
 	import SuccessIcon from '~icons/solar/check-circle-bold-duotone';
-	import { _ } from 'svelte-i18n';
+	import { _, t } from 'svelte-i18n';
 	import { Container } from '$lib/components';
+	import Breadcrumbs from '$/lib/components/Breadcrumbs.svelte';
 
 	const currentDate = dayjs();
+
 	let start = currentDate.startOf('month').toDate();
 	let end = currentDate.endOf('month').toDate();
 
@@ -40,8 +42,10 @@
 </script>
 
 <Container.Wrapper>
+	<Breadcrumbs parts={[{ label: $_('pages.events') }]} />
+
 	<Container.Root>
-		<Container.Header></Container.Header>
+		<Container.Header title={$t('pages.events')}></Container.Header>
 		<Container.Section>
 			<div class="filters">
 				<div class=" date-input">
@@ -62,7 +66,7 @@
 			</div>
 		</Container.Section>
 
-		<Container.Section>
+		<Container.Section indent>
 			{#if $eventHistory.isPending}
 				Loading...
 			{/if}
@@ -71,7 +75,7 @@
 				{$eventHistory.error.message}
 			{/if}
 			{#if $eventHistory.isSuccess}
-				<div>
+				<div class="events">
 					<table>
 						<thead>
 							<tr>
@@ -108,8 +112,7 @@
 
 										<td class="column column--type">{$_(`events.${row.type}.label`)}</td>
 										<td class="column column--description"
-											>{$_(`events.${row.type}.description`)}</td
-										>
+											>{$_(`events.${row.type}.description`)}</td>
 
 										<td>{dayjs(row.created_at).format('L LT')}</td>
 									</tr>
@@ -124,6 +127,8 @@
 </Container.Wrapper>
 
 <style lang="scss">
+	@use '$lib/styles/palette.scss' as palette;
+
 	.column {
 		&--level {
 			width: 70px;
@@ -165,7 +170,7 @@
 		font-family: Arial, Helvetica, sans-serif;
 		border-collapse: collapse;
 		width: 100%;
-		border: 1px solid #ddd;
+		background-color: #fff;
 	}
 
 	th,
@@ -189,7 +194,7 @@
 		padding-top: 12px;
 		padding-bottom: 12px;
 		text-align: left;
-		background-color: #34495e;
+		background-color: palette.$gray-700;
 		color: white;
 	}
 

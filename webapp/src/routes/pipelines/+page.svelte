@@ -5,7 +5,7 @@
 	import PipelineItem from '$lib/components/pipeline/PipelineItem.svelte';
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import { Container } from '$lib/components';
-	import { _ } from 'svelte-i18n';
+	import { t } from 'svelte-i18n';
 
 	const eventPipelinesQuery = createQuery<ListEventPipeline[]>({
 		queryKey: ['event-pipelines'],
@@ -18,33 +18,35 @@
 </script>
 
 <Container.Wrapper>
-	<Breadcrumbs parts={[{ label: 'Event Pipelines' }]} />
+	<Breadcrumbs parts={[{ label: $t('pages.pipelines') }]} />
 
 	<Container.Root>
-		<Container.Header title={$_('actions_title')}>
-			<a class="button" href="/pipelines/create">{$_('create')}</a>
+		<Container.Header title={$t('pages.pipelines')}>
+			<a class="button" href="/pipelines/create">{$t('create')}</a>
 		</Container.Header>
 
-		<div class="content">
-			<div class="items">
-				{#if $eventPipelinesQuery.isPending}
-					Loading...
-				{:else if $eventPipelinesQuery.error}
-					An error has occurred:
-					{$eventPipelinesQuery.error.message}
-				{:else if $eventPipelinesQuery.isSuccess}
-					{#each $eventPipelinesQuery.data as row}
-						<PipelineItem item={row} />
-					{:else}
-						<div class="empty">
-							<p class="empty__text">
-								{$_('pipelines.empty')}
-							</p>
-						</div>
-					{/each}
-				{/if}
-			</div>
-		</div>
+		<Container.Content>
+			<Container.Section indent>
+				<Container.Root>
+					{#if $eventPipelinesQuery.isPending}
+						Loading...
+					{:else if $eventPipelinesQuery.error}
+						An error has occurred:
+						{$eventPipelinesQuery.error.message}
+					{:else if $eventPipelinesQuery.isSuccess}
+						{#each $eventPipelinesQuery.data as row}
+							<PipelineItem item={row} />
+						{:else}
+							<div class="empty">
+								<p class="empty__text">
+									{$t('pipelines.empty')}
+								</p>
+							</div>
+						{/each}
+					{/if}
+				</Container.Root>
+			</Container.Section>
+		</Container.Content>
 
 		<Container.Footer></Container.Footer>
 	</Container.Root>
@@ -52,16 +54,6 @@
 
 <style lang="scss">
 	@use '$lib/styles/palette.scss' as palette;
-
-	.items {
-		background-color: #fff;
-		border: 0.1rem solid palette.$gray-300;
-	}
-
-	.content {
-		padding: 1rem;
-		background-color: palette.$gray-200;
-	}
 
 	.empty {
 		padding: 1rem;

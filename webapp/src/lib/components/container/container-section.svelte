@@ -1,4 +1,8 @@
-<div class="container__section">
+<script lang="ts">
+	export let indent: boolean = false;
+</script>
+
+<div class="container__section" class:container__section--indent={indent}>
 	<slot />
 </div>
 
@@ -13,11 +17,15 @@
 	.container__section {
 		justify-content: space-between;
 		align-items: center;
-
 		padding: 1rem;
 
 		&:not(:last-child) {
 			border-bottom: $border;
+		}
+
+		&--indent {
+			padding: 1rem;
+			background-color: palette.$gray-200;
 		}
 	}
 </style>
