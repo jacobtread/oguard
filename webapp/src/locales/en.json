@@ -135,5 +135,9 @@
             "limit": "Will repeat {limit} times",
             "no_limit": "Will repeat until the system shuts down or the service is stopped"
         }
+    },
+    "buzzer": {
+        "name": "Buzzer",
+        "description": "When AC is lost the UPS will play a beep sound"
     }
 }
