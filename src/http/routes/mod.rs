@@ -9,6 +9,7 @@ mod auth;
 mod history;
 mod pipelines;
 mod realtime;
+mod server;
 mod state;
 mod web;
 
@@ -17,6 +18,7 @@ pub fn router() -> Router {
         .nest(
             "/api",
             Router::new()
+                .route("/server", get(server::server_details))
                 .route("/device-state", get(state::device_state::<DefaultDevice>))
                 .route(
                     "/battery-state",

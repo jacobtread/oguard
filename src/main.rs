@@ -56,6 +56,8 @@ enum ServiceCommands {
     Delete,
 }
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 fn main() -> anyhow::Result<()> {
     // Parse command line arguments
     let cli = Cli::parse();

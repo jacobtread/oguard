@@ -6,6 +6,11 @@ use crate::{
     action::ActionPipeline, database::entities::events::UPSEvent, utils::validate::valid_range,
 };
 
+#[derive(Debug, Serialize)]
+pub struct ServerDetails {
+    pub version: &'static str,
+}
+
 #[derive(Debug, Validate, Deserialize)]
 pub struct RangeQuery {
     #[garde(skip)]
