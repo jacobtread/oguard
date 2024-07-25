@@ -2,11 +2,12 @@
 	import type { Action } from '$lib/api/types';
 	import { _ } from 'svelte-i18n';
 	import ConfigureActionForm from './ConfigureActionForm.svelte';
-	import { fly } from 'svelte/transition';
+	import { fade, scale } from 'svelte/transition';
 	import { Dialog } from 'bits-ui';
 	import { cloneDeep } from 'lodash';
 
-	export let action: Action;
+	export let open: boolean;
+	export let action: Action | null;
 
 	export let onSubmit: (action: Action) => void;
 	export let onCancel: () => void;
@@ -14,7 +15,7 @@
 	// Operate on a copy of the action rather than the action itself
 	let editingAction = cloneDeep(action);
 
-	function setEditingAction(action: Action) {
+	function setEditingAction(action: Action | null) {
 		editingAction = cloneDeep(action);
 	}
 
@@ -22,33 +23,37 @@
 </script>
 
 <Dialog.Root
-	open
+	{open}
 	onOpenChange={(open) => {
 		if (!open) onCancel();
 	}}>
 	<Dialog.Portal>
-		<Dialog.Overlay transition={fly} transitionConfig={{ duration: 300, y: -10 }} />
-		<Dialog.Content transition={fly} transitionConfig={{ duration: 300, y: -10 }}>
+		<Dialog.Overlay transition={fade} transitionConfig={{ duration: 300 }} />
+		<Dialog.Content transition={scale} transitionConfig={{ duration: 300, start: 0.95 }}>
 			<div class="dialog__header"><h3>Edit Action</h3></div>
 
-			<div class="dialog__subheader">
-				<h3>
-					{$_('action.configure', {
-						values: { action: $_(`actions.${action.ty.type}.label`) }
-					})}
-				</h3>
-			</div>
-
-			<div class="dialog__content">
-				<ConfigureActionForm bind:action={editingAction} />
-			</div>
-			<div class="dialog__footer">
-				<div class="dialog__footer__actions">
-					<button class="button" on:click={() => onSubmit(editingAction)}>Update</button>
-					<div style="flex: auto;"></div>
-					<button class="button button--secondary" on:click={onCancel}>Cancel</button>
+			{#if editingAction !== null}
+				<div class="dialog__subheader">
+					<h3>
+						{$_('action.configure', {
+							values: { action: $_(`actions.${editingAction.ty.type}.label`) }
+						})}
+					</h3>
 				</div>
-			</div>
+
+				<div class="dialog__content">
+					<ConfigureActionForm bind:action={editingAction} />
+				</div>
+				<div class="dialog__footer">
+					<div class="dialog__footer__actions">
+						<button
+							class="button"
+							on:click={() => editingAction !== null && onSubmit(editingAction)}>Update</button>
+						<div style="flex: auto;"></div>
+						<button class="button button--secondary" on:click={onCancel}>Cancel</button>
+					</div>
+				</div>
+			{/if}
 		</Dialog.Content>
 	</Dialog.Portal>
 </Dialog.Root>

@@ -13,6 +13,7 @@
 	import { _, t } from 'svelte-i18n';
 	import { Container } from '$lib/components';
 	import Breadcrumbs from '$/lib/components/Breadcrumbs.svelte';
+	import { fly } from 'svelte/transition';
 
 	const currentDate = dayjs();
 
@@ -86,10 +87,10 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each $eventHistory.data as row}
+							{#each $eventHistory.data as row, index (index)}
 								{@const typeData = EVENT_TYPE_DATA[row.type]}
 								{#if typeData !== undefined}
-									<tr>
+									<tr in:fly|global={{ delay: index * 25, duration: 100, x: -10 }}>
 										<td class="column column--level">
 											{#if typeData.level === EventLevel.Info}
 												<span class="level level--info">

@@ -8,6 +8,7 @@
 	import { Select } from 'bits-ui';
 	import DurationInput from '../../DurationInput.svelte';
 	import { _ } from 'svelte-i18n';
+	import { fly } from 'svelte/transition';
 
 	export let retry: ActionRetry;
 
@@ -35,7 +36,11 @@
 
 	<Select.Root items={options} onSelectedChange={onChangeType} {selected}>
 		<Select.Trigger>{$_(`action.retry_keys.${retry.delay.type}.label`)}</Select.Trigger>
-		<Select.Content sideOffset={8} sameWidth={false}>
+		<Select.Content
+			transition={fly}
+			transitionConfig={{ duration: 150, y: -10 }}
+			sideOffset={8}
+			sameWidth={false}>
 			{#each options as option}
 				<Select.Item value={option.value} label={option.label}>
 					<div class="delay-type">

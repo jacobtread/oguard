@@ -1,22 +1,24 @@
 <script lang="ts">
 	import { Dialog } from 'bits-ui';
-	import { fly } from 'svelte/transition';
+	import { fade, scale } from 'svelte/transition';
 
 	export let title: string;
 	export let content: string;
+
+	export let open: boolean;
 
 	export let onConfirm: () => void;
 	export let onCancel: () => void;
 </script>
 
 <Dialog.Root
-	open
+	{open}
 	onOpenChange={(open) => {
 		if (!open) onCancel();
 	}}>
 	<Dialog.Portal>
-		<Dialog.Overlay transition={fly} transitionConfig={{ duration: 300, y: -10 }} />
-		<Dialog.Content transition={fly} transitionConfig={{ duration: 300, y: -10 }}>
+		<Dialog.Overlay transition={fade} transitionConfig={{ duration: 300 }} />
+		<Dialog.Content transition={scale} transitionConfig={{ duration: 300, start: 0.95 }}>
 			<div class="dialog__header"><h3>{title}</h3></div>
 
 			<div class="dialog__content">

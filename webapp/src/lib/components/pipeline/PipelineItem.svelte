@@ -6,7 +6,9 @@
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import { onDestroy } from 'svelte';
+	import { fly } from 'svelte/transition';
 
+	export let index: number;
 	export let item: ListEventPipeline;
 
 	let canToggleEnabled: boolean = true;
@@ -40,7 +42,7 @@
 			// Delay enabling the switch for 2 seconds
 			toggleEnabledTimeout = setTimeout(() => {
 				canToggleEnabled = true;
-			}, 1000);
+			}, 1000) as unknown as number;
 		}
 	}
 
@@ -51,7 +53,7 @@
 	});
 </script>
 
-<div class="item">
+<div class="item" in:fly|global={{ delay: index * 100, duration: 300, x: -10 }}>
 	<div class="item__icon"><BoxIcon /></div>
 
 	<a class="item__content" href="/pipelines/{item.id}">

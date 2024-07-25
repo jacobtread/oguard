@@ -34,8 +34,8 @@
 						An error has occurred:
 						{$eventPipelinesQuery.error.message}
 					{:else if $eventPipelinesQuery.isSuccess}
-						{#each $eventPipelinesQuery.data as row}
-							<PipelineItem item={row} />
+						{#each $eventPipelinesQuery.data as row, i (row.id)}
+							<PipelineItem index={i} item={row} />
 						{:else}
 							<div class="empty">
 								<p class="empty__text">

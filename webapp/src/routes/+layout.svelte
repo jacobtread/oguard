@@ -15,6 +15,8 @@
 	import Header from '$lib/components/Header.svelte';
 	import { getLocaleFromNavigator, init, register } from 'svelte-i18n';
 	import { Toaster } from 'svelte-sonner';
+	import PageTransition from '$/lib/components/PageTransition.svelte';
+	import { page } from '$app/stores';
 
 	register('en', () => import('../locales/en.json'));
 
@@ -82,7 +84,9 @@
 			<Header />
 
 			<main class="main">
-				<slot />
+				<PageTransition url={$page.url.toString()}>
+					<slot />
+				</PageTransition>
 			</main>
 		</div>
 	{:catch error}

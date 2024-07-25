@@ -7,10 +7,12 @@
 	import { Dialog } from 'bits-ui';
 	import { _ } from 'svelte-i18n';
 	import { toast } from 'svelte-sonner';
-	import { fly } from 'svelte/transition';
+	import { fade, scale } from 'svelte/transition';
 
 	// The pipeline to delete
 	export let pipeline: EventPipeline;
+
+	export let open: boolean;
 
 	export let onClose: () => void;
 
@@ -41,13 +43,13 @@
 </script>
 
 <Dialog.Root
-	open
+	{open}
 	onOpenChange={(open) => {
 		if (!open) onClose();
 	}}>
 	<Dialog.Portal>
-		<Dialog.Overlay transition={fly} transitionConfig={{ duration: 300, y: -10 }} />
-		<Dialog.Content transition={fly} transitionConfig={{ duration: 300, y: -10 }}>
+		<Dialog.Overlay transition={fade} transitionConfig={{ duration: 300 }} />
+		<Dialog.Content transition={scale} transitionConfig={{ duration: 300, start: 0.95 }}>
 			<div class="dialog__header"><h3>{$_('delete_pipeline.title')}</h3></div>
 
 			<div class="dialog__content">

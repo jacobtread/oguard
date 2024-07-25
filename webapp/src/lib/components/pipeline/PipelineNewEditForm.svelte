@@ -296,8 +296,9 @@
 	</Container.Root>
 </Container.Wrapper>
 
-{#if confirmTest && existing !== undefined}
+{#if existing !== undefined}
 	<ConfirmDialog
+		open={confirmTest}
 		title="Confirm Test"
 		content="Are you sure you want to test this pipeline? This will ignore delays and repeated actions and execute all actions you've listed including shutdown actions, it's recommend you save any changes if you have destructive actions. Only saved actions will be executed"
 		onConfirm={() => {
@@ -308,32 +309,33 @@
 		onCancel={() => (confirmTest = false)} />
 {/if}
 
-{#if addAction}
-	<CreateActionForm
-		onSubmit={(action) => {
-			addAction = false;
-			actions.push(action);
+<CreateActionForm
+	open={addAction}
+	onSubmit={(action) => {
+		addAction = false;
+		actions.push(action);
+		actions = actions;
+	}}
+	onCancel={() => (addAction = false)} />
+
+<EditActionForm
+	open={editingAction !== null && editAction !== null}
+	action={editingAction}
+	onSubmit={(action) => {
+		if (editAction !== null) {
+			actions[editAction] = action;
 			actions = actions;
-		}}
-		onCancel={() => (addAction = false)} />
-{/if}
+		}
 
-{#if editingAction !== null && editAction !== null}
-	<EditActionForm
-		action={editingAction}
-		onSubmit={(action) => {
-			if (editAction !== null) {
-				actions[editAction] = action;
-				actions = actions;
-			}
+		editAction = null;
+	}}
+	onCancel={() => (editAction = null)} />
 
-			editAction = null;
-		}}
-		onCancel={() => (editAction = null)} />
-{/if}
-
-{#if confirmDelete && existing !== undefined}
-	<DeletePipelineDialog pipeline={existing} onClose={() => (confirmDelete = false)} />
+{#if existing !== undefined}
+	<DeletePipelineDialog
+		open={confirmDelete}
+		pipeline={existing}
+		onClose={() => (confirmDelete = false)} />
 {/if}
 
 <style lang="scss">

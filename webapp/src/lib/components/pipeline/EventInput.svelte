@@ -3,6 +3,7 @@
 	import { Select } from 'bits-ui';
 	import { t } from 'svelte-i18n';
 	import EventLevelIcon from './EventLevelIcon.svelte';
+	import { fly } from 'svelte/transition';
 
 	export let value: EventType = EventType.ACFailure;
 
@@ -30,7 +31,11 @@
 			<Select.Value placeholder={$t('event.select')} />
 		</div>
 	</Select.Trigger>
-	<Select.Content sideOffset={8} sameWidth={false}>
+	<Select.Content
+		transition={fly}
+		transitionConfig={{ duration: 150, y: -10 }}
+		sideOffset={8}
+		sameWidth={false}>
 		{#each values as eventType}
 			{@const typeData = EVENT_TYPE_DATA[eventType.value]}
 			{#if typeData !== undefined}
