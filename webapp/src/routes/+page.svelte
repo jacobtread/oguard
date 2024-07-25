@@ -16,7 +16,7 @@
 				route: '/api/battery-state'
 			}),
 
-		// Refetch the data every second
+		// Refetch the data every 3 seconds
 		refetchInterval: 3000
 	});
 
@@ -28,7 +28,7 @@
 				route: '/api/device-state'
 			}),
 
-		// Refetch the data every second
+		// Refetch the data every 3 seconds
 		refetchInterval: 3000
 	});
 
@@ -95,8 +95,7 @@
 			capacity={$batteryInfoQuery.data.capacity}
 			remainingTime={$batteryInfoQuery.data.remaining_time}
 			lastUpdated={$batteryInfoQuery.dataUpdatedAt}
-			refreshing={$batteryInfoQuery.isFetching}
-		/>
+			refreshing={$batteryInfoQuery.isFetching} />
 	{/if}
 
 	{#if $deviceStateQuery.isPending}
@@ -112,8 +111,7 @@
 			inputVoltage={$deviceStateQuery.data.input_voltage}
 			outputVoltage={$deviceStateQuery.data.output_voltage}
 			lastUpdated={$deviceStateQuery.dataUpdatedAt}
-			refreshing={$deviceStateQuery.isFetching}
-		/>
+			refreshing={$deviceStateQuery.isFetching} />
 	{/if}
 </div>
 <div class="grid">
@@ -132,8 +130,7 @@
 					value: value.state.capacity
 				}))}
 				{options}
-				style="padding:2rem;height:400px;"
-			/>
+				style="padding:2rem;height:400px;" />
 		</div>
 	{/if}
 </div>
