@@ -10,6 +10,7 @@
 	import ConfigureActionForm from './ConfigureActionForm.svelte';
 	import { fade, fly, scale } from 'svelte/transition';
 	import { Dialog } from 'bits-ui';
+	import { cloneDeep } from 'lodash';
 
 	export let open: boolean;
 
@@ -36,6 +37,19 @@
 	const onChangeActionType = (actionType: ActionTypeKey) => {
 		action.ty = getDefaultActionType(actionType);
 	};
+
+	const setDefaults = () => {
+		state = State.Initial;
+		action = {
+			ty: getDefaultActionType(ActionTypeKey.Notification),
+			delay: null,
+			repeat: null,
+			retry: null
+		};
+	};
+
+	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+	$: open, setDefaults();
 </script>
 
 <Dialog.Root
@@ -83,7 +97,7 @@
 							</div>
 							<div class="dialog__footer">
 								<div class="dialog__footer__actions">
-									<button class="button" on:click={() => onSubmit(action)}>Add</button>
+									<button class="button" on:click={() => onSubmit(cloneDeep(action))}>Add</button>
 									<div style="flex: auto;"></div>
 									<button class="button button--secondary" on:click={() => (state = State.Initial)}>
 										Back

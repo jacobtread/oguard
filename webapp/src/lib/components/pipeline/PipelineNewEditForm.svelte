@@ -21,6 +21,7 @@
 	import { t } from 'svelte-i18n';
 	import EventInput from './EventInput.svelte';
 	import ConfirmDialog from '../ConfirmDialog.svelte';
+	import { cloneDeep } from 'lodash';
 
 	// Mutation arg types
 	type UpdateData = { id: number; data: UpdateEventPipeline };
@@ -127,7 +128,7 @@
 			name = existing.name;
 			cancellable = existing.cancellable;
 			enabled = existing.enabled;
-			actions = [...existing.pipeline.actions];
+			actions = cloneDeep(existing.pipeline.actions);
 		} else {
 			eventType = EventType.ACFailure;
 			name = '';
