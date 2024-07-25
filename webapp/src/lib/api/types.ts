@@ -155,7 +155,12 @@ export function getDefaultActionType(actionType: ActionTypeKey): ActionType {
 		case ActionTypeKey.Sleep:
 			return { type: ActionTypeKey.Sleep };
 		case ActionTypeKey.Shutdown:
-			return { type: ActionTypeKey.Shutdown, message: '', timeout: null, force_close_apps: false };
+			return {
+				type: ActionTypeKey.Shutdown,
+				message: null,
+				timeout: null,
+				force_close_apps: false
+			};
 		case ActionTypeKey.USPShutdown:
 			return { type: ActionTypeKey.USPShutdown, delay_minutes: 1 };
 		case ActionTypeKey.Executable:

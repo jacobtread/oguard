@@ -3,6 +3,8 @@
 
 	export let config: ActionTypeConfig<ActionTypeKey.Shutdown>;
 
+	const addMessage = () => (config.message = 'Custom message');
+	const removeMessage = () => (config.message = null);
 	const addTimeout = () => (config.timeout = { secs: 5, nanos: 0 });
 	const removeTimeout = () => (config.timeout = null);
 </script>
@@ -14,7 +16,12 @@
 		Message to show in the shutdown dialog, will only appear if a timeout is set
 	</p>
 
-	<input class="input" type="text" bind:value={config.message} />
+	{#if config.message !== null}
+		<input class="input" type="text" required bind:value={config.message} />
+		<button class="button" on:click={removeMessage}>Remove Message</button>
+	{:else}
+		<button class="button" on:click={addMessage}>Add Message</button>
+	{/if}
 </div>
 
 <div class="field">
