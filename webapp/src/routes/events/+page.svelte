@@ -14,6 +14,7 @@
 	import { Container } from '$lib/components';
 	import Breadcrumbs from '$/lib/components/Breadcrumbs.svelte';
 	import { fly } from 'svelte/transition';
+	import Spinner from '$/lib/components/Spinner.svelte';
 
 	const currentDate = dayjs();
 
@@ -69,7 +70,7 @@
 
 		<Container.Section indent>
 			{#if $eventHistory.isPending}
-				Loading...
+				<Spinner />
 			{/if}
 			{#if $eventHistory.error}
 				An error has occurred:

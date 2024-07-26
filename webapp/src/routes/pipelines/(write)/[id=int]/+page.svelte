@@ -4,6 +4,7 @@
 	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import { createQuery } from '@tanstack/svelte-query';
 	import PipelineNewEditForm from '$lib/components/pipeline/PipelineNewEditForm.svelte';
+	import Spinner from '$/lib/components/Spinner.svelte';
 
 	$: pipelineId = parseInt($page.params.id);
 
@@ -19,7 +20,7 @@
 </script>
 
 {#if $pipelineQuery.isPending}
-	Loading...
+	<Spinner />
 {:else if $pipelineQuery.error}
 	An error has occurred:
 	{$pipelineQuery.error.message}

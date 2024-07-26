@@ -6,6 +6,7 @@
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import { Container } from '$lib/components';
 	import { t } from 'svelte-i18n';
+	import Spinner from '$/lib/components/Spinner.svelte';
 
 	const eventPipelinesQuery = createQuery<ListEventPipeline[]>({
 		queryKey: ['event-pipelines'],
@@ -29,7 +30,7 @@
 			<Container.Section indent>
 				<Container.Root>
 					{#if $eventPipelinesQuery.isPending}
-						Loading...
+						<Spinner />
 					{:else if $eventPipelinesQuery.error}
 						An error has occurred:
 						{$eventPipelinesQuery.error.message}

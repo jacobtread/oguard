@@ -7,6 +7,7 @@
 	import dayjs from 'dayjs';
 	import { AreaChart, ScaleTypes } from '@carbon/charts-svelte';
 	import { type AreaChartOptions } from '@carbon/charts';
+	import Spinner from '$/lib/components/Spinner.svelte';
 
 	const batteryInfoQuery = createQuery<DeviceBattery>({
 		queryKey: ['battery-info'],
@@ -84,7 +85,7 @@
 
 <div class="grid">
 	{#if $batteryInfoQuery.isPending}
-		Loading...
+		<Spinner />
 	{/if}
 	{#if $batteryInfoQuery.error}
 		An error has occurred:
@@ -99,7 +100,7 @@
 	{/if}
 
 	{#if $deviceStateQuery.isPending}
-		Loading...
+		<Spinner />
 	{/if}
 	{#if $deviceStateQuery.error}
 		An error has occurred:
@@ -116,7 +117,7 @@
 </div>
 <div class="grid">
 	{#if $deviceBatteryHistory.isPending}
-		Loading...
+		<Spinner />
 	{/if}
 	{#if $deviceBatteryHistory.error}
 		An error has occurred:

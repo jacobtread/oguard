@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { DeviceState } from '$/lib/api/types';
 	import { HttpMethod, requestJson, requestText } from '$/lib/api/utils';
+	import Spinner from '$/lib/components/Spinner.svelte';
 	import { Container } from '$lib/components';
 	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { Switch } from 'bits-ui';
@@ -56,7 +57,7 @@
 				<div class="fls">
 					<div>
 						{#if $deviceStateQuery.isPending}
-							Loading...
+							<Spinner />
 						{/if}
 						{#if $deviceStateQuery.error}
 							An error has occurred:
@@ -72,6 +73,7 @@
 
 									<span class="toggling">
 										{#if $toggleBuzzerMutation.isPending}
+											<Spinner />
 											Toggling buzzer...
 										{/if}
 									</span>
