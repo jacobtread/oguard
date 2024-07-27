@@ -1,21 +1,18 @@
 <script lang="ts">
-	import { type EventHistory, EventLevel, EVENT_TYPE_DATA } from '$lib/api/types';
+	import { type EventHistory, EVENT_TYPE_DATA } from '$lib/api/types';
 	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import { createQuery } from '@tanstack/svelte-query';
 	import dayjs from 'dayjs';
 	import { DateInput } from 'date-picker-svelte';
 	import DateIcon from '~icons/solar/calendar-date-bold-duotone';
 	import { derived } from 'svelte/store';
-	import InfoIcon from '~icons/solar/info-circle-bold-duotone';
-	import WarningIcon from '~icons/solar/danger-triangle-bold-duotone';
-	import ErrorIcon from '~icons/solar/bug-bold-duotone';
-	import SuccessIcon from '~icons/solar/check-circle-bold-duotone';
 	import { t } from 'svelte-i18n';
 	import { Container } from '$lib/components';
 	import Breadcrumbs from '$/lib/components/Breadcrumbs.svelte';
 	import { fly } from 'svelte/transition';
 	import Spinner from '$/lib/components/Spinner.svelte';
 	import { orderBy } from 'lodash';
+	import EventLevelIcon from '$/lib/components/pipeline/EventLevelIcon.svelte';
 
 	const currentDate = dayjs();
 
@@ -101,23 +98,7 @@
 								{#if typeData !== undefined}
 									<tr in:fly|global={{ delay: index * 25, duration: 100, x: -10 }}>
 										<td class="column column--level">
-											{#if typeData.level === EventLevel.Info}
-												<span class="level level--info">
-													<InfoIcon />
-												</span>
-											{:else if typeData.level === EventLevel.Success}
-												<span class="level level--success">
-													<SuccessIcon />
-												</span>
-											{:else if typeData.level === EventLevel.Warning}
-												<span class="level level--warning">
-													<WarningIcon />
-												</span>
-											{:else if typeData.level === EventLevel.Severe}
-												<span class="level level--severe">
-													<ErrorIcon />
-												</span>
-											{/if}
+											<EventLevelIcon level={typeData.level} />
 										</td>
 
 										<td class="column column--type">{$t(`events.${row.type}.label`)}</td>
@@ -152,27 +133,6 @@
 
 		&--description {
 			white-space: nowrap;
-		}
-	}
-
-	.level {
-		font-size: 1.25rem;
-		line-height: 1;
-
-		&--info {
-			color: #34495e;
-		}
-
-		&--success {
-			color: #30b455;
-		}
-
-		&--warning {
-			color: #efaf13;
-		}
-
-		&--severe {
-			color: #aa1109;
 		}
 	}
 
