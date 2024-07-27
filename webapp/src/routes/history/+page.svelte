@@ -99,54 +99,6 @@
 <style lang="scss">
 	@use '$lib/styles/palette.scss' as palette;
 
-	.column {
-		&--level {
-			width: 70px;
-			text-align: center;
-		}
-
-		&--type {
-			width: 20%;
-			white-space: nowrap;
-		}
-
-		&--description {
-			white-space: nowrap;
-		}
-	}
-
-	table {
-		font-family: Arial, Helvetica, sans-serif;
-		border-collapse: collapse;
-		width: 100%;
-		background-color: #fff;
-	}
-
-	th,
-	td {
-		padding: 8px;
-	}
-
-	td {
-		border: 1px solid #ddd;
-	}
-
-	tr:nth-child(even) {
-		background-color: #f2f2f2;
-	}
-
-	tr:hover {
-		background-color: #ddd;
-	}
-
-	th {
-		padding-top: 12px;
-		padding-bottom: 12px;
-		text-align: left;
-		background-color: palette.$gray-700;
-		color: white;
-	}
-
 	.filters {
 		display: flex;
 		gap: 1rem;
