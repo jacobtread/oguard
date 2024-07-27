@@ -10,11 +10,12 @@
 	import WarningIcon from '~icons/solar/danger-triangle-bold-duotone';
 	import ErrorIcon from '~icons/solar/bug-bold-duotone';
 	import SuccessIcon from '~icons/solar/check-circle-bold-duotone';
-	import { _, t } from 'svelte-i18n';
+	import { t } from 'svelte-i18n';
 	import { Container } from '$lib/components';
 	import Breadcrumbs from '$/lib/components/Breadcrumbs.svelte';
 	import { fly } from 'svelte/transition';
 	import Spinner from '$/lib/components/Spinner.svelte';
+	import { orderBy } from 'lodash';
 
 	const currentDate = dayjs();
 
@@ -41,10 +42,17 @@
 			refetchInterval: 1000 * 60
 		}))
 	);
+
+	$: orderedHistory =
+		$eventHistory.data !== undefined ? getSortedHistory($eventHistory.data) : undefined;
+
+	function getSortedHistory(events: EventHistory[]) {
+		return orderBy(events, (event) => event.created_at, 'desc');
+	}
 </script>
 
 <Container.Wrapper>
-	<Breadcrumbs parts={[{ label: $_('pages.events') }]} />
+	<Breadcrumbs parts={[{ label: $t('pages.events') }]} />
 
 	<Container.Root>
 		<Container.Header title={$t('pages.events')}></Container.Header>
@@ -53,7 +61,7 @@
 				<div class=" date-input">
 					<label class="date-input__label" for="startDate">
 						<DateIcon />
-						{$_('event.filters.start')}
+						{$t('event.filters.start')}
 					</label>
 					<DateInput id="startDate" timePrecision="minute" bind:value={start} />
 				</div>
@@ -61,7 +69,7 @@
 				<div class=" date-input">
 					<label class="date-input__label" for="endDate">
 						<DateIcon />
-						{$_('event.filters.end')}
+						{$t('event.filters.end')}
 					</label>
 					<DateInput id="endDate" timePrecision="minute" bind:value={end} />
 				</div>
@@ -76,19 +84,19 @@
 				An error has occurred:
 				{$eventHistory.error.message}
 			{/if}
-			{#if $eventHistory.isSuccess}
+			{#if $eventHistory.isSuccess && orderedHistory !== undefined}
 				<div class="events">
 					<table>
 						<thead>
 							<tr>
-								<th class="column column--level">{$_('event.columns.level')}</th>
-								<th>{$_('event.columns.type')}</th>
-								<th>{$_('event.columns.description')}</th>
-								<th>{$_('event.columns.timestamp')}</th>
+								<th class="column column--level">{$t('event.columns.level')}</th>
+								<th>{$t('event.columns.type')}</th>
+								<th>{$t('event.columns.description')}</th>
+								<th>{$t('event.columns.timestamp')}</th>
 							</tr>
 						</thead>
 						<tbody>
-							{#each $eventHistory.data as row, index (index)}
+							{#each orderedHistory as row, index (index)}
 								{@const typeData = EVENT_TYPE_DATA[row.type]}
 								{#if typeData !== undefined}
 									<tr in:fly|global={{ delay: index * 25, duration: 100, x: -10 }}>
@@ -112,9 +120,9 @@
 											{/if}
 										</td>
 
-										<td class="column column--type">{$_(`events.${row.type}.label`)}</td>
+										<td class="column column--type">{$t(`events.${row.type}.label`)}</td>
 										<td class="column column--description"
-											>{$_(`events.${row.type}.description`)}</td>
+											>{$t(`events.${row.type}.description`)}</td>
 
 										<td>{dayjs(row.created_at).format('L LT')}</td>
 									</tr>
