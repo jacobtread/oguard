@@ -7,13 +7,22 @@
 
 	import SortDesc from '~icons/solar/alt-arrow-down-bold';
 	import SortAsc from '~icons/solar/alt-arrow-up-bold';
-	import { createRender, createTable, Render, Subscribe } from 'svelte-headless-table';
+	import {
+		createRender,
+		createTable,
+		Render,
+		Subscribe,
+		type HeaderLabel
+	} from 'svelte-headless-table';
 	import LocalizedDateTime from '../LocalizedDateTime.svelte';
 	import dayjs from 'dayjs';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { HttpMethod, requestJson } from '$/lib/api/utils';
 	import Spinner from '../Spinner.svelte';
-	import { Pagination } from 'bits-ui';
+	import Localized from '../Localized.svelte';
+	import ManageColumns from '../table/ManageColumns.svelte';
+	import { Container } from '..';
+	import Pagination from '../Pagination.svelte';
 
 	export let start: Readable<Date>;
 	export let end: Readable<Date>;
@@ -49,22 +58,25 @@
 		hideColumns: addHiddenColumns()
 	});
 
+	const header: HeaderLabel<DeviceBatteryHistory> = ({ id }) =>
+		createRender(Localized, { key: `history.columns.${id}` });
+
 	const columns = table.createColumns([
 		table.column({
 			id: 'capacity',
-			header: 'Capacity',
+			header,
 			accessor: (item) => item.state.capacity,
 			cell: ({ value }) => `${value}%`
 		}),
 		table.column({
 			id: 'remaining_time',
-			header: 'Remaining time',
+			header,
 			accessor: (item) => item.state.remaining_time,
 			cell: ({ value }) => dayjs.duration(value, 'seconds').humanize()
 		}),
 		table.column({
 			id: 'timestamp',
-			header: 'Timestamp',
+			header,
 			accessor: (item) => item.created_at,
 			cell: ({ value }) => createRender(LocalizedDateTime, { value })
 		})
@@ -76,10 +88,6 @@
 	const ids = flatColumns.map((c) => c.id);
 	const { pageIndex, pageSize } = pluginStates.page;
 	const { hiddenColumnIds } = pluginStates.hideColumns;
-	let hideForId = Object.fromEntries(ids.map((id) => [id, false]));
-	$: $hiddenColumnIds = Object.entries(hideForId)
-		.filter(([, hide]) => hide)
-		.map(([id]) => id);
 </script>
 
 {#if $eventHistory.isPending}
@@ -90,51 +98,14 @@
 	{$eventHistory.error.message}
 {/if}
 
-<!-- Pagination buttons -->
-<Pagination.Root
-	count={$rows.length}
-	page={$pageIndex + 1}
-	onPageChange={(page) => {
-		$pageIndex = page - 1;
-	}}
-	perPage={$pageSize}
-	let:pages>
-	<!-- Pagination count selector -->
-	<select bind:value={$pageSize} data-pagination-per-page-button>
-		<option value={5}>5</option>
-		<option value={10} selected>10</option>
-		<option value={20}>20</option>
-		<option value={30}>30</option>
-		<option value={50}>50</option>
-	</select>
-
-	<Pagination.PrevButton>Back</Pagination.PrevButton>
-	<div class="pagination-pages">
-		{#each pages as page (page.key)}
-			{#if page.type === 'ellipsis'}
-				<div data-pagination-page>...</div>
-			{:else}
-				<Pagination.Page {page}>
-					{page.value}
-				</Pagination.Page>
-			{/if}
-		{/each}
-	</div>
-	<Pagination.NextButton>Next</Pagination.NextButton>
-</Pagination.Root>
-
-<h2>Hidden columns</h2>
-
-<div style:display="grid" style:grid-template-columns="repeat(3, 1fr)">
-	{#each ids as id}
-		<div style:display="flex" style:align-items="center" style:gap="1rem">
-			<input id="hide-{id}" type="checkbox" bind:checked={hideForId[id]} />
-			<label for="hide-{id}">{id}</label>
-		</div>
-	{/each}
-</div>
-
 <div class="history">
+	<Container.Root>
+		<div class="filters">
+			<Pagination count={$rows.length} bind:pageIndex={$pageIndex} bind:perPage={$pageSize} />
+			<ManageColumns columnIds={ids} {hiddenColumnIds} />
+		</div>
+	</Container.Root>
+
 	<table {...$tableAttrs}>
 		<thead>
 			{#each $headerRows as headerRow (headerRow.id)}
@@ -175,20 +146,22 @@
 			{/each}
 		</tbody>
 	</table>
+
+	<Container.Root>
+		<div class="filters">
+			<Pagination count={$rows.length} bind:pageIndex={$pageIndex} bind:perPage={$pageSize} />
+		</div>
+	</Container.Root>
 </div>
 
 <style lang="scss">
 	@use '$lib/styles/palette.scss' as palette;
 
-	th .resizer {
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		right: -4px;
-		width: 8px;
-		z-index: 1;
-		background: rgba(200, 200, 200, 0.5);
-		cursor: col-resize;
+	.filters {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1rem;
 	}
 
 	table {
@@ -205,6 +178,9 @@
 	}
 
 	.history {
+		display: flex;
+		flex-flow: column;
+		gap: 1rem;
 		width: 100%;
 		overflow-x: auto;
 	}

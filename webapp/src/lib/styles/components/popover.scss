@@ -1,0 +1,15 @@
+@use '$lib/styles/palette.scss' as palette;
+
+[data-popover-content] {
+	background-color: #fff;
+	border: 1px solid #eee;
+	border-radius: 0.25rem;
+	padding: 0.5rem;
+	font-size: 0.9rem;
+	box-shadow: 2px 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+[data-popover-trigger] {
+	border: none;
+	background-color: transparent;
+}

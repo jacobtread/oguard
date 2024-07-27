@@ -7,13 +7,22 @@
 
 	import SortDesc from '~icons/solar/alt-arrow-down-bold';
 	import SortAsc from '~icons/solar/alt-arrow-up-bold';
-	import { createRender, createTable, Render, Subscribe } from 'svelte-headless-table';
+	import {
+		createRender,
+		createTable,
+		Render,
+		Subscribe,
+		type HeaderLabel
+	} from 'svelte-headless-table';
 	import LocalizedDateTime from '../LocalizedDateTime.svelte';
 	import dayjs from 'dayjs';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { HttpMethod, requestJson } from '$/lib/api/utils';
 	import Spinner from '../Spinner.svelte';
-	import { Pagination } from 'bits-ui';
+	import ManageColumns from '../table/ManageColumns.svelte';
+	import Localized from '../Localized.svelte';
+	import { Container } from '..';
+	import Pagination from '../Pagination.svelte';
 
 	export let start: Readable<Date>;
 	export let end: Readable<Date>;
@@ -46,80 +55,103 @@
 		page: addPagination({
 			initialPageSize: 50
 		}),
-		hideColumns: addHiddenColumns()
+		hideColumns: addHiddenColumns({ initialHiddenColumnIds: ['device_line_type'] })
 	});
+
+	const header: HeaderLabel<DeviceStateHistory> = ({ id }) =>
+		createRender(Localized, { key: `history.columns.${id}` });
 
 	const columns = table.createColumns([
 		table.column({
 			id: 'input_voltage',
-			header: 'input_voltage',
+			header,
 			accessor: (item) => item.state.input_voltage,
 			cell: ({ value }) => `${value}V`
 		}),
 		table.column({
 			id: 'output_voltage',
-			header: 'output_voltage',
+			header,
 			accessor: (item) => item.state.output_voltage,
 			cell: ({ value }) => `${value}V`
 		}),
 		table.column({
 			id: 'output_load_percent',
-			header: 'output_load_percent',
+			header,
 			accessor: (item) => item.state.output_load_percent,
 			cell: ({ value }) => `${value}%`
 		}),
 		table.column({
 			id: 'output_frequency',
-			header: 'output_frequency',
+			header,
 			accessor: (item) => item.state.output_frequency,
 			cell: ({ value }) => `${value}Hz`
 		}),
 		table.column({
 			id: 'battery_voltage',
-			header: 'battery_voltage',
+			header,
 			accessor: (item) => item.state.battery_voltage,
 			cell: ({ value }) => `${value}V`
 		}),
 		table.column({
 			id: 'device_power_state',
-			header: 'device_power_state',
+			header,
 			accessor: (item) => item.state.device_power_state,
 			cell: ({ value }) => `${value}`
 		}),
 		table.column({
 			id: 'battery_low',
-			header: 'battery_low',
+			header,
 			accessor: (item) => item.state.battery_low,
-			cell: ({ value }) => `${value ? 'Yes' : 'No'}`
+			cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
+			plugins: {
+				sort: {
+					getSortValue: (value) => (value ? 1 : 0)
+				}
+			}
 		}),
 		table.column({
 			id: 'fault_mode',
-			header: 'fault_mode',
+			header,
 			accessor: (item) => item.state.fault_mode,
-			cell: ({ value }) => `${value ? 'Yes' : 'No'}`
+			cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
+			plugins: {
+				sort: {
+					getSortValue: (value) => (value ? 1 : 0)
+				}
+			}
 		}),
 
 		table.column({
 			id: 'device_line_type',
-			header: 'device_line_type',
+			header,
 			accessor: (item) => item.state.device_line_type,
 			cell: ({ value }) => `${value}`
 		}),
 		table.column({
 			id: 'battery_self_test',
-			header: 'battery_self_test',
+			header,
 			accessor: (item) => item.state.battery_self_test,
-			cell: ({ value }) => `${value ? 'Yes' : 'No'}`
+			cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
+			plugins: {
+				sort: {
+					getSortValue: (value) => (value ? 1 : 0)
+				}
+			}
 		}),
 		table.column({
 			id: 'buzzer_control',
-			header: 'buzzer_control',
+			header,
 			accessor: (item) => item.state.buzzer_control,
-			cell: ({ value }) => `${value ? 'Yes' : 'No'}`
+			cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
+			plugins: {
+				sort: {
+					getSortValue: (value) => (value ? 1 : 0)
+				}
+			}
 		}),
 		table.column({
 			id: 'timestamp',
-			header: 'Timestamp',
+			header,
 			accessor: (item) => item.created_at,
 			cell: ({ value }) => createRender(LocalizedDateTime, { value })
 		})
@@ -131,10 +163,6 @@
 	const ids = flatColumns.map((c) => c.id);
 	const { pageIndex, pageSize } = pluginStates.page;
 	const { hiddenColumnIds } = pluginStates.hideColumns;
-	let hideForId = Object.fromEntries(ids.map((id) => [id, false]));
-	$: $hiddenColumnIds = Object.entries(hideForId)
-		.filter(([, hide]) => hide)
-		.map(([id]) => id);
 </script>
 
 {#if $eventHistory.isPending}
@@ -145,51 +173,14 @@
 	{$eventHistory.error.message}
 {/if}
 
-<!-- Pagination buttons -->
-<Pagination.Root
-	count={$rows.length}
-	page={$pageIndex + 1}
-	onPageChange={(page) => {
-		$pageIndex = page - 1;
-	}}
-	perPage={$pageSize}
-	let:pages>
-	<!-- Pagination count selector -->
-	<select bind:value={$pageSize} data-pagination-per-page-button>
-		<option value={5}>5</option>
-		<option value={10} selected>10</option>
-		<option value={20}>20</option>
-		<option value={30}>30</option>
-		<option value={50}>50</option>
-	</select>
-
-	<Pagination.PrevButton>Back</Pagination.PrevButton>
-	<div class="pagination-pages">
-		{#each pages as page (page.key)}
-			{#if page.type === 'ellipsis'}
-				<div data-pagination-page>...</div>
-			{:else}
-				<Pagination.Page {page}>
-					{page.value}
-				</Pagination.Page>
-			{/if}
-		{/each}
-	</div>
-	<Pagination.NextButton>Next</Pagination.NextButton>
-</Pagination.Root>
-
-<h2>Hidden columns</h2>
-
-<div style:display="grid" style:grid-template-columns="repeat(3, 1fr)">
-	{#each ids as id}
-		<div style:display="flex" style:align-items="center" style:gap="1rem">
-			<input id="hide-{id}" type="checkbox" bind:checked={hideForId[id]} />
-			<label for="hide-{id}">{id}</label>
-		</div>
-	{/each}
-</div>
-
 <div class="history">
+	<Container.Root>
+		<div class="filters">
+			<Pagination count={$rows.length} bind:pageIndex={$pageIndex} bind:perPage={$pageSize} />
+			<ManageColumns columnIds={ids} {hiddenColumnIds} />
+		</div>
+	</Container.Root>
+
 	<table {...$tableAttrs}>
 		<thead>
 			{#each $headerRows as headerRow (headerRow.id)}
@@ -230,20 +221,22 @@
 			{/each}
 		</tbody>
 	</table>
+
+	<Container.Root>
+		<div class="filters">
+			<Pagination count={$rows.length} bind:pageIndex={$pageIndex} bind:perPage={$pageSize} />
+		</div>
+	</Container.Root>
 </div>
 
 <style lang="scss">
 	@use '$lib/styles/palette.scss' as palette;
 
-	th .resizer {
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		right: -4px;
-		width: 8px;
-		z-index: 1;
-		background: rgba(200, 200, 200, 0.5);
-		cursor: col-resize;
+	.filters {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1rem;
 	}
 
 	table {
@@ -260,6 +253,9 @@
 	}
 
 	.history {
+		display: flex;
+		flex-flow: column;
+		gap: 1rem;
 		width: 100%;
 		overflow-x: auto;
 	}

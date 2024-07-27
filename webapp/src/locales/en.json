@@ -139,5 +139,33 @@
     "buzzer": {
         "name": "Buzzer",
         "description": "When AC is lost the UPS will play a beep sound"
+    },
+    "history": {
+        "types": {
+            "Battery": {
+                "label": "Battery",
+                "description": "Battery capacity and remaining time over time"
+            },
+            "Device": {
+                "label": "Device State",
+                "description": "Device state over time"
+            }
+        },
+        "columns": {
+            "input_voltage": "Input Voltage",
+            "output_voltage": "Output Voltage",
+            "output_load_percent": "Output Load %",
+            "output_frequency": "Output Frequency",
+            "battery_voltage": "Battery Voltage",
+            "device_power_state": "Device Power State",
+            "battery_low": "Battery Low",
+            "fault_mode": "Fault Mode",
+            "device_line_type": "Device Line Type",
+            "battery_self_test": "Battery Self Test",
+            "buzzer_control": "Buzzer Enabled",
+            "timestamp": "Timestamp",
+            "capacity": "Capacity",
+            "remaining_time": "Remaining Time"
+        }
     }
 }
