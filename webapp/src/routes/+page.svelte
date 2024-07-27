@@ -8,6 +8,7 @@
 	import { AreaChart, ScaleTypes } from '@carbon/charts-svelte';
 	import { type AreaChartOptions } from '@carbon/charts';
 	import Spinner from '$/lib/components/Spinner.svelte';
+	import { Container } from '$/lib/components';
 
 	const batteryInfoQuery = createQuery<DeviceBattery>({
 		queryKey: ['battery-info'],
@@ -115,16 +116,17 @@
 			refreshing={$deviceStateQuery.isFetching} />
 	{/if}
 </div>
+
 <div class="grid">
-	{#if $deviceBatteryHistory.isPending}
-		<Spinner />
-	{/if}
-	{#if $deviceBatteryHistory.error}
-		An error has occurred:
-		{$deviceBatteryHistory.error.message}
-	{/if}
-	{#if $deviceBatteryHistory.isSuccess}
-		<div class="card graph-card">
+	<Container.Root>
+		{#if $deviceBatteryHistory.isPending}
+			<Spinner />
+		{/if}
+		{#if $deviceBatteryHistory.error}
+			An error has occurred:
+			{$deviceBatteryHistory.error.message}
+		{/if}
+		{#if $deviceBatteryHistory.isSuccess}
 			<AreaChart
 				data={$deviceBatteryHistory.data.map((value) => ({
 					date: value.created_at,
@@ -132,8 +134,8 @@
 				}))}
 				{options}
 				style="padding:2rem;height:400px;" />
-		</div>
-	{/if}
+		{/if}
+	</Container.Root>
 </div>
 
 <style lang="scss">
@@ -141,9 +143,5 @@
 		display: flex;
 		gap: 1rem;
 		margin: 1rem;
-	}
-
-	.graph-card {
-		flex: auto;
 	}
 </style>

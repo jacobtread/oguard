@@ -2,6 +2,7 @@
 	import dayjs from 'dayjs';
 	import SolarRefreshLineDuotone from '~icons/solar/refresh-line-duotone';
 	import { _ } from 'svelte-i18n';
+	import { Container } from '.';
 
 	// The current capacity % of the battery
 	export let capacity: number;
@@ -18,41 +19,43 @@
 	const lastUpdatedFormatted = dayjs(lastUpdated).format('LT');
 </script>
 
-<div class="card battery-card">
-	<div class="battery-header">
-		<div class="battery">
-			<div class="battery-level-wrapper">
-				<div
-					class="battery-level"
-					class:alert={capacity < 15}
-					class:warn={capacity >= 15 && capacity < 30}
-					style="width:{capacity}%;"
-				></div>
+<div class="wrapper">
+	<Container.Root>
+		<div class="battery-header">
+			<div class="battery">
+				<div class="battery-level-wrapper">
+					<div
+						class="battery-level"
+						class:alert={capacity < 15}
+						class:warn={capacity >= 15 && capacity < 30}
+						style="width:{capacity}%;">
+					</div>
+				</div>
 			</div>
+
+			<p class="battery-capacity">
+				<span class="battery-capacity__value">{capacity}%</span>
+				{$_('capacity')}
+			</p>
+
+			<p class="battery-remaining">
+				{$_('remaining', { values: { duration: remainingTimeFormatted } })}
+			</p>
 		</div>
 
-		<p class="battery-capacity">
-			<span class="battery-capacity__value">{capacity}%</span>
-			{$_('capacity')}
-		</p>
+		<div class="card-content">
+			<p class="battery-last-fetched">
+				{$_('last_fetched', { values: { at: lastUpdatedFormatted } })}
+			</p>
 
-		<p class="battery-remaining">
-			{$_('remaining', { values: { duration: remainingTimeFormatted } })}
-		</p>
-	</div>
-
-	<div class="card-content">
-		<p class="battery-last-fetched">
-			{$_('last_fetched', { values: { at: lastUpdatedFormatted } })}
-		</p>
-
-		{#if refreshing}
-			<div class="refresh">
-				<SolarRefreshLineDuotone />
-				{$_('refreshing')}
-			</div>
-		{/if}
-	</div>
+			{#if refreshing}
+				<div class="refresh">
+					<SolarRefreshLineDuotone />
+					{$_('refreshing')}
+				</div>
+			{/if}
+		</div>
+	</Container.Root>
 </div>
 
 <style lang="scss">
@@ -78,11 +81,13 @@
 		gap: 0.5rem;
 	}
 
-	.battery-card {
+	.wrapper {
 		position: relative;
 		display: inline-block;
 
 		min-width: 300px;
+		width: 50%;
+		max-width: 400px;
 	}
 
 	.battery-capacity {

@@ -4,6 +4,7 @@
 	import { _ } from 'svelte-i18n';
 
 	import dayjs from 'dayjs';
+	import { Container } from '.';
 
 	// The current capacity % of load on the battery
 	export let load: number;
@@ -20,40 +21,45 @@
 	const lastUpdatedFormatted = dayjs(lastUpdated).format('LT');
 </script>
 
-<div class="card output-card">
-	<div class="output-header">
-		<div class="output">
-			<div class="output-level-wrapper">
-				<div
-					class="output-level"
-					class:alert={load > 85}
-					class:warn={load <= 85 && load > 70}
-					style="width:{load}%;"
-				></div>
+<div class="wrapper">
+	<Container.Root>
+		<div class="output-header">
+			<div class="output">
+				<div class="output-level-wrapper">
+					<div
+						class="output-level"
+						class:alert={load > 85}
+						class:warn={load <= 85 && load > 70}
+						style="width:{load}%;">
+					</div>
+				</div>
 			</div>
+
+			<p class="output-capacity">
+				<span class="output-capacity__value">{load}%</span>
+				{$_('load')}
+			</p>
+			<p class="output-remaining">
+				<SolarBoltCircleBoldDuotone />
+				{$_('input_voltage', { values: { voltage: inputVoltage } })}V
+				<SolarBoltCircleBoldDuotone />
+				{$_('output_voltage', { values: { voltage: outputVoltage } })}V
+			</p>
 		</div>
 
-		<p class="output-capacity"><span class="output-capacity__value">{load}%</span> {$_('load')}</p>
-		<p class="output-remaining">
-			<SolarBoltCircleBoldDuotone />
-			{$_('input_voltage', { values: { voltage: inputVoltage } })}V
-			<SolarBoltCircleBoldDuotone />
-			{$_('output_voltage', { values: { voltage: outputVoltage } })}V
-		</p>
-	</div>
+		<div class="card-content">
+			<p class="output-last-fetched">
+				{$_('last_fetched', { values: { at: lastUpdatedFormatted } })}
+			</p>
 
-	<div class="card-content">
-		<p class="output-last-fetched">
-			{$_('last_fetched', { values: { at: lastUpdatedFormatted } })}
-		</p>
-
-		{#if refreshing}
-			<div class="refresh">
-				<SolarRefreshLineDuotone />
-				{$_('refreshing')}
-			</div>
-		{/if}
-	</div>
+			{#if refreshing}
+				<div class="refresh">
+					<SolarRefreshLineDuotone />
+					{$_('refreshing')}
+				</div>
+			{/if}
+		</div>
+	</Container.Root>
 </div>
 
 <style lang="scss">
@@ -79,11 +85,13 @@
 		gap: 0.5rem;
 	}
 
-	.output-card {
+	.wrapper {
 		position: relative;
 		display: inline-block;
 
 		min-width: 300px;
+		width: 50%;
+		max-width: 400px;
 	}
 
 	.output-capacity {
