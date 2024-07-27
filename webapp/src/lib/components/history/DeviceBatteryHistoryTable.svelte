@@ -3,13 +3,10 @@
 
 	import { type DeviceBatteryHistory } from '$lib/api/types';
 	import { type Readable } from 'svelte/store';
-	import {
-		addHiddenColumns,
-		addPagination,
-		addResizedColumns,
-		addSortBy
-	} from 'svelte-headless-table/plugins';
+	import { addHiddenColumns, addPagination, addSortBy } from 'svelte-headless-table/plugins';
 
+	import SortDesc from '~icons/solar/alt-arrow-down-bold';
+	import SortAsc from '~icons/solar/alt-arrow-up-bold';
 	import { createRender, createTable, Render, Subscribe } from 'svelte-headless-table';
 	import LocalizedDateTime from '../LocalizedDateTime.svelte';
 	import dayjs from 'dayjs';
@@ -17,8 +14,9 @@
 	export let history: Readable<DeviceBatteryHistory[]>;
 
 	const table = createTable(history, {
-		sort: addSortBy(),
-		resize: addResizedColumns(),
+		sort: addSortBy({
+			initialSortKeys: [{ id: 'timestamp', order: 'desc' }]
+		}),
 		page: addPagination({
 			initialPageSize: 50
 		}),
@@ -27,16 +25,19 @@
 
 	const columns = table.createColumns([
 		table.column({
+			id: 'capacity',
 			header: 'Capacity',
 			accessor: (item) => item.state.capacity,
 			cell: ({ value }) => `${value}%`
 		}),
 		table.column({
+			id: 'remaining_time',
 			header: 'Remaining time',
 			accessor: (item) => item.state.remaining_time,
 			cell: ({ value }) => dayjs.duration(value, 'seconds').humanize()
 		}),
 		table.column({
+			id: 'timestamp',
 			header: 'Timestamp',
 			accessor: (item) => item.created_at,
 			cell: ({ value }) => createRender(LocalizedDateTime, { value })
@@ -89,19 +90,12 @@
 								<th
 									{...attrs}
 									on:click={props.sort.toggle}
-									class:sorted={props.sort.order !== undefined}
-									use:props.resize>
-									<div>
-										<Render of={cell.render()} />
-										{#if props.sort.order === 'asc'}
-											⬆️ asc
-										{:else if props.sort.order === 'desc'}
-											⬇️ desc
-										{/if}
-									</div>
-
-									{#if !props.resize.disabled}
-										<button class="resizer" on:click|stopPropagation use:props.resize.drag />
+									class:sorted={props.sort.order !== undefined}>
+									<Render of={cell.render()} />
+									{#if props.sort.order === 'asc'}
+										<SortAsc />
+									{:else if props.sort.order === 'desc'}
+										<SortDesc />
 									{/if}
 								</th>
 							</Subscribe>
@@ -142,27 +136,11 @@
 		cursor: col-resize;
 	}
 
-	.column {
-		&--level {
-			width: 70px;
-			text-align: center;
-		}
-
-		&--type {
-			width: 20%;
-			white-space: nowrap;
-		}
-
-		&--description {
-			white-space: nowrap;
-		}
-	}
-
 	table {
 		font-family: Arial, Helvetica, sans-serif;
 		border-collapse: collapse;
-		width: 100%;
 		background-color: #fff;
+		width: 100%;
 	}
 
 	thead {
