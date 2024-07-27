@@ -20,8 +20,17 @@ pub use sea_orm::DbErr;
 /// Database error result type
 pub type DbResult<T> = Result<T, DbErr>;
 
+/// On windows the db file is saved to the working directory
+#[cfg(target_os = "windows")]
 const DATABASE_PATH: &str = "data/app.db";
-const DATABASE_PATH_URL: &str = "sqlite:data/app.db";
+
+/// Linux release builds save the db file to /usr/local/share/oguard/app.db
+#[cfg(all(target_os = "linux", not(debug_assertions)))]
+const DATABASE_PATH: &str = "/usr/local/share/oguard/app.db";
+
+/// Linux debug builds the db file is saved to the working directory
+#[cfg(all(target_os = "linux", debug_assertions))]
+const DATABASE_PATH: &str = "data/app.db";
 
 /// Connects to the database and applies the admin changes if
 /// required, returning the database connection
@@ -42,7 +51,9 @@ pub async fn init() -> DatabaseConnection {
         File::create(path).expect("Unable to create sqlite database file");
     }
 
-    connect_database(DATABASE_PATH_URL).await
+    let db_url = format!("sqlite:{}", DATABASE_PATH);
+
+    connect_database(&db_url).await
 }
 
 /// Connects to the database

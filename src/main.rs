@@ -66,8 +66,8 @@ fn main() -> anyhow::Result<()> {
         // Load the configuration
         let config = config::load_default();
 
-        // Setup logging
-        logging::setup(&config.logging).expect("failed to setup logging");
+        // Setup logging (Don't persist in cli mode)
+        logging::setup(&config.logging, false).expect("failed to setup logging");
 
         #[allow(unreachable_code)]
         return match command {
@@ -125,7 +125,7 @@ fn server_main() -> anyhow::Result<()> {
     let config = config::load_default();
 
     // Setup logging
-    logging::setup(&config.logging).context("failed to setup logging")?;
+    logging::setup(&config.logging, true).context("failed to setup logging")?;
 
     // Create a channel to safely shutdown the server when requested
     let (shutdown_tx, shutdown_rx) = mpsc::channel(1);

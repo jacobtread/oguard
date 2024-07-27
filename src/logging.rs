@@ -12,12 +12,21 @@ use crate::config::LoggingConfig;
 /// The pattern to use when logging
 const LOGGING_PATTERN: &str = "[{d} {h({l})} {M}] {m}{n}";
 
-/// Log file name
-pub const LOG_FILE_NAME: &str = "data/server.log";
+/// On windows the log file is saved to the working directory
+#[cfg(target_os = "windows")]
+const LOG_FILE_NAME: &str = "data/server.log";
+
+/// Linux release builds save the log file to /usr/local/share/oguard/server.log
+#[cfg(all(target_os = "linux", not(debug_assertions)))]
+const LOG_FILE_NAME: &str = "/usr/local/share/oguard/server.log";
+
+/// Linux debug builds the log file is saved to the working directory
+#[cfg(all(target_os = "linux", debug_assertions))]
+const LOG_FILE_NAME: &str = "data/server.log";
 
 /// Setup function for setting up the Log4rs logging configuring it
 /// for all the different modules and and setting up file and stdout logging
-pub fn setup(logging: &LoggingConfig) -> anyhow::Result<()> {
+pub fn setup(logging: &LoggingConfig, persist: bool) -> anyhow::Result<()> {
     let logging_level = logging.level;
 
     if logging_level == LevelFilter::Off {
@@ -37,9 +46,14 @@ pub fn setup(logging: &LoggingConfig) -> anyhow::Result<()> {
 
     const APPENDERS: [&str; 2] = ["stdout", "file"];
 
-    let config = Config::builder()
-        .appender(Appender::builder().build("stdout", console))
-        .appender(Appender::builder().build("file", file))
+    let mut config = Config::builder().appender(Appender::builder().build("stdout", console));
+
+    // Only add file appender if persisting logs
+    if persist {
+        config = config.appender(Appender::builder().build("file", file));
+    }
+
+    let config = config
         .logger(
             Logger::builder()
                 .appenders(APPENDERS)
