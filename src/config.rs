@@ -9,6 +9,18 @@ use log::{error, LevelFilter};
 use serde::Deserialize;
 use std::fs::read_to_string;
 
+/// On windows the configuration is loaded from the working directory
+#[cfg(target_os = "windows")]
+const CONFIG_PATH: &str = "config.toml";
+
+/// Linux release builds load config from /etc/oguard
+#[cfg(all(target_os = "linux", not(debug_assertions)))]
+const CONFIG_PATH: &str = "/etc/oguard/config.toml";
+
+/// Linux debug builds load config from the working directory
+#[cfg(all(target_os = "linux", debug_assertions))]
+const CONFIG_PATH: &str = "config.toml";
+
 pub type SharedConfig = Arc<Config>;
 
 #[derive(Debug, Deserialize)]
@@ -76,7 +88,7 @@ pub struct LoginConfig {
 }
 
 pub fn load_default() -> Config {
-    let path = Path::new("config.toml");
+    let path = Path::new(CONFIG_PATH);
     match from_file(path) {
         Ok(value) => value,
         Err(err) => {
