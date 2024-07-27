@@ -1,0 +1,19 @@
+# Locale for translations (For messages by the server, webapp configured seperately)
+locale = "en"
+
+# Logging configuration
+[logging]
+# Loggin level "off", "error", "warn", "info", "debug"
+level = "debug"
+
+# Credentials for the web app
+[login]
+# Password to login to make changes on the web app
+password = "admin"
+
+# HTTP server configuration for serving the web app
+[http]
+# Host to bind the server to 
+host = "0.0.0.0"
+# Port to bind the server on 
+port = 5439

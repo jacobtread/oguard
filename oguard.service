@@ -1,0 +1,11 @@
+[Unit]
+Description=OGuard service
+After=udev.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/oguard
+Restart=always        
+
+[Install]
+WantedBy=multi-user.target

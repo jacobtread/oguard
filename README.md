@@ -38,14 +38,28 @@ Below is a screenshot of the WIP web UI for the app to monitor the capacity and 
 ![Pipeline screenshot](assets/image-3.png)
 ![Pipeline screenshot](assets/image-4.png)
 
+## Linux
 
-## Linux Notes
+## Configuration
 
-I have only tested development on Fedora, you will need to adjust these to be relevant for your distro
+The configuration file is loaded from `/etc/oguard/config.toml` you can find an example [Here](./example-config.toml)
 
-## Dependencies
+The commands below will set the current config to the example config
 
-libudev - Used for USB device access
+
+```sh
+# Create the config directory (Only required for first time)
+sudo mkdir /etc/oguard
+
+# Copy the example config
+sudo cp ./example-config.toml /etc/oguard/config.toml
+```
+
+Development is done on **Fedora** you will need to adapt these commands to your specific distribution
+
+## Native Dependencies
+
+libudev - Used for USB device access, required to build the executable
 
 ```sh
 sudo dnf install libudev-devel 
@@ -53,7 +67,7 @@ sudo dnf install libudev-devel
 
 ## Unprivileged USB access
 
-By default linux will not allow access to HID devices without sudo which makes it hard to debug and develop this program.
+By default linux will not allow access to HID devices without sudo.
 
 You can allow unprivileged access to the UPS HID device by doing the following
 
@@ -69,4 +83,53 @@ Then, replug your device or run:
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-You should now be able to run the program without privileges
+This will allow the program to access the device without requiring sudo
+
+## Installation
+
+Below are the instructions for installing:
+
+```sh
+# Build release binary
+cargo build --release
+
+# Copy release binary to /usr/local/bin
+sudo cp ./target/release/oguard /usr/local/bin/oguard
+
+# Create the config directory
+sudo mkdir /etc/oguard
+
+# Copy the example config
+sudo cp ./example-config.toml /etc/oguard/config.toml
+
+# Copy service to systemd
+sudo cp ./oguard.service /etc/systemd/system/oguard.service
+
+# Reload systemctl 
+sudo systemctl daemon-reload
+
+# Start the service
+sudo systemctl start oguard
+
+# Enable automatic start on boot
+sudo systemctl enable oguard
+
+# Verify the service has started
+sudo systemctl status oguard
+```
+
+## Paths
+
+### Linux
+
+Config file: /etc/oguard/config.toml
+Log file: /usr/local/share/oguard/server.log
+Database file: /usr/local/share/oguard/app.db
+
+### Windows
+
+(Relative to the executable working directory)
+
+Config file: ./config.toml
+Log file: ./data/server.log
+Database file: ./data/app.db
