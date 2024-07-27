@@ -119,6 +119,7 @@ impl EventPipelineRunner {
 
         // Event cancels no other
         if cancels.is_empty() {
+            debug!("no events to cancel");
             return;
         }
 
@@ -134,6 +135,7 @@ impl EventPipelineRunner {
 
         // Nothing to cancel
         if cancels_pipelines.is_empty() {
+            debug!("no pipelines to cancel");
             return;
         }
 
@@ -153,6 +155,7 @@ impl EventPipelineRunner {
                     .any(|cancel_pipeline| cancel_pipeline.id == task.id);
 
                 if is_cancel {
+                    debug!("aborting running task: {}", task.id);
                     task.abort_handle.abort();
                 }
 
