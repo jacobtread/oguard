@@ -23,6 +23,7 @@
 	import Localized from '../Localized.svelte';
 	import { Container } from '..';
 	import Pagination from '../Pagination.svelte';
+	import { fly } from 'svelte/transition';
 
 	export let start: Readable<Date>;
 	export let end: Readable<Date>;
@@ -206,9 +207,9 @@
 			{/each}
 		</thead>
 		<tbody {...$tableBodyAttrs}>
-			{#each $pageRows as row (row.id)}
+			{#each $pageRows as row, index (row.id)}
 				<Subscribe attrs={row.attrs()} let:attrs rowProps={row.props()}>
-					<tr {...attrs}>
+					<tr {...attrs} in:fly|global={{ delay: index * 25, duration: 100, x: -10 }}>
 						{#each row.cells as cell (cell.id)}
 							<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
 								<td {...attrs} class:sorted={props.sort.order !== undefined}>
