@@ -15,6 +15,10 @@
 	box-sizing: border-box;
 }
 
+[data-sonner-toast] {
+	padding: 16px !important;
+}
+
 .card {
 	border: 1px solid #efefef;
 	box-shadow: 2px 10px 20px rgba(0, 0, 0, 0.1);
