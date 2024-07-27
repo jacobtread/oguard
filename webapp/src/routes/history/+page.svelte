@@ -1,19 +1,16 @@
 <script lang="ts">
-	import { type DeviceBatteryHistory } from '$lib/api/types';
-	import { HttpMethod, requestJson } from '$lib/api/utils';
-	import { createQuery } from '@tanstack/svelte-query';
 	import dayjs from 'dayjs';
 	import { DateInput } from 'date-picker-svelte';
 	import DateIcon from '~icons/solar/calendar-date-bold-duotone';
-	import { derived } from 'svelte/store';
+	import { writable } from 'svelte/store';
 	import { t } from 'svelte-i18n';
 	import { Container } from '$lib/components';
 	import Breadcrumbs from '$/lib/components/Breadcrumbs.svelte';
 	import { fly } from 'svelte/transition';
-	import Spinner from '$/lib/components/Spinner.svelte';
 	import { Select } from 'bits-ui';
 
 	import DeviceBatteryHistoryTable from '$/lib/components/history/DeviceBatteryHistoryTable.svelte';
+	import DeviceStateHistoryTable from '$/lib/components/history/DeviceStateHistoryTable.svelte';
 
 	const currentDate = dayjs();
 
@@ -23,30 +20,9 @@
 	}
 
 	let historyType = HistoryType.Battery;
-	let start = currentDate.startOf('month').toDate();
-	let end = currentDate.endOf('month').toDate();
 
-	const eventHistory = createQuery<DeviceBatteryHistory[]>(
-		derived([], () => ({
-			queryKey: ['device-battery-history', start.toISOString(), end.toISOString()],
-			queryFn: async () => {
-				const startDate = dayjs(start).utc();
-				const endDate = dayjs(end).utc();
-
-				const query = new URLSearchParams();
-				query.set('start', startDate.toISOString());
-				query.set('end', endDate.toISOString());
-
-				return await requestJson<DeviceBatteryHistory[]>({
-					method: HttpMethod.GET,
-					route: `/api/history/battery-state?` + query.toString()
-				});
-			},
-
-			// Refetch the data every minute
-			refetchInterval: 1000 * 60
-		}))
-	);
+	let start = writable(currentDate.startOf('month').toDate());
+	let end = writable(currentDate.endOf('month').toDate());
 
 	$: options = [HistoryType.Battery, HistoryType.Device].map((value) => ({
 		value,
@@ -60,8 +36,6 @@
 		if (option === undefined) return;
 		historyType = option.value;
 	}
-
-	const dataStore = derived(eventHistory, ($eventHistory) => $eventHistory.data ?? []);
 </script>
 
 <Container.Wrapper>
@@ -97,7 +71,7 @@
 						<DateIcon />
 						{$t('event.filters.start')}
 					</label>
-					<DateInput id="startDate" timePrecision="minute" bind:value={start} />
+					<DateInput id="startDate" timePrecision="minute" bind:value={$start} />
 				</div>
 
 				<div class=" date-input">
@@ -105,24 +79,19 @@
 						<DateIcon />
 						{$t('event.filters.end')}
 					</label>
-					<DateInput id="endDate" timePrecision="minute" bind:value={end} />
+					<DateInput id="endDate" timePrecision="minute" bind:value={$end} />
 				</div>
 			</div>
 		</Container.Section>
 
 		<Container.Section indent>
-			{#if $eventHistory.isPending}
-				<Spinner />
-			{/if}
-			{#if $eventHistory.error}
-				An error has occurred:
-				{$eventHistory.error.message}
-			{/if}
-			{#if $eventHistory.isSuccess}
-				<div class="events">
-					<DeviceBatteryHistoryTable history={dataStore} />
-				</div>
-			{/if}
+			<div class="events">
+				{#if historyType === HistoryType.Battery}
+					<DeviceBatteryHistoryTable {start} {end} />
+				{:else if historyType === HistoryType.Device}
+					<DeviceStateHistoryTable {start} {end} />
+				{/if}
+			</div>
 		</Container.Section>
 	</Container.Root>
 </Container.Wrapper>

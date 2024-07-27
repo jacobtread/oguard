@@ -9,9 +9,9 @@
 
 [data-pagination-per-page-button] {
 	border: none;
-	background-color: #222;
-	color: #ffffff;
-	border: 1px solid #444;
+	background-color: palette.$gray-300;
+	color: palette.$gray-900;
+	border: 1px solid palette.$gray-500;
 	padding: 0.5rem;
 	height: 2rem;
 
@@ -22,20 +22,23 @@
 [data-pagination-prev-button],
 [data-pagination-next-button],
 [data-pagination-page] {
+	line-height: 1;
+	font-size: 1rem;
+
 	border: none;
-	border: 1px solid #444;
+	border: 1px solid palette.$gray-500;
 	border-left: none;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	background-color: #222;
-	color: #ffffff;
+	background-color: palette.$gray-300;
+	color: palette.$gray-900;
 	padding: 0.75rem;
 	height: 2rem;
 	cursor: pointer;
 
 	&[data-selected] {
-		background-color: #444;
+		background-color: palette.$gray-400;
 	}
 
 	&:disabled {
@@ -48,26 +51,9 @@
 	border-bottom-right-radius: 0.25rem;
 }
 
-[data-pagination-prev-button],
+[data-pagination-per-page-button],
 [data-pagination-next-button],
-[data-pagination-page] {
-	border: none;
-	border: 1px solid #444;
-	border-left: none;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	background-color: #222;
-	color: #ffffff;
-	padding: 0.75rem;
-	height: 2rem;
-	cursor: pointer;
-
-	&[data-selected] {
-		background-color: #444;
-	}
-
-	&:disabled {
-		cursor: not-allowed;
-	}
+[data-pagination-prev-button] {
+	line-height: 1;
+	font-size: 0.8rem;
 }

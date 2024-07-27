@@ -1,7 +1,7 @@
 <script lang="ts">
 	/** eslint-disable svelte/valid-compile */
 
-	import { type DeviceBatteryHistory } from '$lib/api/types';
+	import { type DeviceStateHistory } from '$lib/api/types';
 	import { derived, type Readable } from 'svelte/store';
 	import { addHiddenColumns, addPagination, addSortBy } from 'svelte-headless-table/plugins';
 
@@ -18,9 +18,9 @@
 	export let start: Readable<Date>;
 	export let end: Readable<Date>;
 
-	const eventHistory = createQuery<DeviceBatteryHistory[]>(
+	const eventHistory = createQuery<DeviceStateHistory[]>(
 		derived([start, end], ([$start, $end]) => ({
-			queryKey: ['device-battery-history', $start.toISOString(), $end.toISOString()],
+			queryKey: ['device-state-history', $start.toISOString(), $end.toISOString()],
 			queryFn: async () => {
 				const startDate = dayjs($start).utc();
 				const endDate = dayjs($end).utc();
@@ -29,9 +29,9 @@
 				query.set('start', startDate.toISOString());
 				query.set('end', endDate.toISOString());
 
-				return await requestJson<DeviceBatteryHistory[]>({
+				return await requestJson<DeviceStateHistory[]>({
 					method: HttpMethod.GET,
-					route: `/api/history/battery-state?` + query.toString()
+					route: `/api/history/device-state?` + query.toString()
 				});
 			}
 		}))
@@ -51,16 +51,71 @@
 
 	const columns = table.createColumns([
 		table.column({
-			id: 'capacity',
-			header: 'Capacity',
-			accessor: (item) => item.state.capacity,
+			id: 'input_voltage',
+			header: 'input_voltage',
+			accessor: (item) => item.state.input_voltage,
+			cell: ({ value }) => `${value}V`
+		}),
+		table.column({
+			id: 'output_voltage',
+			header: 'output_voltage',
+			accessor: (item) => item.state.output_voltage,
+			cell: ({ value }) => `${value}V`
+		}),
+		table.column({
+			id: 'output_load_percent',
+			header: 'output_load_percent',
+			accessor: (item) => item.state.output_load_percent,
 			cell: ({ value }) => `${value}%`
 		}),
 		table.column({
-			id: 'remaining_time',
-			header: 'Remaining time',
-			accessor: (item) => item.state.remaining_time,
-			cell: ({ value }) => dayjs.duration(value, 'seconds').humanize()
+			id: 'output_frequency',
+			header: 'output_frequency',
+			accessor: (item) => item.state.output_frequency,
+			cell: ({ value }) => `${value}Hz`
+		}),
+		table.column({
+			id: 'battery_voltage',
+			header: 'battery_voltage',
+			accessor: (item) => item.state.battery_voltage,
+			cell: ({ value }) => `${value}V`
+		}),
+		table.column({
+			id: 'device_power_state',
+			header: 'device_power_state',
+			accessor: (item) => item.state.device_power_state,
+			cell: ({ value }) => `${value}`
+		}),
+		table.column({
+			id: 'battery_low',
+			header: 'battery_low',
+			accessor: (item) => item.state.battery_low,
+			cell: ({ value }) => `${value ? 'Yes' : 'No'}`
+		}),
+		table.column({
+			id: 'fault_mode',
+			header: 'fault_mode',
+			accessor: (item) => item.state.fault_mode,
+			cell: ({ value }) => `${value ? 'Yes' : 'No'}`
+		}),
+
+		table.column({
+			id: 'device_line_type',
+			header: 'device_line_type',
+			accessor: (item) => item.state.device_line_type,
+			cell: ({ value }) => `${value}`
+		}),
+		table.column({
+			id: 'battery_self_test',
+			header: 'battery_self_test',
+			accessor: (item) => item.state.battery_self_test,
+			cell: ({ value }) => `${value ? 'Yes' : 'No'}`
+		}),
+		table.column({
+			id: 'buzzer_control',
+			header: 'buzzer_control',
+			accessor: (item) => item.state.buzzer_control,
+			cell: ({ value }) => `${value ? 'Yes' : 'No'}`
 		}),
 		table.column({
 			id: 'timestamp',
