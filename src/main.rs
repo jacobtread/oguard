@@ -106,7 +106,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[cfg(not(debug_assertions))]
+#[cfg(not(any(debug_assertions, target_os = "linux")))]
 #[doc = r" Static callback used by the system to bootstrap the service."]
 #[doc = r" Do not call it directly."]
 extern "system" fn ffi_service_main(num_service_arguments: u32, service_arguments: *mut *mut u16) {
@@ -119,7 +119,7 @@ extern "system" fn ffi_service_main(num_service_arguments: u32, service_argument
     service::service_main(arguments);
 }
 
-#[cfg(debug_assertions)]
+#[cfg(any(debug_assertions, target_os = "linux"))]
 fn server_main() -> anyhow::Result<()> {
     // Load the configuration
     let config = config::load_default();
