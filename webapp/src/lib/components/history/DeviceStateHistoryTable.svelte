@@ -178,7 +178,7 @@
 	<Container.Root>
 		<div class="filters">
 			<Pagination count={$rows.length} bind:pageIndex={$pageIndex} bind:perPage={$pageSize} />
-			<ManageColumns columnIds={ids} {hiddenColumnIds} />
+			<ManageColumns translateKey="history.columns" columnIds={ids} {hiddenColumnIds} />
 		</div>
 	</Container.Root>
 

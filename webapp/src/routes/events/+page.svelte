@@ -1,30 +1,44 @@
 <script lang="ts">
-	import { type EventHistory, EVENT_TYPE_DATA } from '$lib/api/types';
+	import { type EventHistory, EVENT_TYPE_DATA, EventLevel } from '$lib/api/types';
 	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import { createQuery } from '@tanstack/svelte-query';
 	import dayjs from 'dayjs';
 	import { DateInput } from 'date-picker-svelte';
 	import DateIcon from '~icons/solar/calendar-date-bold-duotone';
-	import { derived } from 'svelte/store';
+	import { derived, writable } from 'svelte/store';
 	import { t } from 'svelte-i18n';
 	import { Container } from '$lib/components';
 	import Breadcrumbs from '$/lib/components/Breadcrumbs.svelte';
 	import { fly } from 'svelte/transition';
 	import Spinner from '$/lib/components/Spinner.svelte';
-	import { orderBy } from 'lodash';
 	import EventLevelIcon from '$/lib/components/pipeline/EventLevelIcon.svelte';
+	import {
+		createRender,
+		createTable,
+		Render,
+		Subscribe,
+		type HeaderLabel
+	} from 'svelte-headless-table';
+	import { addHiddenColumns, addPagination, addSortBy } from 'svelte-headless-table/plugins';
+
+	import SortDesc from '~icons/solar/alt-arrow-down-bold';
+	import SortAsc from '~icons/solar/alt-arrow-up-bold';
+	import Localized from '$/lib/components/Localized.svelte';
+	import LocalizedDateTime from '$/lib/components/LocalizedDateTime.svelte';
+	import Pagination from '$/lib/components/Pagination.svelte';
+	import ManageColumns from '$/lib/components/table/ManageColumns.svelte';
 
 	const currentDate = dayjs();
 
-	let start = currentDate.startOf('month').toDate();
-	let end = currentDate.endOf('month').toDate();
+	let start = writable(currentDate.startOf('month').toDate());
+	let end = writable(currentDate.endOf('month').toDate());
 
-	$: eventHistory = createQuery<EventHistory[]>(
-		derived([], () => ({
-			queryKey: ['event-history'],
+	const eventHistory = createQuery<EventHistory[]>(
+		derived([start, end], ([$start, $end]) => ({
+			queryKey: ['event-history', $start.toISOString(), $end.toISOString()],
 			queryFn: async () => {
-				const startDate = dayjs(start).utc();
-				const endDate = dayjs(end).utc();
+				const startDate = dayjs($start).utc();
+				const endDate = dayjs($end).utc();
 
 				const query = new URLSearchParams();
 				query.set('start', startDate.toISOString());
@@ -40,12 +54,60 @@
 		}))
 	);
 
-	$: orderedHistory =
-		$eventHistory.data !== undefined ? getSortedHistory($eventHistory.data) : undefined;
+	const history = derived(eventHistory, ($eventHistory) => $eventHistory.data ?? []);
 
-	function getSortedHistory(events: EventHistory[]) {
-		return orderBy(events, (event) => event.created_at, 'desc');
-	}
+	const table = createTable(history, {
+		sort: addSortBy({
+			initialSortKeys: [{ id: 'timestamp', order: 'desc' }]
+		}),
+		page: addPagination({
+			initialPageSize: 50
+		}),
+		hideColumns: addHiddenColumns()
+	});
+
+	const header: HeaderLabel<EventHistory> = ({ id }) =>
+		createRender(Localized, { key: `event.columns.${id}` });
+
+	const columns = table.createColumns([
+		table.column({
+			id: 'level',
+			header,
+			accessor: (item) => EVENT_TYPE_DATA[item.type]?.level ?? EventLevel.Info,
+			cell: ({ value }) => createRender(EventLevelIcon, { level: value })
+		}),
+		table.column({
+			id: 'type',
+			header,
+			accessor: (item) => item.type,
+			cell: ({ value }) => createRender(Localized, { key: `events.${value}.label` })
+		}),
+		table.column({
+			id: 'description',
+			header,
+			accessor: (item) => item.type,
+			cell: ({ value }) => createRender(Localized, { key: `events.${value}.description` }),
+
+			plugins: {
+				sort: {
+					disable: true
+				}
+			}
+		}),
+		table.column({
+			id: 'timestamp',
+			header,
+			accessor: (item) => item.created_at,
+			cell: ({ value }) => createRender(LocalizedDateTime, { value })
+		})
+	]);
+
+	const { flatColumns, headerRows, rows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } =
+		table.createViewModel(columns);
+
+	const ids = flatColumns.map((c) => c.id);
+	const { pageIndex, pageSize } = pluginStates.page;
+	const { hiddenColumnIds } = pluginStates.hideColumns;
 </script>
 
 <Container.Wrapper>
@@ -54,13 +116,13 @@
 	<Container.Root>
 		<Container.Header title={$t('pages.events')}></Container.Header>
 		<Container.Section>
-			<div class="filters">
+			<div class="top-filters">
 				<div class=" date-input">
 					<label class="date-input__label" for="startDate">
 						<DateIcon />
 						{$t('event.filters.start')}
 					</label>
-					<DateInput id="startDate" timePrecision="minute" bind:value={start} />
+					<DateInput id="startDate" timePrecision="minute" bind:value={$start} />
 				</div>
 
 				<div class=" date-input">
@@ -68,7 +130,7 @@
 						<DateIcon />
 						{$t('event.filters.end')}
 					</label>
-					<DateInput id="endDate" timePrecision="minute" bind:value={end} />
+					<DateInput id="endDate" timePrecision="minute" bind:value={$end} />
 				</div>
 			</div>
 		</Container.Section>
@@ -81,38 +143,66 @@
 				An error has occurred:
 				{$eventHistory.error.message}
 			{/if}
-			{#if $eventHistory.isSuccess && orderedHistory !== undefined}
-				<div class="events">
-					<table>
-						<thead>
-							<tr>
-								<th class="column column--level">{$t('event.columns.level')}</th>
-								<th>{$t('event.columns.type')}</th>
-								<th>{$t('event.columns.description')}</th>
-								<th>{$t('event.columns.timestamp')}</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each orderedHistory as row, index (index)}
-								{@const typeData = EVENT_TYPE_DATA[row.type]}
-								{#if typeData !== undefined}
-									<tr in:fly|global={{ delay: index * 25, duration: 100, x: -10 }}>
-										<td class="column column--level">
-											<EventLevelIcon level={typeData.level} />
-										</td>
 
-										<td class="column column--type">{$t(`events.${row.type}.label`)}</td>
-										<td class="column column--description"
-											>{$t(`events.${row.type}.description`)}</td>
+			<div class="history">
+				<Container.Root>
+					<div class="filters">
+						<Pagination count={$rows.length} bind:pageIndex={$pageIndex} bind:perPage={$pageSize} />
+						<ManageColumns translateKey="event.columns" columnIds={ids} {hiddenColumnIds} />
+					</div>
+				</Container.Root>
 
-										<td>{dayjs(row.created_at).format('L LT')}</td>
-									</tr>
-								{/if}
-							{/each}
-						</tbody>
-					</table>
-				</div>
-			{/if}
+				<table {...$tableAttrs}>
+					<thead>
+						{#each $headerRows as headerRow (headerRow.id)}
+							<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
+								<tr {...rowAttrs}>
+									{#each headerRow.cells as cell (cell.id)}
+										<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
+											<th
+												{...attrs}
+												on:click={props.sort.toggle}
+												class:sorted={props.sort.order !== undefined}
+												class:column--level={cell.id === 'level'}>
+												<Render of={cell.render()} />
+												{#if props.sort.order === 'asc'}
+													<SortAsc />
+												{:else if props.sort.order === 'desc'}
+													<SortDesc />
+												{/if}
+											</th>
+										</Subscribe>
+									{/each}
+								</tr>
+							</Subscribe>
+						{/each}
+					</thead>
+					<tbody {...$tableBodyAttrs}>
+						{#each $pageRows as row, index (row.id)}
+							<Subscribe attrs={row.attrs()} let:attrs rowProps={row.props()}>
+								<tr {...attrs} in:fly|global={{ delay: index * 25, duration: 100, x: -10 }}>
+									{#each row.cells as cell (cell.id)}
+										<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
+											<td
+												{...attrs}
+												class:sorted={props.sort.order !== undefined}
+												class:column--level={cell.id === 'level'}>
+												<Render of={cell.render()} />
+											</td>
+										</Subscribe>
+									{/each}
+								</tr>
+							</Subscribe>
+						{/each}
+					</tbody>
+				</table>
+
+				<Container.Root>
+					<div class="filters">
+						<Pagination count={$rows.length} bind:pageIndex={$pageIndex} bind:perPage={$pageSize} />
+					</div>
+				</Container.Root>
+			</div>
 		</Container.Section>
 	</Container.Root>
 </Container.Wrapper>
@@ -134,6 +224,21 @@
 		&--description {
 			white-space: nowrap;
 		}
+	}
+
+	.history {
+		display: flex;
+		flex-flow: column;
+		gap: 1rem;
+		width: 100%;
+		overflow-x: auto;
+	}
+
+	.filters {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1rem;
 	}
 
 	table {
@@ -168,7 +273,7 @@
 		color: white;
 	}
 
-	.filters {
+	.top-filters {
 		display: flex;
 		gap: 1rem;
 	}

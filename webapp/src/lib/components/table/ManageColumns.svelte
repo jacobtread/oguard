@@ -6,6 +6,7 @@
 
 	import SettingsIcon from '~icons/solar/settings-bold-duotone';
 
+	export let translateKey: string;
 	export let columnIds: string[];
 	export let hiddenColumnIds: Writable<string[]>;
 
@@ -44,7 +45,7 @@
 						}}>
 						<Switch.Thumb />
 					</Switch.Root>
-					<label for="hide-{id}">{$t(`history.columns.${id}`)}</label>
+					<label for="hide-{id}">{$t(`${translateKey}.${id}`)}</label>
 				</div>
 			{/each}
 		</div>
