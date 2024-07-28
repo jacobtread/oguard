@@ -4,7 +4,8 @@
         "events": "Events",
         "history": "History",
         "configure": "Configure",
-        "pipelines": "Event Pipelines"
+        "pipelines": "Event Pipelines",
+        "realtime": "Realtime Control"
     },
     "refreshing": "Refreshing",
     "last_fetched": "Last fetched {at}",
@@ -139,6 +140,10 @@
     "buzzer": {
         "name": "Buzzer",
         "description": "When AC is lost the UPS will play a beep sound"
+    },
+    "battery_self_test": {
+        "name": "Battery Self Test",
+        "description": "Run a 10 second battery self test, the device will switch over to battery mode for 10 seconds then switch back to utility"
     },
     "history": {
         "types": {

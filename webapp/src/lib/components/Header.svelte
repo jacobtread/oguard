@@ -65,6 +65,15 @@
 					{$_('pages.configure')}
 				</a>
 			</li>
+			<li class="nav-list__item">
+				<a
+					class="nav-link"
+					href="{base}/realtime"
+					class:nav-link--selected={$page.route.id == '/realtime'}>
+					<ConfigureIcon class="nav-link__item" />
+					{$_('pages.realtime')}
+				</a>
+			</li>
 		</ul>
 	</nav>
 
