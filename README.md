@@ -3,7 +3,7 @@
 ![Banner](assets/banner.jpg)
 
 
-# <img src="./assets/oguard.svg" height="24px" alt="OGuard Logo"> OGuard
+# <img src="./assets/oguard.svg" height="32px" alt="OGuard Logo"> OGuard
 
 > Work in progress 
 
