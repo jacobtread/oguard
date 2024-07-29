@@ -198,14 +198,14 @@ sudo systemctl status oguard
 
 ### Linux
 
-Config file: /etc/oguard/config.toml
-Log file: /usr/local/share/oguard/server.log
-Database file: /usr/local/share/oguard/app.db
+- Config file: /etc/oguard/config.toml
+- Log file: /usr/local/share/oguard/server.log
+- Database file: /usr/local/share/oguard/app.db
 
 ### Windows
 
 (Relative to the executable working directory)
 
-Config file: ./config.toml
-Log file: ./data/server.log
-Database file: ./data/app.db
+- Config file: ./config.toml
+- Log file: ./data/server.log
+- Database file: ./data/app.db
