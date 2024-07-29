@@ -2,7 +2,8 @@
 
 ![Banner](assets/banner.jpg)
 
-# OGuard
+
+# <img src="./assets/oguard.svg" height="24px" alt="OGuard Logo"> OGuard
 
 > Work in progress 
 
@@ -14,29 +15,39 @@ for other UPS devices
 ## Stack
 
 * Monitor (Rust) - Software that tracks the state changes, interacts with the UPS, stores the data, exposes an HTTP API
-* Webapp (Svelte, Typescript) - Web application for viewing the app information, state, graphs etc
+* Webapp (Svelte, Typescript) - Web application for viewing the app information, state, graphs etc, managing actions and configuration
 
 ## Implemented 
-
-So far I've implemented the basic USB HID protocol and can pull the battery and device state information from the device. Below are the features implemented so far:
 
 - Can detect common events (AC Lost, AC Recovered, Fault, Low Battery Start, Low Battery End, Battery Test Start, Battery Test End)
 - Events are stored in a SQLite database
 - Events are reported through desktop notifications
 - Keeps track of a history of the battery and device state (Tracked every minute and stored in the database)
-- Basic API, allows querying the current device and battery state, has SSE endpoint that emits events when they happen
-
-<img src="./assets/oguard.svg" width="32px" alt="OGuard Logo">
+- History API, can view all events, battery and device states over time
+- Realtime control APIs, control buzzer and battery tests
+- Current state API, get the current device and battery states
+- Event Pipeline system for triggering actions based on different events (Configurable from webapp)
+- Authentication & Authorization for mutating actions
 
 
 ## WebUI
 
 Below is a screenshot of the WIP web UI for the app to monitor the capacity and load:
-![Home screenshot](assets/image.png)
-![Events screenshot](assets/image-1.png)
-![Pipeline screenshot](assets/image-2.png)
-![Pipeline screenshot](assets/image-3.png)
-![Pipeline screenshot](assets/image-4.png)
+
+![Home Page](assets/home-page.png)
+![Events Page](assets/events-page.png)
+![History Page](assets/history-page.png)
+![Event Pipelines Page](assets/event-pipelines-page.png)
+![Configure Page](assets/configure-page.png)
+![Realtime Control Page](assets/realtime-page.png)
+![Login Page](assets/login-dialog.png)
+![Create Event Pipeline Page](assets/create-event-pipeline.png)
+![Add action](assets/add-action.png)
+![Add action settings](assets/add-action-settings.png)
+![Add action settings](assets/create-pipeline-actions.png)
+![Add action settings](assets/event-types.png)
+![Add action settings](assets/edit-pipeline.png)
+
 
 ## Linux
 
