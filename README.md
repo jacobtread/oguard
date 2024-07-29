@@ -34,19 +34,84 @@ for other UPS devices
 
 Below is a screenshot of the WIP web UI for the app to monitor the capacity and load:
 
-![Home Page](assets/home-page.png)
-![Events Page](assets/events-page.png)
-![History Page](assets/history-page.png)
-![Event Pipelines Page](assets/event-pipelines-page.png)
-![Configure Page](assets/configure-page.png)
-![Realtime Control Page](assets/realtime-page.png)
-![Login Page](assets/login-dialog.png)
-![Create Event Pipeline Page](assets/create-event-pipeline.png)
-![Add action](assets/add-action.png)
-![Add action settings](assets/add-action-settings.png)
-![Add action settings](assets/create-pipeline-actions.png)
-![Add action settings](assets/event-types.png)
-![Add action settings](assets/edit-pipeline.png)
+<table>
+  <tr>
+    <td>
+      <img src="assets/home-page.png" width="300" alt="Home Page">
+      <br>
+      <em>Home Page</em>
+    </td>
+    <td>
+      <img src="assets/events-page.png" width="300" alt="Events Page">
+      <br>
+      <em>Events Page</em>
+    </td>
+    <td>
+      <img src="assets/history-page.png" width="300" alt="History Page">
+      <br>
+      <em>History Page</em>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="assets/event-pipelines-page.png" width="300" alt="Event Pipelines Page">
+      <br>
+      <em>Event Pipelines Page</em>
+    </td>
+    <td>
+      <img src="assets/configure-page.png" width="300" alt="Configure Page">
+      <br>
+      <em>Configure Page</em>
+    </td>
+    <td>
+      <img src="assets/realtime-page.png" width="300" alt="Realtime Control Page">
+      <br>
+      <em>Realtime Control Page</em>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="assets/login-dialog.png" width="300" alt="Login Page">
+      <br>
+      <em>Login Page</em>
+    </td>
+    <td>
+      <img src="assets/create-event-pipeline.png" width="300" alt="Create Event Pipeline Page">
+      <br>
+      <em>Create Event Pipeline Page</em>
+    </td>
+    <td>
+      <img src="assets/add-action.png" width="300" alt="Add action">
+      <br>
+      <em>Add action</em>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="assets/add-action-settings.png" width="300" alt="Add action settings">
+      <br>
+      <em>Add action settings</em>
+    </td>
+    <td>
+      <img src="assets/create-pipeline-actions.png" width="300" alt="Create pipeline with actions">
+      <br>
+      <em>Create pipeline with actions</em>
+    </td>
+    <td>
+      <img src="assets/event-types.png" width="300" alt="Event types">
+      <br>
+      <em>Event types</em>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="assets/edit-pipeline.png" width="300" alt="Edit pipeline">
+      <br>
+      <em>Edit pipeline</em>
+    </td>
+    <td colspan="2"></td>
+  </tr>
+</table>
 
 
 ## Linux
