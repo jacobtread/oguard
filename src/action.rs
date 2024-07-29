@@ -996,7 +996,7 @@ mod test {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "Destructive action test"]
     async fn test_full_shutdown() {
         setup_tests();
 
@@ -1044,7 +1044,7 @@ mod test {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "Destructive action test"]
     async fn test_notification_action() {
         setup_tests();
 
@@ -1068,7 +1068,7 @@ mod test {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "Destructive action test"]
     async fn test_popup_action() {
         setup_tests();
 
@@ -1092,7 +1092,7 @@ mod test {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "Destructive action test"]
     async fn test_sleep_action() {
         setup_tests();
 
@@ -1116,7 +1116,7 @@ mod test {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "Destructive action test"]
     async fn test_executable_action() {
         setup_tests();
 
