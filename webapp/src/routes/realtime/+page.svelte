@@ -75,6 +75,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>OGuard | {$t('pages.realtime')}</title>
+</svelte:head>
+
 <Container.Wrapper>
 	<Container.Root>
 		<Container.Header title={$t('pages.realtime')} />

@@ -49,6 +49,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>OGuard | {$t('pages.configure')}</title>
+</svelte:head>
+
 <Container.Wrapper>
 	<Container.Root>
 		<Container.Header title={$t('pages.configure')} />

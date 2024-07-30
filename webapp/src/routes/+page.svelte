@@ -9,6 +9,7 @@
 	import { type AreaChartOptions } from '@carbon/charts';
 	import Spinner from '$/lib/components/Spinner.svelte';
 	import { Container } from '$/lib/components';
+	import { t } from 'svelte-i18n';
 
 	const batteryInfoQuery = createQuery<DeviceBattery>({
 		queryKey: ['battery-info'],
@@ -83,6 +84,10 @@
 		height: '400px'
 	};
 </script>
+
+<svelte:head>
+	<title>OGuard | {$t('pages.home')}</title>
+</svelte:head>
 
 <div class="grid">
 	{#if $batteryInfoQuery.isPending}

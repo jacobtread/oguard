@@ -38,6 +38,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>OGuard | {$t('pages.history')}</title>
+</svelte:head>
+
 <Container.Wrapper>
 	<Breadcrumbs parts={[{ label: $t('pages.history') }]} />
 

@@ -76,6 +76,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>OGuard</title>
+</svelte:head>
+
 <QueryClientProvider client={queryClient}>
 	{#await i18nPromise}
 		<p>Loading...</p>

@@ -18,6 +18,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>OGuard | {$t('pages.pipelines')}</title>
+</svelte:head>
+
 <Container.Wrapper>
 	<Breadcrumbs parts={[{ label: $t('pages.pipelines') }]} />
 

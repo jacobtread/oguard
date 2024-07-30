@@ -110,6 +110,10 @@
 	const { hiddenColumnIds } = pluginStates.hideColumns;
 </script>
 
+<svelte:head>
+	<title>OGuard | {$t('pages.events')}</title>
+</svelte:head>
+
 <Container.Wrapper>
 	<Breadcrumbs parts={[{ label: $t('pages.events') }]} />
 
