@@ -108,6 +108,25 @@
 		gap: 1rem;
 	}
 
+	.history-type {
+		display: flex;
+		flex-flow: column;
+		gap: 0.25rem;
+
+		padding: 0.5rem 1rem;
+		cursor: pointer;
+		width: 100%;
+
+		&__label {
+			font-weight: bold;
+		}
+
+		&__description {
+			font-size: 0.9rem;
+			color: palette.$gray-700;
+		}
+	}
+
 	.date-input {
 		display: flex;
 		align-items: center;
