@@ -21,7 +21,9 @@
 	import { t } from 'svelte-i18n';
 	import EventInput from './EventInput.svelte';
 	import ConfirmDialog from '../ConfirmDialog.svelte';
-	import { cloneDeep } from 'lodash';
+	import { cloneDeep, omit, uniqueId } from 'lodash';
+	import { dndzone, type DndEvent } from 'svelte-dnd-action';
+	import { flip } from 'svelte/animate';
 
 	// Mutation arg types
 	type UpdateData = { id: number; data: UpdateEventPipeline };
@@ -42,7 +44,13 @@
 	let name: string = '';
 	let cancellable: boolean = false;
 	let enabled: boolean = true;
-	let actions: Action[] = [];
+	let actions: ActionWithId[] = [];
+
+	type ActionWithId = Action & { id: string };
+
+	function handleSort(e: CustomEvent<DndEvent<ActionWithId>>) {
+		actions = e.detail.items;
+	}
 
 	// Setup default state
 	$: setDefaultState(existing);
@@ -128,7 +136,7 @@
 			name = existing.name;
 			cancellable = existing.cancellable;
 			enabled = existing.enabled;
-			actions = cloneDeep(existing.pipeline.actions);
+			actions = existing.pipeline.actions.map(createLocalAction);
 		} else {
 			eventType = EventType.ACFailure;
 			name = '';
@@ -136,6 +144,10 @@
 			enabled = true;
 			actions = [];
 		}
+	}
+
+	function createLocalAction(action: Action): ActionWithId {
+		return { ...cloneDeep(action), id: uniqueId() };
 	}
 </script>
 
@@ -219,13 +231,19 @@
 		</div>
 
 		<div class="content">
-			<div class="items">
-				{#each actions as action, index}
-					<ActionItem
-						{index}
-						item={action}
-						onEdit={() => (editAction = index)}
-						onRemove={() => removeAction(index)} />
+			<div
+				class="items"
+				use:dndzone={{ items: actions, flipDurationMs: 200, dropTargetStyle: {} }}
+				on:consider={handleSort}
+				on:finalize={handleSort}>
+				{#each actions as action, index (action.id)}
+					<div tabindex="0" class="item" role="button" animate:flip={{ duration: 200 }}>
+						<ActionItem
+							{index}
+							item={action}
+							onEdit={() => (editAction = index)}
+							onRemove={() => removeAction(index)} />
+					</div>
 				{:else}
 					<p class="empty">
 						You don't have any actions in this pipeline, press <b>Add Action</b> to add an action
@@ -243,6 +261,7 @@
 						class="button"
 						disabled={$updateMutation.isPending}
 						on:click={() => {
+							const pipelineActions = actions.map((action) => omit(action, 'id'));
 							$updateMutation.mutate({
 								id: existing.id,
 								data: {
@@ -251,7 +270,7 @@
 									cancellable,
 									enabled,
 									pipeline: {
-										actions
+										actions: pipelineActions
 									}
 								}
 							});
@@ -285,8 +304,15 @@
 					<button
 						class="button"
 						on:click={() => {
+							// Strip local ID from actions
+							const pipelineActions = actions.map((action) => omit(action, 'id'));
 							$createPipelineMutation.mutate({
-								data: { name, event: eventType, pipeline: { actions }, cancellable }
+								data: {
+									name,
+									event: eventType,
+									pipeline: { actions: pipelineActions },
+									cancellable
+								}
 							});
 						}}>
 						Create
@@ -314,7 +340,7 @@
 	open={addAction}
 	onSubmit={(action) => {
 		addAction = false;
-		actions.push(action);
+		actions.push(createLocalAction(action));
 		actions = actions;
 	}}
 	onCancel={() => (addAction = false)} />
@@ -324,7 +350,7 @@
 	action={editingAction}
 	onSubmit={(action) => {
 		if (editAction !== null) {
-			actions[editAction] = action;
+			actions[editAction] = createLocalAction(action);
 			actions = actions;
 		}
 
@@ -346,6 +372,13 @@
 	$borderStyle: solid;
 	$borderColor: #dfe3e8;
 	$border: $borderWidth $borderStyle $borderColor;
+
+	// Pipeline item
+	.item {
+		&:not(:last-child) {
+			border-bottom: 0.1rem solid palette.$gray-300;
+		}
+	}
 
 	.fls {
 		display: grid;

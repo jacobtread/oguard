@@ -6,7 +6,7 @@
 	import dayjs from 'dayjs';
 
 	export let index: number;
-	export let item: Action;
+	export let item: Action & { id: string };
 
 	export let onRemove: () => void;
 	export let onEdit: () => void;
@@ -96,12 +96,18 @@
 <style lang="scss">
 	@use '$lib/styles/palette.scss' as palette;
 
+	:global(#dnd-action-dragged-el .item) {
+		border: 0.1rem solid palette.$gray-300;
+	}
+
 	// Pipeline item
 	.item {
 		display: flex;
 		gap: 0.5rem;
 		padding: 1rem;
 		align-items: center;
+		background-color: #fff;
+		height: 7rem;
 
 		&:not(:last-child) {
 			border-bottom: 0.1rem solid palette.$gray-300;
@@ -122,17 +128,6 @@
 		justify-content: center;
 	}
 
-	// Content portion of the item
-	.item__content {
-		flex: auto;
-		text-decoration: none;
-		color: palette.$gray-600;
-
-		&:hover {
-			text-decoration: underline;
-		}
-	}
-
 	// Ending action portion of the item
 	.item__actions {
 		display: flex;
@@ -140,6 +135,10 @@
 		justify-content: flex-end;
 		flex: auto;
 		gap: 0.5rem;
+
+		.button {
+			cursor: pointer;
+		}
 	}
 
 	.item__text {

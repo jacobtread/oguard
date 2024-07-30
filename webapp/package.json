@@ -47,6 +47,7 @@
 		"date-picker-svelte": "^2.13.0",
 		"dayjs": "^1.11.11",
 		"lodash": "^4.17.21",
+		"svelte-dnd-action": "^0.9.49",
 		"svelte-i18n": "^4.0.0",
 		"svelte-sonner": "^0.3.27"
 	}
