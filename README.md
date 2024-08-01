@@ -23,7 +23,7 @@ for other UPS devices
 - Events are stored in a SQLite database
 - Events are reported through desktop notifications
 - Keeps track of a history of the battery and device state (Tracked every minute and stored in the database)
-- History API, can view all events, battery and device states over time
+- History API, can view all events, battery and device states over time, allows filtering and sorting through tables on frontend
 - Realtime control APIs, control buzzer and battery tests
 - Current state API, get the current device and battery states
 - Event Pipeline system for triggering actions based on different events (Configurable from webapp)
