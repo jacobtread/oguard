@@ -373,13 +373,6 @@
 	$borderColor: #dfe3e8;
 	$border: $borderWidth $borderStyle $borderColor;
 
-	// Pipeline item
-	.item {
-		&:not(:last-child) {
-			border-bottom: 0.1rem solid palette.$gray-300;
-		}
-	}
-
 	.fls {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
