@@ -1,5 +1,5 @@
 <script lang="ts">
-	export let maxWidth: "xs" | "sm" | "md" | "lg" = "lg";
+	export let maxWidth: 'xs' | 'sm' | 'md' | 'lg' = 'lg';
 </script>
 
 <div class="wrapper" data-max-width={maxWidth}>
@@ -14,19 +14,19 @@
 		margin: 0 auto;
 	}
 
-	.wrapper[data-max-width="lg"] {
+	.wrapper[data-max-width='lg'] {
 		max-width: 80rem;
 	}
 
-	.wrapper[data-max-width="md"] {
+	.wrapper[data-max-width='md'] {
 		max-width: 70rem;
 	}
-	
-	.wrapper[data-max-width="sm"] {
+
+	.wrapper[data-max-width='sm'] {
 		max-width: 60rem;
 	}
-	
-	.wrapper[data-max-width="xs"] {
+
+	.wrapper[data-max-width='xs'] {
 		max-width: 40rem;
 	}
 </style>

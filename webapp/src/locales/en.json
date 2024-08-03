@@ -1,176 +1,176 @@
 {
-    "pages": {
-        "home": "Home",
-        "events": "Events",
-        "history": "History",
-        "configure": "Configure",
-        "pipelines": "Event Pipelines",
-        "realtime": "Realtime Control"
-    },
-    "refreshing": "Refreshing",
-    "last_fetched": "Last fetched {at}",
-    "remaining": "Remaining: {duration}",
-    "capacity": "Capacity",
-    "load": "Load",
-    "input_voltage": "Input: {voltage}",
-    "output_voltage": "Output: {voltage}",
-    "login": "Login",
-    "login_description": "This area is protected. You must login to access this page",
-    "logout": "Logout",
-    "actions_title": "Actions",
-    "pipelines_title": "Event Pipelines",
-    "pipelines": {
-        "title": "Event Pipelines",
-        "empty": "You don't have any event pipelines, press Create to create a new one.",
-        "editing_title": "Editing Pipeline",
-        "create_title": "Create Event Pipeline"
-    },
-    "create": "Create",
-    "delete_pipeline": {
-        "title": "Delete Pipeline",
-        "message": "Are you sure you want to delete this pipeline?"
-    },
-    "event": {
-        "columns": {
-            "level": "Level",
-            "type": "Type",
-            "description": "Description",
-            "timestamp": "Timestamp"
-        },
-        "filters": {
-            "start": "Start",
-            "end": "End"
-        },
-        "select": "Select an event"
-    },
-    "no_results": "No results found",
-    "events": {
-        "ACFailure": {
-            "label": "AC Power Failure",
-            "description": "No longer receiving AC power, running on battery"
-        },
-        "ACRecovery": {
-            "label": "AC Power Recovered",
-            "description": "Receiving AC power, no longer running on battery"
-        },
-        "UPSFault": {
-            "label": "Fault encountered",
-            "description": "UPS Encountered a fault"
-        },
-        "LowBatteryModeStart": {
-            "label": "UPS Low Battery",
-            "description": "UPS is running low on battery"
-        },
-        "LowBatteryModeEnd": {
-            "label": "UPS Sufficient Battery",
-            "description": "UPS is no longer running low on battery"
-        },
-        "BatteryTestStart": {
-            "label": "UPS Battery Test Started",
-            "description": "UPS is testing the battery"
-        },
-        "BatteryTestEnd": {
-            "label": "UPS Battery Test Finished",
-            "description": "UPS has finished testing the battery"
-        }
-    },
-    "actions": {
-        "Notification": {
-            "label": "Notification",
-            "description": "Send a desktop notification"
-        },
-        "Popup": {
-            "label": "Popup",
-            "description": "Show a popup notification"
-        },
-        "Sleep": {
-            "label": "Sleep",
-            "description": "Put the device to sleep"
-        },
-        "Shutdown": {
-            "label": "Shutdown",
-            "description": "Shutdown the device"
-        },
-        "USPShutdown": {
-            "label": "Shutdown UPS",
-            "description": "Shutdown the UPS"
-        },
-        "Executable": {
-            "label": "Executable",
-            "description": "Run an executable"
-        },
-        "HttpRequest": {
-            "label": "HTTP request",
-            "description": "Send an HTTP request"
-        }
-    },
-    "action": {
-        "settings": "{setting} settings",
-        "configure": "Configure {action} action",
-        "delay": "Delay",
-        "repeat": "Repeat",
-        "retry": "Retry",
-        "retry_keys": {
-            "Fixed": {
-                "label": "Fixed Delay",
-                "description": "Delay each retry by a fixed duration of time"
-            },
-            "LinearBackoff": {
-                "label": "Linear Backoff Delay",
-                "description": "Delay each retry by a duration increasing by the provided increment"
-            },
-            "ExponentialBackoff": {
-                "label": "Exponential Backoff Delay",
-                "description": "Delay each retry by an initial duration multiplying the delay by an exponent for each retry"
-            }
-        },
-        "delay_explain": {
-            "duration_capacity": "Delayed until either {duration} elapses or the battery capacity goes below {capacity}%",
-            "duration": "Delayed until {duration} has elapsed",
-            "below_capacity": "Delayed until the battery capacity goes below {capacity}%"
-        },
-        "repeat_explain": {
-            "interval_capacity": "Repeats every {duration} and every time the capacity decreases by {capacity}%",
-            "interval": "Repeats every {duration}",
-            "capacity": "Repeats every time the capacity decreases by {capacity}%",
-            "limit": "Will repeat {limit} times",
-            "no_limit": "Will repeat until the system shuts down or the service is stopped"
-        }
-    },
-    "buzzer": {
-        "name": "Buzzer",
-        "description": "When AC is lost the UPS will play a beep sound"
-    },
-    "battery_self_test": {
-        "name": "Battery Self Test",
-        "description": "Run a 10 second battery self test, the device will switch over to battery mode for 10 seconds then switch back to utility"
-    },
-    "history": {
-        "types": {
-            "Battery": {
-                "label": "Battery",
-                "description": "Battery capacity and remaining time over time"
-            },
-            "Device": {
-                "label": "Device State",
-                "description": "Device state over time"
-            }
-        },
-        "columns": {
-            "input_voltage": "Input Voltage",
-            "output_voltage": "Output Voltage",
-            "output_load_percent": "Output Load %",
-            "output_frequency": "Output Frequency",
-            "battery_voltage": "Battery Voltage",
-            "device_power_state": "Device Power State",
-            "battery_low": "Battery Low",
-            "fault_mode": "Fault Mode",
-            "device_line_type": "Device Line Type",
-            "battery_self_test": "Battery Self Test",
-            "buzzer_control": "Buzzer Enabled",
-            "timestamp": "Timestamp",
-            "capacity": "Capacity",
-            "remaining_time": "Remaining Time"
-        }
-    }
+	"pages": {
+		"home": "Home",
+		"events": "Events",
+		"history": "History",
+		"configure": "Configure",
+		"pipelines": "Event Pipelines",
+		"realtime": "Realtime Control"
+	},
+	"refreshing": "Refreshing",
+	"last_fetched": "Last fetched {at}",
+	"remaining": "Remaining: {duration}",
+	"capacity": "Capacity",
+	"load": "Load",
+	"input_voltage": "Input: {voltage}",
+	"output_voltage": "Output: {voltage}",
+	"login": "Login",
+	"login_description": "This area is protected. You must login to access this page",
+	"logout": "Logout",
+	"actions_title": "Actions",
+	"pipelines_title": "Event Pipelines",
+	"pipelines": {
+		"title": "Event Pipelines",
+		"empty": "You don't have any event pipelines, press Create to create a new one.",
+		"editing_title": "Editing Pipeline",
+		"create_title": "Create Event Pipeline"
+	},
+	"create": "Create",
+	"delete_pipeline": {
+		"title": "Delete Pipeline",
+		"message": "Are you sure you want to delete this pipeline?"
+	},
+	"event": {
+		"columns": {
+			"level": "Level",
+			"type": "Type",
+			"description": "Description",
+			"timestamp": "Timestamp"
+		},
+		"filters": {
+			"start": "Start",
+			"end": "End"
+		},
+		"select": "Select an event"
+	},
+	"no_results": "No results found",
+	"events": {
+		"ACFailure": {
+			"label": "AC Power Failure",
+			"description": "No longer receiving AC power, running on battery"
+		},
+		"ACRecovery": {
+			"label": "AC Power Recovered",
+			"description": "Receiving AC power, no longer running on battery"
+		},
+		"UPSFault": {
+			"label": "Fault encountered",
+			"description": "UPS Encountered a fault"
+		},
+		"LowBatteryModeStart": {
+			"label": "UPS Low Battery",
+			"description": "UPS is running low on battery"
+		},
+		"LowBatteryModeEnd": {
+			"label": "UPS Sufficient Battery",
+			"description": "UPS is no longer running low on battery"
+		},
+		"BatteryTestStart": {
+			"label": "UPS Battery Test Started",
+			"description": "UPS is testing the battery"
+		},
+		"BatteryTestEnd": {
+			"label": "UPS Battery Test Finished",
+			"description": "UPS has finished testing the battery"
+		}
+	},
+	"actions": {
+		"Notification": {
+			"label": "Notification",
+			"description": "Send a desktop notification"
+		},
+		"Popup": {
+			"label": "Popup",
+			"description": "Show a popup notification"
+		},
+		"Sleep": {
+			"label": "Sleep",
+			"description": "Put the device to sleep"
+		},
+		"Shutdown": {
+			"label": "Shutdown",
+			"description": "Shutdown the device"
+		},
+		"USPShutdown": {
+			"label": "Shutdown UPS",
+			"description": "Shutdown the UPS"
+		},
+		"Executable": {
+			"label": "Executable",
+			"description": "Run an executable"
+		},
+		"HttpRequest": {
+			"label": "HTTP request",
+			"description": "Send an HTTP request"
+		}
+	},
+	"action": {
+		"settings": "{setting} settings",
+		"configure": "Configure {action} action",
+		"delay": "Delay",
+		"repeat": "Repeat",
+		"retry": "Retry",
+		"retry_keys": {
+			"Fixed": {
+				"label": "Fixed Delay",
+				"description": "Delay each retry by a fixed duration of time"
+			},
+			"LinearBackoff": {
+				"label": "Linear Backoff Delay",
+				"description": "Delay each retry by a duration increasing by the provided increment"
+			},
+			"ExponentialBackoff": {
+				"label": "Exponential Backoff Delay",
+				"description": "Delay each retry by an initial duration multiplying the delay by an exponent for each retry"
+			}
+		},
+		"delay_explain": {
+			"duration_capacity": "Delayed until either {duration} elapses or the battery capacity goes below {capacity}%",
+			"duration": "Delayed until {duration} has elapsed",
+			"below_capacity": "Delayed until the battery capacity goes below {capacity}%"
+		},
+		"repeat_explain": {
+			"interval_capacity": "Repeats every {duration} and every time the capacity decreases by {capacity}%",
+			"interval": "Repeats every {duration}",
+			"capacity": "Repeats every time the capacity decreases by {capacity}%",
+			"limit": "Will repeat {limit} times",
+			"no_limit": "Will repeat until the system shuts down or the service is stopped"
+		}
+	},
+	"buzzer": {
+		"name": "Buzzer",
+		"description": "When AC is lost the UPS will play a beep sound"
+	},
+	"battery_self_test": {
+		"name": "Battery Self Test",
+		"description": "Run a 10 second battery self test, the device will switch over to battery mode for 10 seconds then switch back to utility"
+	},
+	"history": {
+		"types": {
+			"Battery": {
+				"label": "Battery",
+				"description": "Battery capacity and remaining time over time"
+			},
+			"Device": {
+				"label": "Device State",
+				"description": "Device state over time"
+			}
+		},
+		"columns": {
+			"input_voltage": "Input Voltage",
+			"output_voltage": "Output Voltage",
+			"output_load_percent": "Output Load %",
+			"output_frequency": "Output Frequency",
+			"battery_voltage": "Battery Voltage",
+			"device_power_state": "Device Power State",
+			"battery_low": "Battery Low",
+			"fault_mode": "Fault Mode",
+			"device_line_type": "Device Line Type",
+			"battery_self_test": "Battery Self Test",
+			"buzzer_control": "Buzzer Enabled",
+			"timestamp": "Timestamp",
+			"capacity": "Capacity",
+			"remaining_time": "Remaining Time"
+		}
+	}
 }
