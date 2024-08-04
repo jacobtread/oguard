@@ -10,6 +10,7 @@
 	import Spinner from '$/lib/components/Spinner.svelte';
 	import { Container } from '$/lib/components';
 	import { t } from 'svelte-i18n';
+	import Alert, { AlertType } from '$/lib/components/Alert.svelte';
 
 	const batteryInfoQuery = createQuery<DeviceBattery>({
 		queryKey: ['battery-info'],
@@ -94,8 +95,9 @@
 		<Spinner />
 	{/if}
 	{#if $batteryInfoQuery.error}
-		An error has occurred:
-		{$batteryInfoQuery.error.message}
+		<Alert
+			type={AlertType.ERROR}
+			message={`Failed to load device battery: ${$batteryInfoQuery.error.message}`} />
 	{/if}
 	{#if $batteryInfoQuery.isSuccess}
 		<DeviceBatteryCard
@@ -109,8 +111,9 @@
 		<Spinner />
 	{/if}
 	{#if $deviceStateQuery.error}
-		An error has occurred:
-		{$deviceStateQuery.error.message}
+		<Alert
+			type={AlertType.ERROR}
+			message={`Failed to load device state: ${$deviceStateQuery.error.message}`} />
 	{/if}
 	{#if $deviceStateQuery.isSuccess}
 		<DeviceOutputCard
@@ -128,8 +131,9 @@
 			<Spinner />
 		{/if}
 		{#if $deviceBatteryHistory.error}
-			An error has occurred:
-			{$deviceBatteryHistory.error.message}
+			<Alert
+				type={AlertType.ERROR}
+				message={`Failed to load battery history: ${$deviceBatteryHistory.error.message}`} />
 		{/if}
 		{#if $deviceBatteryHistory.isSuccess}
 			<AreaChart
