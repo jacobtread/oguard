@@ -2,7 +2,16 @@
     "words": [
         "Appender",
         "appenders",
+        "devel",
+        "Dynamix",
+        "hidraw",
+        "libudev",
+        "replug",
         "reqwest",
-        "sonner"
+        "sonner",
+        "uaccess",
+        "udev",
+        "udevadm",
+        "UPSD"
     ]
 }
