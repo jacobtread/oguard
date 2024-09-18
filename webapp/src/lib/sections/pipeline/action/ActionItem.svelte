@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Action } from '$lib/api/types';
 	import { _ } from 'svelte-i18n';
-	import ActionTypeIcon from './ActionTypeIcon.svelte';
+	import ActionTypeIcon from '$lib/sections/pipeline/action/ActionTypeIcon.svelte';
 	import { Tooltip } from 'bits-ui';
 	import dayjs from 'dayjs';
 

@@ -6,22 +6,29 @@
 		type Action
 	} from '$lib/api/types';
 	import { _ } from 'svelte-i18n';
-	import ExecutableConfig from './config/ExecutableConfig.svelte';
-	import HttpConfig from './config/HTTPConfig.svelte';
-	import ShutdownConfig from './config/ShutdownConfig.svelte';
-	import UpsShutdownConfig from './config/UPSShutdownConfig.svelte';
 	import { Collapsible } from 'bits-ui';
-	import ActionDelayConfig from './config/ActionDelayConfig.svelte';
-	import ActionRepeatConfig from './config/ActionRepeatConfig.svelte';
-	import ActionRetryConfig from './config/ActionRetryConfig.svelte';
 	import ExpandIcon from '~icons/solar/double-alt-arrow-down-bold-duotone';
 	import { slide } from 'svelte/transition';
+
+	import {
+		ExecutableConfig,
+		HttpConfig,
+		ShutdownConfig,
+		UpsShutdownConfig,
+		ActionDelayConfig,
+		ActionRepeatConfig,
+		ActionRetryConfig
+	} from '$lib/sections/pipeline/action/config';
+	import type { ComponentType, SvelteComponent } from 'svelte';
 
 	export let action: Action;
 
 	$: actionType = action.ty.type;
 
-	const configScreen: Partial<Record<ActionTypeKey, unknown>> = {
+	const configScreen: Partial<
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		Record<ActionTypeKey, ComponentType<SvelteComponent<{ config: any }>>>
+	> = {
 		[ActionTypeKey.Shutdown]: ShutdownConfig,
 		[ActionTypeKey.USPShutdown]: UpsShutdownConfig,
 		[ActionTypeKey.Executable]: ExecutableConfig,
@@ -75,7 +82,7 @@
 			</Collapsible.Trigger>
 			<Collapsible.Content transition={slide}>
 				<div class="section__content">
-					<CurrentConfigScreen bind:config={action.ty} />
+					<svelte:component this={CurrentConfigScreen} bind:config={action.ty} />
 				</div>
 			</Collapsible.Content>
 		</Collapsible.Root>

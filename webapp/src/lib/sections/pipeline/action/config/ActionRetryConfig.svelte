@@ -6,7 +6,7 @@
 		type ActionRetry
 	} from '$lib/api/types';
 	import { Select } from 'bits-ui';
-	import DurationInput from '../../DurationInput.svelte';
+	import DurationInput from '$lib/components/DurationInput.svelte';
 	import { _ } from 'svelte-i18n';
 	import { fly } from 'svelte/transition';
 

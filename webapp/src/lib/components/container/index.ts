@@ -6,3 +6,5 @@ import Section from './container-section.svelte';
 import Content from './container-content.svelte';
 
 export { Root, Wrapper, Header, Footer, Section, Content };
+
+export default { Root, Wrapper, Header, Footer, Section, Content };

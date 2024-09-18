@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ActionRepeat } from '$lib/api/types';
-	import DurationInput from '../../DurationInput.svelte';
+	import DurationInput from '$lib/components/DurationInput.svelte';
 
 	export let repeat: ActionRepeat;
 

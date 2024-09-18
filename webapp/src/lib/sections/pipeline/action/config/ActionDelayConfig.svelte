@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ActionDelay } from '$lib/api/types';
-	import DurationInput from '../../DurationInput.svelte';
+	import DurationInput from '$lib/components/DurationInput.svelte';
 
 	export let delay: ActionDelay;
 

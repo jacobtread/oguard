@@ -4,7 +4,7 @@
 	import { _ } from 'svelte-i18n';
 
 	import dayjs from 'dayjs';
-	import { Container } from '.';
+	import Container from '$lib/components/container';
 
 	// The current capacity % of load on the battery
 	export let load: number;

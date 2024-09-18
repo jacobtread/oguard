@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
 	import { HttpMethod, requestJson } from '$lib/api/utils';
-	import DeviceBatteryCard from '$lib/components/DeviceBatteryCard.svelte';
+	import DeviceBatteryCard from '$/lib/sections/overview/DeviceBatteryCard.svelte';
 	import type { DeviceBattery, DeviceState, DeviceBatteryHistory } from '$lib/api/types';
-	import DeviceOutputCard from '$lib/components/DeviceOutputCard.svelte';
+	import DeviceOutputCard from '$lib/sections/overview/DeviceOutputCard.svelte';
 	import dayjs from 'dayjs';
 	import { AreaChart, ScaleTypes } from '@carbon/charts-svelte';
 	import { type AreaChartOptions } from '@carbon/charts';

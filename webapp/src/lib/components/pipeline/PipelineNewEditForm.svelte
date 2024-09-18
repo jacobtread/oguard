@@ -9,9 +9,9 @@
 	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { base } from '$app/paths';
-	import ActionItem from '$lib/components/pipeline/ActionItem.svelte';
-	import CreateActionForm from '$lib/components/pipeline/CreateActionForm.svelte';
-	import EditActionForm from '$lib/components/pipeline/EditActionForm.svelte';
+	import ActionItem from '$/lib/sections/pipeline/action/ActionItem.svelte';
+	import CreateActionForm from '$lib/sections/pipeline/action/CreateActionForm.svelte';
+	import EditActionForm from '$lib/sections/pipeline/action/EditActionForm.svelte';
 	import { Switch } from 'bits-ui';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';

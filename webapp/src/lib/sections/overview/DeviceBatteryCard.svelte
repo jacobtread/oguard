@@ -1,8 +1,9 @@
 <script lang="ts">
 	import dayjs from 'dayjs';
+	import { t } from 'svelte-i18n';
+
 	import SolarRefreshLineDuotone from '~icons/solar/refresh-line-duotone';
-	import { _ } from 'svelte-i18n';
-	import { Container } from '.';
+	import Container from '$lib/components/container';
 
 	// The current capacity % of the battery
 	export let capacity: number;
@@ -35,23 +36,23 @@
 
 			<p class="battery-capacity">
 				<span class="battery-capacity__value">{capacity}%</span>
-				{$_('capacity')}
+				{$t('capacity')}
 			</p>
 
 			<p class="battery-remaining">
-				{$_('remaining', { values: { duration: remainingTimeFormatted } })}
+				{$t('remaining', { values: { duration: remainingTimeFormatted } })}
 			</p>
 		</div>
 
 		<div class="card-content">
 			<p class="battery-last-fetched">
-				{$_('last_fetched', { values: { at: lastUpdatedFormatted } })}
+				{$t('last_fetched', { values: { at: lastUpdatedFormatted } })}
 			</p>
 
 			{#if refreshing}
 				<div class="refresh">
 					<SolarRefreshLineDuotone />
-					{$_('refreshing')}
+					{$t('refreshing')}
 				</div>
 			{/if}
 		</div>
