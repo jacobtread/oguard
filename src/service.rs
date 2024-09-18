@@ -27,7 +27,7 @@ pub fn service_main(_arguments: Vec<OsString>) {
     let config = config::load_default();
 
     // Setup logging
-    logging::setup(&config.logging).expect("failed to setup logging");
+    logging::setup(&config.logging, true).expect("failed to setup logging");
 
     if let Err(err) = run_service(config) {
         error!("error running service: {err}")
