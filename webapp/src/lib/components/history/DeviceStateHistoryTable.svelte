@@ -14,13 +14,13 @@
 		Subscribe,
 		type HeaderLabel
 	} from 'svelte-headless-table';
-	import LocalizedDateTime from '../LocalizedDateTime.svelte';
+	import LocalizedDateTime from '../i18n/LocalizedDateTime.svelte';
 	import dayjs from 'dayjs';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { HttpMethod, requestJson } from '$/lib/api/utils';
 	import Spinner from '../Spinner.svelte';
 	import ManageColumns from '../table/ManageColumns.svelte';
-	import Localized from '../Localized.svelte';
+	import Localized from '../i18n/Localized.svelte';
 	import { Container } from '..';
 	import Pagination from '../Pagination.svelte';
 	import { fly } from 'svelte/transition';

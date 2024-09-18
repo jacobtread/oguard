@@ -23,8 +23,8 @@
 
 	import SortDesc from '~icons/solar/alt-arrow-down-bold';
 	import SortAsc from '~icons/solar/alt-arrow-up-bold';
-	import Localized from '$/lib/components/Localized.svelte';
-	import LocalizedDateTime from '$/lib/components/LocalizedDateTime.svelte';
+	import Localized from '$/lib/components/i18n/Localized.svelte';
+	import LocalizedDateTime from '$/lib/components/i18n/LocalizedDateTime.svelte';
 	import Pagination from '$/lib/components/Pagination.svelte';
 	import ManageColumns from '$/lib/components/table/ManageColumns.svelte';
 
