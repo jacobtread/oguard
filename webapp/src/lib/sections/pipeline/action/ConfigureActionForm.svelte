@@ -3,7 +3,9 @@
 		ActionRetryDelayKey,
 		ActionTypeKey,
 		getDefaultActionRetryDelay,
-		type Action
+		type Action,
+		type ActionType,
+		type ActionTypeConfig
 	} from '$lib/api/types';
 	import { _ } from 'svelte-i18n';
 	import { Collapsible } from 'bits-ui';
@@ -23,19 +25,48 @@
 
 	export let action: Action;
 
-	$: actionType = action.ty.type;
+	type ActionConfigComponent<A extends ActionTypeKey> = ComponentType<
+		SvelteComponent<{ config: ActionTypeConfig<A> }>
+	>;
 
-	const configScreen: Partial<
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		Record<ActionTypeKey, ComponentType<SvelteComponent<{ config: any }>>>
-	> = {
+	// Type mapping between action types and their svelte component
+	type ConfigScreenMap = {
+		[A in ActionTypeKey]: ActionConfigComponent<A>;
+	};
+
+	// Mapping for available config screens
+	const configScreen: Partial<ConfigScreenMap> = {
 		[ActionTypeKey.Shutdown]: ShutdownConfig,
 		[ActionTypeKey.USPShutdown]: UpsShutdownConfig,
 		[ActionTypeKey.Executable]: ExecutableConfig,
 		[ActionTypeKey.HttpRequest]: HttpConfig
 	};
 
-	$: CurrentConfigScreen = configScreen[actionType];
+	// An action type where the type is known by the generic value
+	type KnownActionType<A extends ActionTypeKey> = ActionType & { type: A };
+
+	// Association between a component that takes a config of a specific type and that config
+	type ComponentWithConfig<A extends ActionTypeKey> = {
+		component: ActionConfigComponent<A>;
+		config: KnownActionType<A>;
+	};
+
+	/**
+	 * Identity function to prove that the configuration component and
+	 * configuration value have the same action type
+	 *
+	 * @param actionType The action type to prove
+	 */
+	const getCurrentScreenData = <A extends ActionTypeKey>(
+		actionType: KnownActionType<A>
+	): ComponentWithConfig<A> | undefined => {
+		const component = configScreen[actionType.type];
+		if (component === undefined) return undefined;
+
+		return { component, config: actionType };
+	};
+
+	$: currentScreenData = getCurrentScreenData(action.ty);
 
 	// Adds a default repeat to the action
 	const addDelay = () => {
@@ -71,18 +102,20 @@
 	};
 </script>
 
-{#if CurrentConfigScreen !== undefined}
+{#if currentScreenData !== undefined}
 	<div class="section">
 		<Collapsible.Root>
 			<Collapsible.Trigger>
 				{$_('action.settings', {
-					values: { setting: $_(`actions.${actionType}.label`) }
+					values: { setting: $_(`actions.${currentScreenData.config.type}.label`) }
 				})}
 				<span data-collapsible-icon> <ExpandIcon /> </span>
 			</Collapsible.Trigger>
 			<Collapsible.Content transition={slide}>
 				<div class="section__content">
-					<svelte:component this={CurrentConfigScreen} bind:config={action.ty} />
+					<svelte:component
+						this={currentScreenData.component}
+						bind:config={currentScreenData.config} />
 				</div>
 			</Collapsible.Content>
 		</Collapsible.Root>
