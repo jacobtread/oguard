@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LoginDialog from './LoginDialog.svelte';
+	import LoginDialog from '$lib/sections/auth/LoginDialog.svelte';
 	import { createLoginStateQuery } from '$lib/api/login';
 
 	const loginStateQuery = createLoginStateQuery();

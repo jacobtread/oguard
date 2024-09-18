@@ -2,15 +2,17 @@
 	import dayjs from 'dayjs';
 	import { DateInput } from 'date-picker-svelte';
 	import DateIcon from '~icons/solar/calendar-date-bold-duotone';
-	import { writable } from 'svelte/store';
-	import { t } from 'svelte-i18n';
-	import { Container } from '$lib/components';
-	import Breadcrumbs from '$/lib/components/Breadcrumbs.svelte';
-	import { fly } from 'svelte/transition';
 	import { Select } from 'bits-ui';
 
-	import DeviceBatteryHistoryTable from '$/lib/components/history/DeviceBatteryHistoryTable.svelte';
-	import DeviceStateHistoryTable from '$/lib/components/history/DeviceStateHistoryTable.svelte';
+	import { t } from 'svelte-i18n';
+	import { fly } from 'svelte/transition';
+	import { writable } from 'svelte/store';
+
+	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+	import Container from '$lib/components/container';
+
+	import DeviceBatteryHistoryTable from '$lib/sections/history/DeviceBatteryHistoryTable.svelte';
+	import DeviceStateHistoryTable from '$lib/sections/history/DeviceStateHistoryTable.svelte';
 
 	const currentDate = dayjs();
 

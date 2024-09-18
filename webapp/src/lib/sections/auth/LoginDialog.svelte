@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { _ } from 'svelte-i18n';
+	import { t } from 'svelte-i18n';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { HttpMethod, requestText } from '$lib/api/utils';
 	import type { LoginRequest } from '$lib/api/types';
-	import { Container } from '..';
+	import Container from '$lib/components/container';
 
 	export let open = true;
 	export let onClose: () => void = () => (open = false);
@@ -25,22 +25,18 @@
 	});
 
 	let password = '';
-
-	function onSubmitLogin() {
-		$loginMutation.mutate(password);
-	}
 </script>
 
 <Container.Wrapper maxWidth="xs">
 	<Container.Root>
-		<form on:submit|preventDefault={onSubmitLogin}>
-			<Container.Header dark title={$_('login')}></Container.Header>
+		<form on:submit|preventDefault={() => $loginMutation.mutate(password)}>
+			<Container.Header dark title={$t('login')}></Container.Header>
 
 			<Container.Content>
 				<Container.Section>
-					<p class="description">{$_('login_description')}</p>
+					<p class="description">{$t('login_description')}</p>
 					<div class="field">
-						<label class="field__label" for="password">Password</label>
+						<label class="field__label" for="password">{$t('password')}</label>
 						<input class="field__input input" type="text" bind:value={password} required />
 					</div>
 				</Container.Section>
@@ -51,7 +47,7 @@
 					<button
 						type="submit"
 						class="button"
-						disabled={password.length === 0 || $loginMutation.isPending}>Login</button>
+						disabled={password.length === 0 || $loginMutation.isPending}>{$t('login')}</button>
 					<div style="flex: auto;"></div>
 					<slot name="actions" />
 				</div>

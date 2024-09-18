@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from 'svelte-i18n';
+	import { t } from 'svelte-i18n';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { HttpMethod, requestText } from '$lib/api/utils';
 	import type { LoginRequest } from '$lib/api/types';
@@ -27,7 +27,7 @@
 	disabled={$logoutMutation.isPending}
 	class="button"
 	on:click={() => $logoutMutation.mutate()}>
-	{$_('logout')}
+	{$t('logout')}
 </button>
 
 <style lang="scss">

@@ -5,7 +5,7 @@
 	import { HttpMethod, requestText } from '$lib/api/utils';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { Dialog } from 'bits-ui';
-	import { _ } from 'svelte-i18n';
+	import { t } from 'svelte-i18n';
 	import { toast } from 'svelte-sonner';
 	import { fade, scale } from 'svelte/transition';
 
@@ -50,10 +50,10 @@
 	<Dialog.Portal>
 		<Dialog.Overlay transition={fade} transitionConfig={{ duration: 300 }} />
 		<Dialog.Content transition={scale} transitionConfig={{ duration: 300, start: 0.95 }}>
-			<div class="dialog__header"><h3>{$_('delete_pipeline.title')}</h3></div>
+			<div class="dialog__header"><h3>{$t('delete_pipeline.title')}</h3></div>
 
 			<div class="dialog__content">
-				<p>{$_('delete_pipeline.message')}</p>
+				<p>{$t('delete_pipeline.message')}</p>
 
 				{#if $deleteMutation.error !== null}
 					<p class="error">{$deleteMutation.error.message}</p>

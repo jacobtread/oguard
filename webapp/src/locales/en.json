@@ -19,6 +19,7 @@
 	"logout": "Logout",
 	"actions_title": "Actions",
 	"pipelines_title": "Event Pipelines",
+	"password": "Password",
 	"pipelines": {
 		"title": "Event Pipelines",
 		"empty": "You don't have any event pipelines, press Create to create a new one.",

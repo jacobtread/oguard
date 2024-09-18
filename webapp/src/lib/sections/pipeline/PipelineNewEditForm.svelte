@@ -15,12 +15,12 @@
 	import { Switch } from 'bits-ui';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
-	import Breadcrumbs from '../Breadcrumbs.svelte';
-	import DeletePipelineDialog from './DeletePipelineDialog.svelte';
-	import { Container } from '..';
+	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+	import DeletePipelineDialog from '$/lib/sections/pipeline/PipelineDeleteDialog.svelte';
+	import Container from '$lib/components/container';
 	import { t } from 'svelte-i18n';
-	import EventInput from './EventInput.svelte';
-	import ConfirmDialog from '../ConfirmDialog.svelte';
+	import EventInput from '$lib/components/pipeline/EventInput.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { cloneDeep, omit, uniqueId } from 'lodash';
 	import { dndzone, type DndEvent } from 'svelte-dnd-action';
 	import { flip } from 'svelte/animate';

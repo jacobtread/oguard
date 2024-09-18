@@ -2,7 +2,7 @@
 	import type { ListEventPipeline } from '$lib/api/types';
 	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import { createQuery } from '@tanstack/svelte-query';
-	import PipelineItem from '$lib/components/pipeline/PipelineItem.svelte';
+	import PipelineItem from '$/lib/sections/pipeline/PipelineItem.svelte';
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import { Container } from '$lib/components';
 	import { t } from 'svelte-i18n';
