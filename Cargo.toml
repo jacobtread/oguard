@@ -65,12 +65,16 @@ ordered-float = { version = "4.2.1", features = ["serde"] }
 mime = "0.3.17"
 mime_guess = "2.0.5"
 garde = { version = "0.20.0", features = ["derive", "full"] }
-axum-valid = { version = "0.19.0", default-features = false, features = ["garde", "basic", "full_garde"] }
+axum-valid = { version = "0.19.0", default-features = false, features = [
+    "garde",
+    "basic",
+    "full_garde",
+] }
 
 
 # SeaORM 
 [dependencies.sea-orm]
-version = "^0"
+version = "^1"
 default-features = false
 features = [
     "runtime-tokio-rustls",
@@ -82,7 +86,7 @@ features = [
 
 # SeaORM Migration 
 [dependencies.sea-orm-migration]
-version = "^0"
+version = "^1"
 default-features = false
 features = ["runtime-tokio-rustls", "sqlx-sqlite"]
 
