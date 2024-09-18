@@ -1,35 +1,23 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
-	import { HttpMethod, requestText } from '$lib/api/utils';
-	import type { LoginRequest } from '$lib/api/types';
-
-	const client = useQueryClient();
+	import { createLogoutMutation } from '$/lib/api/login';
 
 	export let open = true;
 	export let onClose: () => void = () => (open = false);
 
-	const logoutMutation = createMutation({
-		mutationFn: async () =>
-			await requestText<LoginRequest>({
-				method: HttpMethod.POST,
-				route: `/api/logout`
-			}),
+	const logoutMutation = createLogoutMutation();
 
-		onSuccess: () => {
-			client.invalidateQueries({ queryKey: ['login-state'] });
+	const onLogout = async () => {
+		try {
+			await $logoutMutation.mutateAsync();
+		} catch (err) {
+			console.error('logout failed', err);
+		} finally {
 			onClose();
 		}
-	});
+	};
 </script>
 
-<button
-	disabled={$logoutMutation.isPending}
-	class="button"
-	on:click={() => $logoutMutation.mutate()}>
+<button disabled={$logoutMutation.isPending} class="button" on:click={onLogout}>
 	{$t('logout')}
 </button>
-
-<style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
-</style>

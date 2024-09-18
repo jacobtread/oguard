@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { createDeletePipelineMutation } from '$/lib/api/event-pipelines';
+	import type { EventPipeline } from '$lib/api/types';
+
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
-	import type { EventPipeline } from '$lib/api/types';
-	import { HttpMethod, requestText } from '$lib/api/utils';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { Dialog } from 'bits-ui';
 	import { t } from 'svelte-i18n';
 	import { toast } from 'svelte-sonner';
@@ -16,29 +16,10 @@
 
 	export let onClose: () => void;
 
-	const client = useQueryClient();
-
-	// Mutation to delete the pipeline
-	$: deleteMutation = createMutation({
-		mutationFn: async () =>
-			await requestText({
-				method: HttpMethod.DELETE,
-				route: `/api/event-pipelines/${pipeline.id}`
-			}),
-
-		onSuccess: async () => {
-			await goto(`${base}/pipelines`);
-
-			client.invalidateQueries({ queryKey: ['event-pipelines'] });
-
-			toast.success('Deleted pipeline.');
-
-			// Clear state for the deleted pipeline
-			client.removeQueries({ queryKey: ['event-pipelines', pipeline.id] });
-			client.cancelQueries({ queryKey: ['event-pipelines', pipeline.id] });
-
-			onClose();
-		}
+	const deleteMutation = createDeletePipelineMutation(async () => {
+		await goto(`${base}/pipelines`);
+		toast.success('Deleted pipeline.');
+		onClose();
 	});
 </script>
 
@@ -64,7 +45,7 @@
 					<button
 						class="button"
 						disabled={$deleteMutation.isPending}
-						on:click={() => $deleteMutation.mutate()}>Delete</button>
+						on:click={() => $deleteMutation.mutate({ id: pipeline.id })}>Delete</button>
 					<div style="flex: auto;"></div>
 					<button class="button button--secondary" on:click={onClose}>Cancel</button>
 				</div>

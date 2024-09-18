@@ -6,9 +6,10 @@
 	import HistoryIcon from '~icons/solar/sort-by-time-bold-duotone';
 	import ConfigureIcon from '~icons/solar/settings-bold-duotone';
 	import PipelineIcon from '~icons/solar/square-sort-horizontal-bold-duotone';
+
 	import { page } from '$app/stores';
-	import { _ } from 'svelte-i18n';
-	import LogoutButton from './auth/LogoutButton.svelte';
+	import { t } from 'svelte-i18n';
+	import LogoutButton from '$lib/sections/auth/LogoutButton.svelte';
 	import { createLoginStateQuery } from '$lib/api/login';
 
 	const loginStateQuery = createLoginStateQuery();
@@ -26,7 +27,7 @@
 			<li class="nav-list__item">
 				<a class="nav-link" href="{base}/" class:nav-link--selected={$page.route.id == '/'}>
 					<HomeIcon class="nav-link__item" />
-					{$_('pages.home')}
+					{$t('pages.home')}
 				</a>
 			</li>
 			<li class="nav-list__item">
@@ -35,7 +36,7 @@
 					href="{base}/events"
 					class:nav-link--selected={$page.route.id == '/events'}>
 					<EventsIcon class="nav-link__item" />
-					{$_('pages.events')}
+					{$t('pages.events')}
 				</a>
 			</li>
 			<li class="nav-list__item">
@@ -44,7 +45,7 @@
 					href="{base}/history"
 					class:nav-link--selected={$page.route.id == '/history'}>
 					<HistoryIcon class="nav-link__item" />
-					{$_('pages.history')}
+					{$t('pages.history')}
 				</a>
 			</li>
 			<li class="nav-list__item">
@@ -53,7 +54,7 @@
 					href="{base}/pipelines"
 					class:nav-link--selected={$page.route.id?.startsWith('/pipelines')}>
 					<PipelineIcon class="nav-link__item" />
-					{$_('pages.pipelines')}
+					{$t('pages.pipelines')}
 				</a>
 			</li>
 			<li class="nav-list__item">
@@ -62,7 +63,7 @@
 					href="{base}/configure"
 					class:nav-link--selected={$page.route.id == '/configure'}>
 					<ConfigureIcon class="nav-link__item" />
-					{$_('pages.configure')}
+					{$t('pages.configure')}
 				</a>
 			</li>
 			<li class="nav-list__item">
@@ -71,7 +72,7 @@
 					href="{base}/realtime"
 					class:nav-link--selected={$page.route.id == '/realtime'}>
 					<ConfigureIcon class="nav-link__item" />
-					{$_('pages.realtime')}
+					{$t('pages.realtime')}
 				</a>
 			</li>
 		</ul>

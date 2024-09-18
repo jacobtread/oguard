@@ -1,35 +1,30 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
-	import { HttpMethod, requestText } from '$lib/api/utils';
-	import type { LoginRequest } from '$lib/api/types';
+
 	import Container from '$lib/components/container';
+	import { createLoginMutation } from '$/lib/api/login';
 
 	export let open = true;
 	export let onClose: () => void = () => (open = false);
 
-	const client = useQueryClient();
-
-	const loginMutation = createMutation({
-		mutationFn: async (password: string) =>
-			await requestText<LoginRequest>({
-				method: HttpMethod.POST,
-				route: `/api/login`,
-				body: { password }
-			}),
-
-		onSuccess: () => {
-			client.invalidateQueries({ queryKey: ['login-state'] });
-			onClose();
-		}
-	});
+	const loginMutation = createLoginMutation();
 
 	let password = '';
+
+	const onSubmitLogin = async () => {
+		try {
+			await $loginMutation.mutateAsync(password);
+		} catch (err) {
+			console.error('login failed', err);
+		} finally {
+			onClose();
+		}
+	};
 </script>
 
 <Container.Wrapper maxWidth="xs">
 	<Container.Root>
-		<form on:submit|preventDefault={() => $loginMutation.mutate(password)}>
+		<form on:submit|preventDefault={onSubmitLogin}>
 			<Container.Header dark title={$t('login')}></Container.Header>
 
 			<Container.Content>

@@ -1,12 +1,15 @@
 <script lang="ts">
 	/** eslint-disable svelte/valid-compile */
 
+	import { createDeviceBatteryHistoryQuery } from '$/lib/api/history';
 	import { type DeviceBatteryHistory } from '$lib/api/types';
+
 	import { derived, type Readable } from 'svelte/store';
-	import { addHiddenColumns, addPagination, addSortBy } from 'svelte-headless-table/plugins';
+	import { fly } from 'svelte/transition';
 
 	import SortDesc from '~icons/solar/alt-arrow-down-bold';
 	import SortAsc from '~icons/solar/alt-arrow-up-bold';
+
 	import {
 		createRender,
 		createTable,
@@ -14,38 +17,21 @@
 		Subscribe,
 		type HeaderLabel
 	} from 'svelte-headless-table';
-	import LocalizedDateTime from '$lib/components/i18n/LocalizedDateTime.svelte';
+	import { addHiddenColumns, addPagination, addSortBy } from 'svelte-headless-table/plugins';
+
 	import dayjs from 'dayjs';
-	import { createQuery } from '@tanstack/svelte-query';
-	import { HttpMethod, requestJson } from '$/lib/api/utils';
+
+	import LocalizedDateTime from '$lib/components/i18n/LocalizedDateTime.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import Localized from '$lib/components/i18n/Localized.svelte';
 	import ManageColumns from '$lib/components/table/ManageColumns.svelte';
 	import Container from '$lib/components/container';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import { fly } from 'svelte/transition';
 
 	export let start: Readable<Date>;
 	export let end: Readable<Date>;
 
-	const eventHistory = createQuery<DeviceBatteryHistory[]>(
-		derived([start, end], ([$start, $end]) => ({
-			queryKey: ['device-battery-history', $start.toISOString(), $end.toISOString()],
-			queryFn: async () => {
-				const startDate = dayjs($start).utc();
-				const endDate = dayjs($end).utc();
-
-				const query = new URLSearchParams();
-				query.set('start', startDate.toISOString());
-				query.set('end', endDate.toISOString());
-
-				return await requestJson<DeviceBatteryHistory[]>({
-					method: HttpMethod.GET,
-					route: `/api/history/battery-state?` + query.toString()
-				});
-			}
-		}))
-	);
+	const eventHistory = createDeviceBatteryHistoryQuery(start, end);
 
 	const history = derived(eventHistory, ($eventHistory) => $eventHistory.data ?? []);
 

@@ -1,52 +1,15 @@
 <script lang="ts">
-	import type { DeviceState } from '$/lib/api/types';
-	import { HttpMethod, requestJson, requestText } from '$/lib/api/utils';
+	import { createDeviceStatePollingQuery, createToggleBuzzerMutation } from '$/lib/api/device';
 	import Spinner from '$/lib/components/Spinner.svelte';
 	import { Container } from '$lib/components';
-	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { Switch } from 'bits-ui';
 	import { t } from 'svelte-i18n';
 
-	const client = useQueryClient();
+	// Query device state, refetching every second
+	const deviceStateQuery = createDeviceStatePollingQuery(1000);
 
-	const deviceStateQuery = createQuery<DeviceState>({
-		queryKey: ['device-state'],
-		queryFn: async () =>
-			await requestJson<DeviceState>({
-				method: HttpMethod.GET,
-				route: '/api/device-state'
-			}),
-
-		// Refetch the data every second
-		refetchInterval: 1000
-	});
-
-	const toggleBuzzerMutation = createMutation({
-		mutationFn: async () =>
-			await requestText({
-				method: HttpMethod.POST,
-				route: '/api/toggle-buzzer'
-			}),
-
-		onMutate: async () => {
-			await client.cancelQueries({ queryKey: ['device-state'] });
-
-			const previousState = client.getQueryData<DeviceState>(['evice-state']);
-
-			if (previousState) {
-				client.setQueryData<DeviceState>(['device-state'], {
-					...previousState,
-					buzzer_control: !previousState.buzzer_control
-				});
-			}
-
-			return previousState;
-		},
-
-		onSettled: () => {
-			client.invalidateQueries({ queryKey: ['device-state'] });
-		}
-	});
+	// Mutation to toggle the buzzer state
+	const toggleBuzzerMutation = createToggleBuzzerMutation();
 </script>
 
 <svelte:head>

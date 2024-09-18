@@ -1,21 +1,12 @@
 <script lang="ts">
-	import type { ListEventPipeline } from '$lib/api/types';
-	import { HttpMethod, requestJson } from '$lib/api/utils';
-	import { createQuery } from '@tanstack/svelte-query';
 	import PipelineItem from '$/lib/sections/pipeline/PipelineItem.svelte';
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import { Container } from '$lib/components';
 	import { t } from 'svelte-i18n';
 	import Spinner from '$/lib/components/Spinner.svelte';
+	import { createEventPipelinesQuery } from '$/lib/api/event-pipelines';
 
-	const eventPipelinesQuery = createQuery<ListEventPipeline[]>({
-		queryKey: ['event-pipelines'],
-		queryFn: async () =>
-			await requestJson<ListEventPipeline[]>({
-				method: HttpMethod.GET,
-				route: '/api/event-pipelines'
-			})
-	});
+	const eventPipelinesQuery = createEventPipelinesQuery();
 </script>
 
 <svelte:head>

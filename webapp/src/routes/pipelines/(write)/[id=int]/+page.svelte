@@ -1,22 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import type { EventPipeline } from '$lib/api/types';
-	import { HttpMethod, requestJson } from '$lib/api/utils';
-	import { createQuery } from '@tanstack/svelte-query';
-	import PipelineNewEditForm from '$lib/components/pipeline/PipelineNewEditForm.svelte';
+	import PipelineNewEditForm from '$lib/sections/pipeline/PipelineNewEditForm.svelte';
 	import Spinner from '$/lib/components/Spinner.svelte';
+	import { derived, type Readable } from 'svelte/store';
+	import { createEventPipelineQuery } from '$/lib/api/event-pipelines';
 
-	$: pipelineId = parseInt($page.params.id);
-
-	$: pipelineQuery = createQuery<EventPipeline>({
-		queryKey: ['event-pipelines', pipelineId],
-		queryFn: async () =>
-			await requestJson<EventPipeline>({
-				method: HttpMethod.GET,
-				route: `/api/event-pipelines/${pipelineId}`
-			}),
-		retry: false
-	});
+	const pipelineId: Readable<number> = derived(page, ($page) => parseInt($page.params.id));
+	const pipelineQuery = createEventPipelineQuery(pipelineId);
 </script>
 
 {#if $pipelineQuery.isPending}

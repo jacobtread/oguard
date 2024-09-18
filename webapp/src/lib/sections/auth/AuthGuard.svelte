@@ -14,7 +14,3 @@
 {:else}
 	<slot />
 {/if}
-
-<style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
-</style>

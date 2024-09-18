@@ -2,9 +2,10 @@
 	import '@fontsource-variable/inter';
 	import '$lib/styles/global.scss';
 	import '@carbon/charts-svelte/styles.css';
-	import { browser } from '$app/environment';
-	import { QueryClientProvider, QueryClient } from '@tanstack/svelte-query';
+
+	import { QueryClientProvider } from '@tanstack/svelte-query';
 	import { SvelteQueryDevtools } from '@tanstack/svelte-query-devtools';
+
 	import dayjs from 'dayjs';
 	import duration from 'dayjs/plugin/duration';
 	import relativeTime from 'dayjs/plugin/relativeTime';
@@ -12,11 +13,14 @@
 	import updateLocale from 'dayjs/plugin/updateLocale';
 	import utc from 'dayjs/plugin/utc';
 	import timezone from 'dayjs/plugin/timezone';
-	import Header from '$lib/components/Header.svelte';
+
 	import { getLocaleFromNavigator, init, register } from 'svelte-i18n';
 	import { Toaster } from 'svelte-sonner';
-	import PageTransition from '$/lib/components/PageTransition.svelte';
 	import { page } from '$app/stores';
+	import { queryClient } from '$lib/api/utils';
+
+	import PageTransition from '$lib/components/PageTransition.svelte';
+	import Header from '$lib/components/Header.svelte';
 
 	register('en', () => import('../locales/en.json'));
 
@@ -24,14 +28,6 @@
 		fallbackLocale: 'en',
 		initialLocale: getLocaleFromNavigator() ?? 'en',
 		ignoreTag: false
-	});
-
-	const queryClient = new QueryClient({
-		defaultOptions: {
-			queries: {
-				enabled: browser
-			}
-		}
 	});
 
 	dayjs.extend(duration);

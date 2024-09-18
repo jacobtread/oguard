@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { type EventHistory, EVENT_TYPE_DATA, EventLevel } from '$lib/api/types';
-	import { HttpMethod, requestJson } from '$lib/api/utils';
-	import { createQuery } from '@tanstack/svelte-query';
 	import dayjs from 'dayjs';
 	import { DateInput } from 'date-picker-svelte';
 	import DateIcon from '~icons/solar/calendar-date-bold-duotone';
@@ -27,32 +25,15 @@
 	import LocalizedDateTime from '$/lib/components/i18n/LocalizedDateTime.svelte';
 	import Pagination from '$/lib/components/Pagination.svelte';
 	import ManageColumns from '$/lib/components/table/ManageColumns.svelte';
+	import { createEventHistoryQuery } from '$/lib/api/history';
 
 	const currentDate = dayjs();
 
-	let start = writable(currentDate.startOf('month').toDate());
-	let end = writable(currentDate.endOf('month').toDate());
+	const start = writable(currentDate.startOf('month').toDate());
+	const end = writable(currentDate.endOf('month').toDate());
 
-	const eventHistory = createQuery<EventHistory[]>(
-		derived([start, end], ([$start, $end]) => ({
-			queryKey: ['event-history', $start.toISOString(), $end.toISOString()],
-			queryFn: async () => {
-				const startDate = dayjs($start).utc();
-				const endDate = dayjs($end).utc();
-
-				const query = new URLSearchParams();
-				query.set('start', startDate.toISOString());
-				query.set('end', endDate.toISOString());
-				return await requestJson<EventHistory[]>({
-					method: HttpMethod.GET,
-					route: '/api/history/event?' + query.toString()
-				});
-			},
-
-			// Refetch the data every minute
-			refetchInterval: 1000 * 60
-		}))
-	);
+	// Query the event history, refreshing the data every minute
+	const eventHistory = createEventHistoryQuery(start, end, 1000 * 60);
 
 	const history = derived(eventHistory, ($eventHistory) => $eventHistory.data ?? []);
 

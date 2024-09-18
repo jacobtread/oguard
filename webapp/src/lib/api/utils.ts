@@ -1,5 +1,16 @@
+import { QueryClient } from '@tanstack/svelte-query';
+import { browser } from '$app/environment';
+
 // Base url segment
 const BASE_URL = import.meta.env.VITE_SERVER_URL ?? `${window.location.origin}/api/`;
+
+export const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			enabled: browser
+		}
+	}
+});
 
 // Constant enum for the different HTTP verbs
 export const enum HttpMethod {

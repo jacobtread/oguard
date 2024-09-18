@@ -1,10 +1,12 @@
 <script lang="ts">
-	import type { EventPipeline, ListEventPipeline, UpdateEventPipeline } from '$lib/api/types';
+	import type { ListEventPipeline } from '$lib/api/types';
+	import { createChangeEnabledMutation } from '$lib/api/event-pipelines';
+
 	import BoxIcon from '~icons/solar/box-bold-duotone';
+
 	import { Label, Switch } from 'bits-ui';
 	import dayjs from 'dayjs';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
-	import { HttpMethod, requestJson } from '$lib/api/utils';
+
 	import { onDestroy } from 'svelte';
 	import { fly } from 'svelte/transition';
 
@@ -14,20 +16,7 @@
 	let canToggleEnabled: boolean = true;
 	let toggleEnabledTimeout: number | null = null;
 
-	const client = useQueryClient();
-
-	const changeEnabledMutation = createMutation({
-		mutationFn: async (enabled: boolean) =>
-			await requestJson<EventPipeline, UpdateEventPipeline>({
-				method: HttpMethod.PUT,
-				route: `/api/event-pipelines/${item.id}`,
-				body: { enabled }
-			}),
-
-		onSuccess: () => {
-			client.invalidateQueries({ queryKey: ['event-pipelines'] });
-		}
-	});
+	const changeEnabledMutation = createChangeEnabledMutation();
 
 	async function onChangeEnabled(enabled: boolean) {
 		if (!canToggleEnabled) return;
@@ -35,7 +24,10 @@
 		canToggleEnabled = false;
 
 		try {
-			await $changeEnabledMutation.mutate(!enabled);
+			await $changeEnabledMutation.mutate({
+				id: item.id,
+				enabled: !enabled
+			});
 		} catch (error) {
 			console.error('Failed to update enabled', error);
 		} finally {

@@ -1,13 +1,5 @@
 <script lang="ts">
-	import {
-		type EventPipeline,
-		type Action,
-		type UpdateEventPipeline,
-		EventType,
-		type CreateEventPipeline
-	} from '$lib/api/types';
-	import { HttpMethod, requestJson } from '$lib/api/utils';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { type EventPipeline, type Action, EventType } from '$lib/api/types';
 	import { base } from '$app/paths';
 	import ActionItem from '$/lib/sections/pipeline/action/ActionItem.svelte';
 	import CreateActionForm from '$lib/sections/pipeline/action/CreateActionForm.svelte';
@@ -24,11 +16,11 @@
 	import { cloneDeep, omit, uniqueId } from 'lodash';
 	import { dndzone, type DndEvent } from 'svelte-dnd-action';
 	import { flip } from 'svelte/animate';
-
-	// Mutation arg types
-	type UpdateData = { id: number; data: UpdateEventPipeline };
-	type TestData = { id: number };
-	type CreateData = { data: CreateEventPipeline };
+	import {
+		createCreateEventPipelineMutation,
+		createTestEventPipelineMutation,
+		createUpdateEventPipelineMutation
+	} from '$/lib/api/event-pipelines';
 
 	// Existing pipeline to edit if editing
 	export let existing: EventPipeline | undefined = undefined;
@@ -58,59 +50,20 @@
 	// Determine the current editing action from its index
 	$: editingAction = editAction === null ? null : actions[editAction];
 
-	const client = useQueryClient();
-
 	// Mutation to update an existing pipeline
-	const updateMutation = createMutation({
-		mutationFn: async ({ id, data }: UpdateData) =>
-			await requestJson<EventPipeline, UpdateEventPipeline>({
-				method: HttpMethod.PUT,
-				route: `/api/event-pipelines/${id}`,
-				body: data
-			}),
-
-		onSuccess: (pipeline) => {
-			client.invalidateQueries({ queryKey: ['event-pipelines'] });
-
-			// Update the local state for the pipeline using the remote state
-			client.setQueryData(['event-pipelines', pipeline.id], pipeline);
-
-			toast.success('Saved changes.');
-		}
+	const updateMutation = createUpdateEventPipelineMutation(() => {
+		toast.success('Saved changes.');
 	});
 
 	// Mutation to create the pipeline
-	const createPipelineMutation = createMutation({
-		mutationFn: async ({ data }: CreateData) =>
-			await requestJson<EventPipeline, CreateEventPipeline>({
-				method: HttpMethod.POST,
-				route: '/api/event-pipelines',
-				body: data
-			}),
-
-		onSuccess: (pipeline) => {
-			goto(`${base}/pipelines/${pipeline.id}`);
-
-			client.invalidateQueries({ queryKey: ['event-pipelines'] });
-
-			// We can preload the data for this since the server gives it back
-			client.setQueryData(['event-pipelines', pipeline.id], pipeline);
-
-			toast.success('Created new pipeline.');
-		}
+	const createPipelineMutation = createCreateEventPipelineMutation((pipeline) => {
+		toast.success('Created new pipeline.');
+		goto(`${base}/pipelines/${pipeline.id}`);
 	});
 
 	// Mutation to test an existing pipeline
-	const testMutation = createMutation({
-		mutationFn: async ({ id }: TestData) =>
-			await requestJson({
-				method: HttpMethod.POST,
-				route: `/api/event-pipelines/${id}/test`
-			}),
-
-		onSuccess: () => {
-			toast.success('Test started.');
-		}
+	const testMutation = createTestEventPipelineMutation(() => {
+		toast.success('Test started.');
 	});
 
 	/**

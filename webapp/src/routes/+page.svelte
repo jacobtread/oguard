@@ -1,89 +1,27 @@
 <script lang="ts">
-	import { createQuery } from '@tanstack/svelte-query';
-	import { HttpMethod, requestJson } from '$lib/api/utils';
 	import DeviceBatteryCard from '$/lib/sections/overview/DeviceBatteryCard.svelte';
-	import type { DeviceBattery, DeviceState, DeviceBatteryHistory } from '$lib/api/types';
 	import DeviceOutputCard from '$lib/sections/overview/DeviceOutputCard.svelte';
 	import dayjs from 'dayjs';
-	import { AreaChart, ScaleTypes } from '@carbon/charts-svelte';
-	import { type AreaChartOptions } from '@carbon/charts';
+
 	import Spinner from '$/lib/components/Spinner.svelte';
 	import { Container } from '$/lib/components';
 	import { t } from 'svelte-i18n';
 	import Alert, { AlertType } from '$/lib/components/Alert.svelte';
+	import { createBatteryInfoPollingQuery, createDeviceStatePollingQuery } from '$/lib/api/device';
+	import { readable } from 'svelte/store';
+	import { createDeviceBatteryHistoryQuery } from '$/lib/api/history';
+	import BatteryCapacityChart from '$/lib/components/charts/BatteryCapacityChart.svelte';
 
-	const batteryInfoQuery = createQuery<DeviceBattery>({
-		queryKey: ['battery-info'],
-		queryFn: async () =>
-			await requestJson<DeviceBattery>({
-				method: HttpMethod.GET,
-				route: '/api/battery-state'
-			}),
+	const batteryInfoQuery = createBatteryInfoPollingQuery(3000);
+	const deviceStateQuery = createDeviceStatePollingQuery(3000);
 
-		// Refetch the data every 3 seconds
-		refetchInterval: 3000
-	});
+	// Get the current date data
+	const currentDate = dayjs.utc();
+	const startOfDay = readable(currentDate.startOf('day').toDate());
+	const endOfDay = readable(currentDate.endOf('day').toDate());
 
-	const deviceStateQuery = createQuery<DeviceState>({
-		queryKey: ['device-state'],
-		queryFn: async () =>
-			await requestJson<DeviceState>({
-				method: HttpMethod.GET,
-				route: '/api/device-state'
-			}),
-
-		// Refetch the data every 3 seconds
-		refetchInterval: 3000
-	});
-
-	const deviceBatteryHistory = createQuery<DeviceBatteryHistory[]>({
-		queryKey: ['device-battery-history'],
-		queryFn: async () => {
-			const currentDate = dayjs.utc();
-			const startOfDay = currentDate.startOf('day');
-			const endOfDay = currentDate.endOf('day');
-
-			const query = new URLSearchParams();
-			query.set('start', startOfDay.toISOString());
-			query.set('end', endOfDay.toISOString());
-			return await requestJson<DeviceBatteryHistory[]>({
-				method: HttpMethod.GET,
-				route: '/api/history/battery-state?' + query.toString()
-			});
-		},
-
-		// Refetch the data every minute
-		refetchInterval: 1000 * 60
-	});
-
-	const options: AreaChartOptions = {
-		title: 'Battery Capacity (Today)',
-		canvasZoom: { enabled: true },
-		locale: {
-			date(value) {
-				return dayjs(value).format('L LT');
-			}
-		},
-		zoomBar: {
-			top: { enabled: true }
-		},
-		axes: {
-			bottom: {
-				title: 'Date',
-				mapsTo: 'date',
-				scaleType: ScaleTypes.TIME
-			},
-			left: {
-				mapsTo: 'value',
-				title: 'Battery Capacity',
-				scaleType: ScaleTypes.LINEAR,
-				percentage: true
-			}
-		},
-
-		curve: 'curveMonotoneX',
-		height: '400px'
-	};
+	// Device battery history, refreshing data every minute
+	const deviceBatteryHistory = createDeviceBatteryHistoryQuery(startOfDay, endOfDay, 1000 * 60);
 </script>
 
 <svelte:head>
@@ -136,13 +74,7 @@
 				message={`Failed to load battery history: ${$deviceBatteryHistory.error.message}`} />
 		{/if}
 		{#if $deviceBatteryHistory.isSuccess}
-			<AreaChart
-				data={$deviceBatteryHistory.data.map((value) => ({
-					date: value.created_at,
-					value: value.state.capacity
-				}))}
-				{options}
-				style="padding:2rem;height:400px;" />
+			<BatteryCapacityChart history={$deviceBatteryHistory.data} />
 		{/if}
 	</Container.Root>
 </div>
