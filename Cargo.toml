@@ -9,9 +9,10 @@ readme = "README.md"
 description = "OGuard"
 
 [dependencies]
+# Windows service helpers
 windows-service = "0.7"
 
-# Web framework
+# Web framework & HTTP server libraries
 axum = "0.7"
 tower-http = { version = "0.5.2", features = ["cors"] }
 tower = "0.4.13"
@@ -42,35 +43,49 @@ anyhow = "1"
 # Async runtime & utilities
 tokio = { version = "1", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["sync", "full"] }
-futures = "0.3.30"
+futures = "0.3"
 
 # Localization
 rust-i18n = "3"
+
+# String enums
 strum = { version = "0.26.3", features = ["derive"] }
 
-# HTTP
-reqwest = "0.12.5"
-uuid = { version = "1.9.1", features = ["v4", "serde"] }
+# HTTP client
+reqwest = "0.12"
+
+# HTTP sessions for authentication
+axum_session = "0.14"
+
+# System shutdown logic
 system_shutdown = "4.0.1"
-axum_session = { version = "0.14.0" }
 
 # Resource embedding
 embeddy = "0.1"
 
-toml = "0.8.14"
-clap = { version = "4.5.9", features = ["derive"] }
-humantime = "2.1.0"
-chrono = { version = "0.4.38", features = ["serde"] }
-ordered-float = { version = "4.2.1", features = ["serde"] }
+# Configuration parsing
+toml = "0.8"
+
+# Command line argument parsing
+clap = { version = "4.5", features = ["derive"] }
+
+# Date
+chrono = { version = "0.4", features = ["serde"] }
+
+# Ordered floating point numbers for comparison
+ordered-float = { version = "4.2", features = ["serde"] }
+
+# Mime type and mime guessing
 mime = "0.3.17"
 mime_guess = "2.0.5"
+
+# Request validation
 garde = { version = "0.20.0", features = ["derive", "full"] }
-axum-valid = { version = "0.19.0", default-features = false, features = [
+axum-valid = { version = "0.20.0", default-features = false, features = [
     "garde",
     "basic",
     "full_garde",
 ] }
-
 
 # SeaORM 
 [dependencies.sea-orm]
