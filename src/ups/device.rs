@@ -1,7 +1,17 @@
 use anyhow::Context;
-use hidapi::{HidApi, HidDevice};
+use hidapi::HidApi;
 
 pub type DefaultDevice = HidDevice;
+
+/// Size for the HID device read buffer
+const HID_READ_BUFFER_SIZE: usize = 128;
+
+pub struct HidDevice {
+    /// The underlying device
+    device: hidapi::HidDevice,
+    /// Buffer for reading from the device
+    read_buffer: [u8; HID_READ_BUFFER_SIZE],
+}
 
 /// Creator for devices
 pub trait DeviceCreator: Sized + Send + 'static {
@@ -49,7 +59,10 @@ impl DeviceCreator for HidDeviceCreator {
             .open(VENDOR_ID, PRODUCT_ID)
             .context("failed to open device")?;
 
-        Ok(device)
+        Ok(HidDevice {
+            device,
+            read_buffer: [0u8; HID_READ_BUFFER_SIZE],
+        })
     }
 }
 
@@ -68,7 +81,7 @@ impl Device for HidDevice {
         buffer.push(0); // Report ID
         buffer.extend_from_slice(cmd.as_bytes());
         buffer.push(b'\r');
-        self.write(&buffer)?;
+        self.device.write(&buffer)?;
         Ok(())
     }
 
@@ -77,18 +90,18 @@ impl Device for HidDevice {
     fn read_response(&mut self) -> anyhow::Result<String> {
         let mut out = String::new();
 
-        let mut buffer = [0u8; 128];
-
         loop {
             let count = self
-                .read_timeout(&mut buffer, 3000)
+                .device
+                .read_timeout(&mut self.read_buffer, 3000)
                 .context("Failed to read response")?;
 
             if count == 0 {
                 return Ok(out);
             }
 
-            let chars = buffer
+            let chars = self
+                .read_buffer
                 .iter()
                 // Take only available length
                 .take(count)
