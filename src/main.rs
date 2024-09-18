@@ -9,12 +9,12 @@ pub mod database;
 pub mod http;
 pub mod logging;
 pub mod server;
-#[cfg(target_os = "windows")]
-pub mod service;
 pub mod services;
 pub mod ups;
 pub mod utils;
 pub mod watcher;
+#[cfg(target_os = "windows")]
+pub mod windows_service;
 
 // Initialize localization
 i18n!("locales", fallback = "en");
@@ -73,11 +73,11 @@ fn main() -> anyhow::Result<()> {
         return match command {
             #[cfg(target_os = "windows")]
             Commands::Service(service) => match service.command {
-                ServiceCommands::Create => service::create_service(),
-                ServiceCommands::Start => service::start_service(),
-                ServiceCommands::Stop => service::stop_service(),
-                ServiceCommands::Restart => service::restart_service(),
-                ServiceCommands::Delete => service::delete_service(),
+                ServiceCommands::Create => windows_service::create_service(),
+                ServiceCommands::Start => windows_service::start_service(),
+                ServiceCommands::Stop => windows_service::stop_service(),
+                ServiceCommands::Restart => windows_service::restart_service(),
+                ServiceCommands::Delete => windows_service::delete_service(),
             },
         };
     }
@@ -93,8 +93,11 @@ fn main() -> anyhow::Result<()> {
         // Production builds start the service logic
         #[cfg(not(debug_assertions))]
         {
-            windows_service::service_dispatcher::start(service::SERVICE_NAME, ffi_service_main)
-                .context("failed to start service")?;
+            windows_service::service_dispatcher::start(
+                windows_service::SERVICE_NAME,
+                ffi_service_main,
+            )
+            .context("failed to start service")?;
         }
     }
 
@@ -116,7 +119,7 @@ extern "system" fn ffi_service_main(num_service_arguments: u32, service_argument
             service_arguments,
         )
     };
-    service::service_main(arguments);
+    windows_service::service_main(arguments);
 }
 
 #[cfg(any(debug_assertions, target_os = "linux"))]
