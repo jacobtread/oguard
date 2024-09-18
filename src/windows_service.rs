@@ -1,3 +1,11 @@
+//! # Windows Service
+//!
+//! Windows specific behavior for running OGuard as a Windows service, enables
+//! the required behavior for listening to shutdown events from the service manager,
+//! reporting the service state.
+//!
+//! Also includes logic for managing the service (Adding, Removing, and Restarting the service)
+
 use anyhow::Context;
 use log::{debug, error};
 use std::env;
@@ -15,8 +23,13 @@ use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 use crate::config::Config;
 use crate::{config, logging, server::run_server};
 
+/// Name of the windows service
 pub const SERVICE_NAME: &str = "oguard";
+
+/// Display name for the service
 const SERVICE_DISPLAY_NAME: &str = "OGuard";
+
+/// Type of the service
 const SERVICE_TYPE: ServiceType = ServiceType::OWN_PROCESS;
 
 // Service entrypoint
