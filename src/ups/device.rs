@@ -6,11 +6,20 @@ pub type DefaultDevice = HidDevice;
 /// Size for the HID device read buffer
 const HID_READ_BUFFER_SIZE: usize = 128;
 
+/// Size for the HID device write buffer
+///
+/// Majority of writes are only going to use up 4 bytes but some larger
+/// timing related commands use a few extra bytes
+const HID_WRITE_BUFFER_SIZE: usize = 32;
+
+/// Native HID device with a buffer for reading
 pub struct HidDevice {
     /// The underlying device
     device: hidapi::HidDevice,
     /// Buffer for reading from the device
     read_buffer: [u8; HID_READ_BUFFER_SIZE],
+    /// Buffer for writing to the device
+    write_buffer: Vec<u8>,
 }
 
 /// Creator for devices
@@ -62,6 +71,7 @@ impl DeviceCreator for HidDeviceCreator {
         Ok(HidDevice {
             device,
             read_buffer: [0u8; HID_READ_BUFFER_SIZE],
+            write_buffer: Vec::with_capacity(HID_WRITE_BUFFER_SIZE),
         })
     }
 }
@@ -77,11 +87,17 @@ impl Device for HidDevice {
     /// Sends a command over the device HID, commands begin with the report ID which
     /// is always zero and end with a carriage return to indicate the end of a command
     fn write_command(&mut self, cmd: &str) -> anyhow::Result<()> {
-        let mut buffer = Vec::new();
-        buffer.push(0); // Report ID
-        buffer.extend_from_slice(cmd.as_bytes());
-        buffer.push(b'\r');
-        self.device.write(&buffer)?;
+        let write_buffer = &mut self.write_buffer;
+
+        write_buffer.push(0); // Report ID
+        write_buffer.extend_from_slice(cmd.as_bytes());
+        write_buffer.push(b'\r');
+
+        self.device.write(write_buffer)?;
+
+        // Reset the write buffer
+        write_buffer.clear();
+
         Ok(())
     }
 
