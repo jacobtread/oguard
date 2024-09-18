@@ -1,3 +1,14 @@
+//! # UPS Watcher
+//!
+//! Task that will poll a [DeviceExecutorHandle] comparing its current state
+//! against the previous state in order to determine things such as:
+//!
+//! - Switch between battery self testing mode
+//! - Reaching low battery level and returning to normal battery level
+//! - Failure and restoration of AC power
+//!
+//! It will emit any events that occur to anyone listening with a [UPSWatcherHandle]
+
 use crate::{
     database::entities::events::UPSEvent,
     ups::{
@@ -17,8 +28,11 @@ const POLL_INTERVAL: Duration = Duration::from_secs(3);
 /// Watcher that polls a UPS executor at fixed intervals
 /// to handle changes in the state
 pub struct UPSWatcher {
+    /// Handle to the executor to poll
     executor: DeviceExecutorHandle,
+    /// Channel for emitting events
     tx: broadcast::Sender<UPSEvent>,
+    /// Last known device state
     last_device_state: Option<DeviceState>,
 }
 
@@ -36,6 +50,10 @@ impl Clone for UPSWatcherHandle {
 }
 
 impl UPSWatcherHandle {
+    /// Converts the underlying channel of the watcher handle into
+    /// a stream for reading events.
+    ///
+    /// Used by the SSE API endpoint for sharing events with clients
     pub fn into_stream(self) -> BroadcastStream<UPSEvent> {
         BroadcastStream::new(self.rx)
     }
@@ -47,6 +65,7 @@ impl UPSWatcherHandle {
 }
 
 impl UPSWatcher {
+    /// Starts a UPS watcher that will watch the provided executor handle
     pub fn start(executor: DeviceExecutorHandle) -> UPSWatcherHandle {
         let (tx, rx) = broadcast::channel(4);
         let watcher = Self {
@@ -124,6 +143,7 @@ impl UPSWatcher {
             }
             (Some(true), false) => {
                 info!("Device is no longer low on battery");
+
                 self.push_event(UPSEvent::LowBatteryModeEnd);
             }
             _ => {}

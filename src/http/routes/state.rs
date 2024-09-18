@@ -37,7 +37,7 @@ pub async fn device_battery<D: Device>(
 
 /// GET /api/events
 ///
-/// Websocket hook for receiving events
+/// SSE events endpoint
 pub async fn events(
     Extension(watcher_handle): Extension<UPSWatcherHandle>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
