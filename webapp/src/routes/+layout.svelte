@@ -16,11 +16,13 @@
 
 	import { getLocaleFromNavigator, init, register } from 'svelte-i18n';
 	import { Toaster } from 'svelte-sonner';
-	import { page } from '$app/stores';
+	import { navigating, page } from '$app/stores';
 	import { queryClient } from '$lib/api/utils';
 
 	import PageTransition from '$lib/components/PageTransition.svelte';
 	import Header from '$lib/components/Header.svelte';
+	import Alert, { AlertType } from '$/lib/components/Alert.svelte';
+	import LoadingScreen from '$/lib/sections/LoadingScreen.svelte';
 
 	register('en', () => import('../locales/en.json'));
 
@@ -78,19 +80,22 @@
 
 <QueryClientProvider client={queryClient}>
 	{#await i18nPromise}
-		<p>Loading...</p>
+		<LoadingScreen />
 	{:then}
 		<div class="layout">
 			<Header />
-
-			<main class="main">
-				<PageTransition url={$page.url.toString()}>
-					<slot />
-				</PageTransition>
-			</main>
+			{#if $navigating}
+				<LoadingScreen />
+			{:else}
+				<main class="main">
+					<PageTransition url={$page.url.toString()}>
+						<slot />
+					</PageTransition>
+				</main>
+			{/if}
 		</div>
 	{:catch error}
-		<p>Failed to load translations: {error.messages}</p>
+		<Alert type={AlertType.ERROR} message={`Failed to load translations: ${error.messages}`} />
 	{/await}
 
 	<Toaster />
