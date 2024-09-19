@@ -85,6 +85,34 @@ export async function requestText<B = never>(config: RequestConfig<B>): Promise<
 	throw new HttpResponseError(response.status, text);
 }
 
+/**
+ * Creates a request that does not capture a response
+ * and only cares that the response was a 2xx status code
+ *
+ * @param config Request configuration
+ * @returns Promise for the request completion
+ */
+export async function requestStatus<B = never>(config: RequestConfig<B>): Promise<void> {
+	const response = await requestInner(config);
+
+	/// Handle 2xx status codes
+	if (response.ok) {
+		return;
+	}
+
+	// Handle non 200 status codes by taking the text response
+	let text: string;
+	try {
+		text = await response.text();
+	} catch (error) {
+		throw new Error('Failed to get error response text', {
+			cause: error
+		});
+	}
+
+	throw new HttpResponseError(response.status, text);
+}
+
 export class HttpResponseError extends Error {
 	statusCode: number;
 

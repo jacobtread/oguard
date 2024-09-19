@@ -2,6 +2,7 @@ import { createMutation, createQuery, type CreateQueryResult } from '@tanstack/s
 import type { LoginRequest, LoginState } from './types';
 import { HttpMethod, queryClient, requestJson, requestText } from './utils';
 
+// Key for the current login state
 export const LOGIN_STATE_KEY = 'login-state';
 
 /**
@@ -42,15 +43,8 @@ export function loginRequest(password: string): Promise<string> {
 }
 
 /**
- * Creates a request to logout
+ * Creates a mutation that will trigger a login request
  */
-export function logoutRequest(): Promise<string> {
-	return requestText({
-		method: HttpMethod.POST,
-		route: `/api/logout`
-	});
-}
-
 export function createLoginMutation() {
 	return createMutation<unknown, Error, string>({
 		mutationFn: (password) => loginRequest(password),
@@ -60,6 +54,19 @@ export function createLoginMutation() {
 	});
 }
 
+/**
+ * Creates a request to logout
+ */
+export function logoutRequest(): Promise<string> {
+	return requestText({
+		method: HttpMethod.POST,
+		route: `/api/logout`
+	});
+}
+
+/**
+ * Creates a mutation that will trigger a logout request
+ */
 export function createLogoutMutation() {
 	return createMutation({
 		mutationFn: logoutRequest,
