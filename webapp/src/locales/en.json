@@ -144,7 +144,12 @@
 	},
 	"battery_self_test": {
 		"name": "Battery Self Test",
-		"description": "Run a 10 second battery self test, the device will switch over to battery mode for 10 seconds then switch back to utility"
+		"description": "Run a 10 second battery self test, the device will switch over to battery mode for 10 seconds then switch back to utility",
+		"starting": "Starting battery test...",
+		"cancelling": "Cancelling battery test...",
+		"running": "Battery self testing in progress...",
+		"cancel": "Cancel Self Test",
+		"start": "Start Self Test"
 	},
 	"history": {
 		"types": {

@@ -42,20 +42,20 @@
 									<span class="toggling">
 										{#if $startBatteryTestMutation.isPending}
 											<Spinner />
-											Starting battery test...
+											{$t('battery_self_test.starting')}
 										{/if}
 									</span>
 									<span class="toggling">
 										{#if $cancelBatteryTestMutation.isPending}
 											<Spinner />
-											Cancelling battery test...
+											{$t('battery_self_test.cancelling')}
 										{/if}
 									</span>
 
 									{#if $deviceStateQuery.data.battery_self_test}
 										<span class="toggling">
 											<Spinner />
-											Battery self testing in progress...
+											{$t('battery_self_test.running')}
 										</span>
 									{/if}
 								</div>
@@ -66,14 +66,14 @@
 											class="button"
 											on:click={() => $cancelBatteryTestMutation.mutate()}
 											disabled={$cancelBatteryTestMutation.isPending}>
-											Cancel Self Test
+											{$t('battery_self_test.cancel')}
 										</button>
 									{:else}
 										<button
 											class="button"
 											on:click={() => $startBatteryTestMutation.mutate()}
 											disabled={$startBatteryTestMutation.isPending}>
-											Start Self Test
+											{$t('battery_self_test.start')}
 										</button>
 									{/if}
 								</div>
