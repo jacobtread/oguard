@@ -249,8 +249,10 @@ export type ActionPipeline = {
 	actions: Action[];
 };
 
+export type PipelineId = number;
+
 export type ListEventPipeline = {
-	id: number;
+	id: PipelineId;
 	name: string;
 	event: EventType;
 	cancellable: boolean;
@@ -261,7 +263,7 @@ export type ListEventPipeline = {
 };
 
 export type EventPipeline = {
-	id: number;
+	id: PipelineId;
 	name: string;
 	event: EventType;
 	pipeline: ActionPipeline;

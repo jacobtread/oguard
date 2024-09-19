@@ -1,26 +1,40 @@
 <script lang="ts">
-	import { type EventPipeline, type Action, EventType } from '$lib/api/types';
-	import { base } from '$app/paths';
-	import ActionItem from '$/lib/sections/pipeline/action/ActionItem.svelte';
-	import CreateActionForm from '$lib/sections/pipeline/action/CreateActionForm.svelte';
-	import EditActionForm from '$lib/sections/pipeline/action/EditActionForm.svelte';
-	import { Switch } from 'bits-ui';
-	import { toast } from 'svelte-sonner';
-	import { goto } from '$app/navigation';
-	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-	import DeletePipelineDialog from '$/lib/sections/pipeline/PipelineDeleteDialog.svelte';
-	import Container from '$lib/components/container';
-	import { t } from 'svelte-i18n';
-	import EventInput from '$lib/components/pipeline/EventInput.svelte';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-	import { cloneDeep, omit, uniqueId } from 'lodash';
-	import { dndzone, type DndEvent } from 'svelte-dnd-action';
-	import { flip } from 'svelte/animate';
+	import {
+		type EventPipeline,
+		type Action,
+		EventType,
+		type PipelineId,
+		type CreateEventPipeline,
+		type UpdateEventPipeline
+	} from '$lib/api/types';
 	import {
 		createCreateEventPipelineMutation,
 		createTestEventPipelineMutation,
 		createUpdateEventPipelineMutation
 	} from '$/lib/api/event-pipelines';
+
+	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
+
+	import ActionItem from '$/lib/sections/pipeline/action/ActionItem.svelte';
+	import CreateActionForm from '$lib/sections/pipeline/action/CreateActionForm.svelte';
+	import EditActionForm from '$lib/sections/pipeline/action/EditActionForm.svelte';
+	import DeletePipelineDialog from '$/lib/sections/pipeline/PipelineDeleteDialog.svelte';
+
+	import EventInput from '$lib/components/pipeline/EventInput.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+	import Container from '$lib/components/container';
+
+	import { Switch } from 'bits-ui';
+
+	import { cloneDeep, omit, uniqueId } from 'lodash';
+
+	import { dndzone, type DndEvent } from 'svelte-dnd-action';
+
+	import { flip } from 'svelte/animate';
+	import { toast } from 'svelte-sonner';
+	import { t } from 'svelte-i18n';
 
 	// Existing pipeline to edit if editing
 	export let existing: EventPipeline | undefined = undefined;
@@ -51,20 +65,66 @@
 	$: editingAction = editAction === null ? null : actions[editAction];
 
 	// Mutation to update an existing pipeline
-	const updateMutation = createUpdateEventPipelineMutation(() => {
-		toast.success('Saved changes.');
-	});
+	const updateMutation = createUpdateEventPipelineMutation();
 
 	// Mutation to create the pipeline
-	const createPipelineMutation = createCreateEventPipelineMutation((pipeline) => {
-		toast.success('Created new pipeline.');
-		goto(`${base}/pipelines/${pipeline.id}`);
-	});
+	const createPipelineMutation = createCreateEventPipelineMutation();
 
 	// Mutation to test an existing pipeline
-	const testMutation = createTestEventPipelineMutation(() => {
-		toast.success('Test started.');
-	});
+	const testMutation = createTestEventPipelineMutation();
+
+	/**
+	 * Updates the data for the provided pipeline
+	 *
+	 * @param pipelineId The ID of the pipeline to update
+	 * @param data Data to update on the pipeline
+	 */
+	async function doUpdatePipeline(pipelineId: PipelineId, data: UpdateEventPipeline) {
+		try {
+			toast.info('Saving pipeline..');
+			await await $updateMutation.mutateAsync({ id: pipelineId, data });
+
+			toast.success('Saved changes.');
+		} catch (err) {
+			toast.error('failed to save pipeline');
+			console.error('failed to save pipeline', err);
+		}
+	}
+
+	/**
+	 * Creates a new pipeline, navigates the user to the page
+	 * for the pipeline after it is created
+	 *
+	 * @param data Data to create the pipeline with
+	 */
+	async function doCreatePipeline(data: CreateEventPipeline) {
+		try {
+			toast.info('Creating pipeline..');
+			const pipeline = await await $createPipelineMutation.mutateAsync({ data });
+
+			toast.success('Created new pipeline.');
+			goto(`${base}/pipelines/${pipeline.id}`);
+		} catch (err) {
+			toast.error('failed to create pipeline');
+			console.error('failed to create pipeline', err);
+		}
+	}
+
+	/**
+	 * Runs the test pipeline
+	 *
+	 * @param pipelineId The test pipeline ID to run
+	 */
+	async function doTestMutation(pipelineId: PipelineId) {
+		try {
+			toast.info('Starting pipeline test..');
+			await $testMutation.mutateAsync({ id: pipelineId });
+			toast.success('Test started.');
+		} catch (err) {
+			toast.error('failed to test pipeline');
+			console.error('failed to test pipeline', err);
+		}
+	}
 
 	/**
 	 * Removes the action at the provided index
@@ -215,16 +275,13 @@
 						disabled={$updateMutation.isPending}
 						on:click={() => {
 							const pipelineActions = actions.map((action) => omit(action, 'id'));
-							$updateMutation.mutate({
-								id: existing.id,
-								data: {
-									event: eventType,
-									name,
-									cancellable,
-									enabled,
-									pipeline: {
-										actions: pipelineActions
-									}
+							doUpdatePipeline(existing.id, {
+								event: eventType,
+								name,
+								cancellable,
+								enabled,
+								pipeline: {
+									actions: pipelineActions
 								}
 							});
 						}}>
@@ -259,13 +316,12 @@
 						on:click={() => {
 							// Strip local ID from actions
 							const pipelineActions = actions.map((action) => omit(action, 'id'));
-							$createPipelineMutation.mutate({
-								data: {
-									name,
-									event: eventType,
-									pipeline: { actions: pipelineActions },
-									cancellable
-								}
+
+							doCreatePipeline({
+								name,
+								event: eventType,
+								pipeline: { actions: pipelineActions },
+								cancellable
 							});
 						}}>
 						Create
@@ -282,8 +338,7 @@
 		title="Confirm Test"
 		content="Are you sure you want to test this pipeline? This will ignore delays and repeated actions and execute all actions you've listed including shutdown actions, it's recommend you save any changes if you have destructive actions. Only saved actions will be executed"
 		onConfirm={() => {
-			toast.info('Starting pipeline test..');
-			$testMutation.mutate({ id: existing.id });
+			doTestMutation(existing.id);
 			confirmTest = false;
 		}}
 		onCancel={() => (confirmTest = false)} />

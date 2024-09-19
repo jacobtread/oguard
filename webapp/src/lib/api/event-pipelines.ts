@@ -83,12 +83,10 @@ export function createEventPipelinesQuery(): CreateQueryResult<ListEventPipeline
 	});
 }
 
-export function createUpdateEventPipelineMutation(onComplete: VoidFunction) {
+export function createUpdateEventPipelineMutation() {
 	return createMutation<EventPipeline, Error, { id: number; data: UpdateEventPipeline }>({
 		mutationFn: ({ id, data }) => updateEventPipelineRequest(id, data),
 		onSuccess: (pipeline) => {
-			onComplete();
-
 			queryClient.invalidateQueries({ queryKey: [EVENT_PIPELINES_KEY] });
 
 			// Update the local state for the pipeline using the remote state
@@ -97,12 +95,10 @@ export function createUpdateEventPipelineMutation(onComplete: VoidFunction) {
 	});
 }
 
-export function createCreateEventPipelineMutation(onComplete: (pipeline: EventPipeline) => void) {
+export function createCreateEventPipelineMutation() {
 	return createMutation<EventPipeline, Error, { data: CreateEventPipeline }>({
 		mutationFn: ({ data }) => createPipelineRequest(data),
 		onSuccess: (pipeline) => {
-			onComplete(pipeline);
-
 			queryClient.invalidateQueries({ queryKey: [EVENT_PIPELINES_KEY] });
 
 			// We can preload the data for this since the server gives it back
@@ -111,12 +107,9 @@ export function createCreateEventPipelineMutation(onComplete: (pipeline: EventPi
 	});
 }
 
-export function createTestEventPipelineMutation(onComplete: VoidFunction) {
+export function createTestEventPipelineMutation() {
 	return createMutation<unknown, Error, { id: number }>({
-		mutationFn: ({ id }) => testPipelineRequest(id),
-		onSuccess: () => {
-			onComplete();
-		}
+		mutationFn: ({ id }) => testPipelineRequest(id)
 	});
 }
 
@@ -129,12 +122,10 @@ export function createChangeEnabledMutation() {
 	});
 }
 
-export function createDeletePipelineMutation(onComplete: VoidFunction) {
+export function createDeletePipelineMutation() {
 	return createMutation<unknown, Error, { id: number }>({
 		mutationFn: ({ id }) => deletePipelineRequest(id),
 		onSuccess: (_, { id }) => {
-			onComplete();
-
 			queryClient.invalidateQueries({ queryKey: [EVENT_PIPELINES_KEY] });
 
 			// Clear state for the deleted pipeline

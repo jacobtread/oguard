@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createDeletePipelineMutation } from '$/lib/api/event-pipelines';
-	import type { EventPipeline } from '$lib/api/types';
+	import type { EventPipeline, PipelineId } from '$lib/api/types';
 
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
@@ -16,11 +16,27 @@
 
 	export let onClose: () => void;
 
-	const deleteMutation = createDeletePipelineMutation(async () => {
-		await goto(`${base}/pipelines`);
-		toast.success('Deleted pipeline.');
-		onClose();
-	});
+	const deleteMutation = createDeletePipelineMutation();
+
+	/**
+	 * Deletes the provided pipeline and navigates the user
+	 * back to the pipelines list after deleting
+	 *
+	 * @param pipelineId The pipeline ID for the pipeline to delete
+	 */
+	async function doDelete(pipelineId: PipelineId) {
+		try {
+			toast.info('Deleting pipeline..');
+			await await $deleteMutation.mutateAsync({ id: pipelineId });
+
+			await goto(`${base}/pipelines`);
+			toast.success('Deleted pipeline.');
+			onClose();
+		} catch (err) {
+			toast.error('failed to delete pipeline');
+			console.error('failed to delete pipeline', err);
+		}
+	}
 </script>
 
 <Dialog.Root
@@ -45,7 +61,7 @@
 					<button
 						class="button"
 						disabled={$deleteMutation.isPending}
-						on:click={() => $deleteMutation.mutate({ id: pipeline.id })}>Delete</button>
+						on:click={() => doDelete(pipeline.id)}>Delete</button>
 					<div style="flex: auto;"></div>
 					<button class="button button--secondary" on:click={onClose}>Cancel</button>
 				</div>
