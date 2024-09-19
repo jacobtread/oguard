@@ -1,9 +1,9 @@
 <script lang="ts">
-	import dayjs from 'dayjs';
-	import { t } from 'svelte-i18n';
-
 	import SolarRefreshLineDuotone from '~icons/solar/refresh-line-duotone';
 	import Container from '$lib/components/container';
+
+	import { t } from 'svelte-i18n';
+	import dayjs from 'dayjs';
 
 	// The current capacity % of the battery
 	export let capacity: number;
@@ -14,8 +14,10 @@
 	// When the device battery was last updated
 	export let lastUpdated: number;
 
+	// Whether new data is currently being requested
 	export let refreshing: boolean;
 
+	// Timestamp in human readable formats
 	const remainingTimeFormatted = dayjs.duration(remainingTime, 'seconds').humanize();
 	const lastUpdatedFormatted = dayjs(lastUpdated).format('LT');
 </script>

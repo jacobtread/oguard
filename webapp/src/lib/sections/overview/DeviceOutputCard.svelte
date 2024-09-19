@@ -1,23 +1,27 @@
 <script lang="ts">
 	import SolarBoltCircleBoldDuotone from '~icons/solar/bolt-circle-bold-duotone';
 	import SolarRefreshLineDuotone from '~icons/solar/refresh-line-duotone';
-	import { _ } from 'svelte-i18n';
-
-	import dayjs from 'dayjs';
 	import Container from '$lib/components/container';
+
+	import { t } from 'svelte-i18n';
+	import dayjs from 'dayjs';
 
 	// The current capacity % of load on the battery
 	export let load: number;
 
+	// Input voltage of the UPS
 	export let inputVoltage: number;
 
-	export let refreshing: boolean;
-
+	// Output voltage of the UPS
 	export let outputVoltage: number;
 
-	// When the device battery was last updated
+	// When the device output was last updated
 	export let lastUpdated: number;
 
+	// Whether new data is currently being requested
+	export let refreshing: boolean;
+
+	// Timestamp in human readable formats
 	const lastUpdatedFormatted = dayjs(lastUpdated).format('LT');
 </script>
 
@@ -37,25 +41,25 @@
 
 			<p class="output-capacity">
 				<span class="output-capacity__value">{load}%</span>
-				{$_('load')}
+				{$t('load')}
 			</p>
 			<p class="output-remaining">
 				<SolarBoltCircleBoldDuotone />
-				{$_('input_voltage', { values: { voltage: inputVoltage } })}V
+				{$t('input_voltage', { values: { voltage: inputVoltage } })}V
 				<SolarBoltCircleBoldDuotone />
-				{$_('output_voltage', { values: { voltage: outputVoltage } })}V
+				{$t('output_voltage', { values: { voltage: outputVoltage } })}V
 			</p>
 		</div>
 
 		<div class="card-content">
 			<p class="output-last-fetched">
-				{$_('last_fetched', { values: { at: lastUpdatedFormatted } })}
+				{$t('last_fetched', { values: { at: lastUpdatedFormatted } })}
 			</p>
 
 			{#if refreshing}
 				<div class="refresh">
 					<SolarRefreshLineDuotone />
-					{$_('refreshing')}
+					{$t('refreshing')}
 				</div>
 			{/if}
 		</div>
