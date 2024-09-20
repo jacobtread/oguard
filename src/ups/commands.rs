@@ -1,4 +1,5 @@
 use anyhow::Context;
+use compact_str::{format_compact, CompactString};
 use ordered_float::OrderedFloat;
 
 use super::{
@@ -12,8 +13,8 @@ pub struct QueryDeviceBattery;
 impl IntoDeviceCommand for QueryDeviceBattery {
     type Response = DeviceBattery;
 
-    fn get_command(&self) -> String {
-        "QI".to_string()
+    fn get_command(&self) -> CompactString {
+        "QI".into()
     }
 
     fn cache_key(&self) -> Option<u64> {
@@ -22,7 +23,7 @@ impl IntoDeviceCommand for QueryDeviceBattery {
 }
 
 impl FromDeviceResponse for DeviceBattery {
-    fn from_device_response(msg: String) -> anyhow::Result<Self> {
+    fn from_device_response(msg: CompactString) -> anyhow::Result<Self> {
         // 100 02832 50.0 000.5 175 290 0 0000020000112000
         let msg: &str = msg
             .strip_prefix('(')
@@ -52,7 +53,7 @@ pub enum ExecuteResponse {
 }
 
 impl FromDeviceResponse for ExecuteResponse {
-    fn from_device_response(msg: String) -> anyhow::Result<Self> {
+    fn from_device_response(msg: CompactString) -> anyhow::Result<Self> {
         let msg: &str = msg
             .strip_prefix('(')
             .context("Missing execute response prefix")?;
@@ -71,8 +72,8 @@ pub struct QueryDeviceState;
 impl IntoDeviceCommand for QueryDeviceState {
     type Response = DeviceState;
 
-    fn get_command(&self) -> String {
-        "QS".to_string()
+    fn get_command(&self) -> CompactString {
+        "QS".into()
     }
 
     fn cache_key(&self) -> Option<u64> {
@@ -81,7 +82,7 @@ impl IntoDeviceCommand for QueryDeviceState {
 }
 
 impl FromDeviceResponse for DeviceState {
-    fn from_device_response(msg: String) -> anyhow::Result<Self> {
+    fn from_device_response(msg: CompactString) -> anyhow::Result<Self> {
         let msg = msg
             .strip_prefix('(')
             .context("Missing device battery response prefix")?;
@@ -181,8 +182,8 @@ pub struct CancelBatteryTest;
 impl IntoDeviceCommand for CancelBatteryTest {
     type Response = ExecuteResponse;
 
-    fn get_command(&self) -> String {
-        "CT".to_string()
+    fn get_command(&self) -> CompactString {
+        "CT".into()
     }
 
     fn invalidate_cache(&self, cache: &mut ResponseCache) {
@@ -201,8 +202,8 @@ pub struct BatteryTest;
 impl IntoDeviceCommand for BatteryTest {
     type Response = ();
 
-    fn get_command(&self) -> String {
-        "T".to_string()
+    fn get_command(&self) -> CompactString {
+        "T".into()
     }
 
     fn invalidate_cache(&self, cache: &mut ResponseCache) {
@@ -228,11 +229,11 @@ pub struct ScheduleUPSShutdown {
 impl IntoDeviceCommand for ScheduleUPSShutdown {
     type Response = ();
 
-    fn get_command(&self) -> String {
+    fn get_command(&self) -> CompactString {
         let delay_minutes = self.delay_minutes.min(9999.0);
         let reboot_delay_minutes = self.reboot_delay_minutes.min(9999);
 
-        format!("S{}R{:04}", delay_minutes, reboot_delay_minutes)
+        format_compact!("S{}R{:04}", delay_minutes, reboot_delay_minutes)
     }
 }
 
@@ -243,8 +244,8 @@ pub struct ToggleBuzzer;
 impl IntoDeviceCommand for ToggleBuzzer {
     type Response = ();
 
-    fn get_command(&self) -> String {
-        "Q".to_string()
+    fn get_command(&self) -> CompactString {
+        "Q".into()
     }
 
     fn invalidate_cache(&self, cache: &mut ResponseCache) {
@@ -270,7 +271,7 @@ mod test {
     #[test]
     fn test_parse_device_battery() {
         let value = "(100 02832 50.0 000.5 175 290 0 0000020000112000";
-        let battery = DeviceBattery::from_device_response(value.to_string())
+        let battery = DeviceBattery::from_device_response(value.into())
             .expect("Battery should parse successfully");
         let expected = DeviceBattery {
             capacity: 100,
@@ -284,15 +285,14 @@ mod test {
     #[test]
     fn test_fail_parse_device_battery() {
         let value = "(A B 50.0 000.5 175 290 0 0000020000112000";
-        DeviceBattery::from_device_response(value.to_string())
-            .expect_err("Battery should fail parsing");
+        DeviceBattery::from_device_response(value.into()).expect_err("Battery should fail parsing");
     }
 
     /// Should parse a valid device state
     #[test]
     fn test_parse_device_state() {
         let value = "(237.1 237.1 237.1 008 50.1 27.1 --.- 00001001";
-        let battery = DeviceState::from_device_response(value.to_string())
+        let battery = DeviceState::from_device_response(value.into())
             .expect("Battery should parse successfully");
         let expected = DeviceState {
             input_voltage: OrderedFloat(237.1),
@@ -324,7 +324,6 @@ mod test {
     #[test]
     fn test_fail_parse_device_state() {
         let value = "(A B 237.1 008 50.1 27.1 --.- 00001001";
-        DeviceState::from_device_response(value.to_string())
-            .expect_err("Battery should fail parsing");
+        DeviceState::from_device_response(value.into()).expect_err("Battery should fail parsing");
     }
 }

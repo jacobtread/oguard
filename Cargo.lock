@@ -918,6 +918,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact_str"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6050c3a16ddab2e412160b31f2c871015704239bca62f72f6e5f0be631d3f644"
+dependencies = [
+ "castaway",
+ "cfg-if",
+ "itoa",
+ "rustversion",
+ "ryu",
+ "static_assertions",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1603,7 +1617,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a3233677ea1554a48235d81bb59d2a41654969a8e29a1316c48105fd1701693"
 dependencies = [
  "card-validate",
- "compact_str",
+ "compact_str 0.7.1",
  "garde_derive",
  "idna 1.0.2",
  "once_cell",
@@ -2711,6 +2725,7 @@ dependencies = [
  "axum_session",
  "chrono",
  "clap",
+ "compact_str 0.8.0",
  "dotenvy",
  "embeddy",
  "futures",

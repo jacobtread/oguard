@@ -71,7 +71,7 @@ mod test {
         let executor = DeviceExecutor::<MockDevice>::start(device_creator).unwrap();
 
         // Set the battery response
-        mock_handle.next_response("(237.1 237.1 237.1 008 50.1 27.1 --.- 00001001".to_string());
+        mock_handle.next_response("(237.1 237.1 237.1 008 50.1 27.1 --.- 00001001".into());
 
         _ = device_state(Extension(executor))
             .await
@@ -81,7 +81,7 @@ mod test {
         let command = mock_handle.next_command().await;
 
         // Ensure expected command was executed
-        assert_eq!(command, Some("QS".to_string()));
+        assert_eq!(command, Some("QS".into()));
     }
 
     /// Tests that the device_battery endpoint executes the correct command
@@ -92,7 +92,7 @@ mod test {
         let executor = DeviceExecutor::<MockDevice>::start(device_creator).unwrap();
 
         // Set the battery response
-        mock_handle.next_response("(100 02832 50.0 000.5 175 290 0 0000020000112000".to_string());
+        mock_handle.next_response("(100 02832 50.0 000.5 175 290 0 0000020000112000".into());
 
         _ = device_battery(Extension(executor))
             .await
@@ -102,6 +102,6 @@ mod test {
         let command = mock_handle.next_command().await;
 
         // Ensure expected command was executed
-        assert_eq!(command, Some("QI".to_string()));
+        assert_eq!(command, Some("QI".into()));
     }
 }

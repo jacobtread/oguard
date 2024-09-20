@@ -1,4 +1,5 @@
 use anyhow::Context;
+use compact_str::CompactString;
 use hidapi::HidApi;
 
 pub type DefaultDevice = HidDevice;
@@ -34,7 +35,7 @@ pub trait Device: Sized + Send + 'static {
     type Creator: DeviceCreator<Output = Self>;
 
     /// Sends a command to the device and receives the response
-    fn send_command(&mut self, cmd: &str) -> anyhow::Result<String> {
+    fn send_command(&mut self, cmd: &str) -> anyhow::Result<CompactString> {
         self.write_command(cmd).context("write command")?;
         self.read_response().context("read response")
     }
@@ -43,7 +44,7 @@ pub trait Device: Sized + Send + 'static {
     fn write_command(&mut self, cmd: &str) -> anyhow::Result<()>;
 
     /// Reads a string response from the device
-    fn read_response(&mut self) -> anyhow::Result<String>;
+    fn read_response(&mut self) -> anyhow::Result<CompactString>;
 }
 
 pub struct HidDeviceCreator {
@@ -103,8 +104,8 @@ impl Device for HidDevice {
 
     /// Reads a response from the device, terminated by a carriage return
     /// or 3s timeout
-    fn read_response(&mut self) -> anyhow::Result<String> {
-        let mut out = String::new();
+    fn read_response(&mut self) -> anyhow::Result<CompactString> {
+        let mut out = CompactString::default();
 
         loop {
             let count = self
@@ -139,6 +140,7 @@ impl Device for HidDevice {
 #[cfg(test)]
 pub mod test {
     use anyhow::Context;
+    use compact_str::CompactString;
     use tokio::sync::broadcast;
     use tokio::sync::mpsc;
 
@@ -149,19 +151,19 @@ pub mod test {
     /// the next response the [MockDevice] will respond with
     pub struct MockDeviceHandle {
         /// Sender for the next response
-        tx: broadcast::Sender<String>,
+        tx: broadcast::Sender<CompactString>,
         /// Receiver for the next command
-        rx: mpsc::Receiver<String>,
+        rx: mpsc::Receiver<CompactString>,
     }
 
     impl MockDeviceHandle {
         /// Set the next response
-        pub fn next_response(&self, next: String) {
+        pub fn next_response(&self, next: CompactString) {
             _ = self.tx.send(next);
         }
 
         /// Await the next executed command
-        pub async fn next_command(&mut self) -> Option<String> {
+        pub async fn next_command(&mut self) -> Option<CompactString> {
             self.rx.recv().await
         }
     }
@@ -170,9 +172,9 @@ pub mod test {
     /// the provided shared responder
     pub struct MockDeviceCreator {
         /// Sender for command messages
-        tx: mpsc::Sender<String>,
+        tx: mpsc::Sender<CompactString>,
         /// Receiver for responses
-        rx: broadcast::Receiver<String>,
+        rx: broadcast::Receiver<CompactString>,
     }
 
     impl MockDeviceCreator {
@@ -205,20 +207,20 @@ pub mod test {
 
     pub struct MockDevice {
         /// Sender for command messages
-        tx: mpsc::Sender<String>,
+        tx: mpsc::Sender<CompactString>,
         /// Receiver for responses
-        rx: broadcast::Receiver<String>,
+        rx: broadcast::Receiver<CompactString>,
     }
 
     impl Device for MockDevice {
         type Creator = MockDeviceCreator;
 
-        fn read_response(&mut self) -> anyhow::Result<String> {
+        fn read_response(&mut self) -> anyhow::Result<CompactString> {
             self.rx.blocking_recv().context("missing response")
         }
 
         fn write_command(&mut self, cmd: &str) -> anyhow::Result<()> {
-            _ = self.tx.blocking_send(cmd.to_string());
+            _ = self.tx.blocking_send(cmd.into());
             Ok(())
         }
     }

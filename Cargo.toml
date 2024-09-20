@@ -86,6 +86,7 @@ axum-valid = { version = "0.20.0", default-features = false, features = [
     "basic",
     "full_garde",
 ] }
+compact_str = "0.8.0"
 
 # SeaORM 
 [dependencies.sea-orm]

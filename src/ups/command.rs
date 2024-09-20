@@ -4,6 +4,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+use compact_str::CompactString;
+
 /// Trait implemented by structures that can be used
 /// as device commands
 pub trait IntoDeviceCommand: Send + 'static {
@@ -11,7 +13,7 @@ pub trait IntoDeviceCommand: Send + 'static {
     type Response: FromDeviceResponse;
 
     /// Gets the command string to send to the device
-    fn get_command(&self) -> String;
+    fn get_command(&self) -> CompactString;
 
     /// Unique cache key to use if the response can be cached
     fn cache_key(&self) -> Option<u64> {
@@ -25,19 +27,12 @@ pub trait IntoDeviceCommand: Send + 'static {
 }
 
 pub trait FromDeviceResponse: Send + Clone + 'static {
-    fn from_device_response(value: String) -> anyhow::Result<Self>;
-}
-
-impl FromDeviceResponse for String {
-    #[inline]
-    fn from_device_response(value: String) -> anyhow::Result<Self> {
-        Ok(value)
-    }
+    fn from_device_response(value: CompactString) -> anyhow::Result<Self>;
 }
 
 impl FromDeviceResponse for () {
     #[inline]
-    fn from_device_response(_value: String) -> anyhow::Result<Self> {
+    fn from_device_response(_value: CompactString) -> anyhow::Result<Self> {
         Ok(())
     }
 }
