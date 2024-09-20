@@ -121,6 +121,8 @@
 
 	.end-actions {
 		padding-right: 0.5rem;
+		display: flex;
+		gap: 0.75rem;
 	}
 
 	.nav-wrapper {
