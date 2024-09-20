@@ -1,8 +1,6 @@
 <script lang="ts">
 	export let title: string | undefined = undefined;
 	export let dark: boolean = false;
-
-	console.log(title);
 </script>
 
 <div class="container__header" class:container__header--dark={dark}>

@@ -12,10 +12,8 @@
 
 	function onChangeChecked(id: string, checked: boolean) {
 		if (checked) {
-			console.log('add');
 			hiddenColumnIds.update((ids) => ids.filter((otherId) => otherId !== id));
 		} else {
-			console.log('remove');
 			hiddenColumnIds.update((ids) => [...ids, id]);
 		}
 	}
