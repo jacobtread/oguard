@@ -7,15 +7,13 @@ use crate::services::watcher::{UPSWatcher, UPSWatcherHandle};
 use crate::ups::device::HidDeviceCreator;
 use crate::ups::DeviceExecutor;
 use crate::{action::EventPipelineRunner, ups::DeviceExecutorHandle};
-use axum::{http::HeaderValue, Extension};
+use axum::Extension;
 use axum_session::{Key, SessionConfig, SessionLayer, SessionMode, SessionNullPool, SessionStore};
 use log::debug;
-use reqwest::{header, Method};
 use rust_i18n::t;
 use sea_orm::DatabaseConnection;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::mpsc;
-use tower_http::cors::CorsLayer;
 
 /// Starts and runs the app server until the `shutdown_rx` receives a message
 pub async fn run_server(config: Config, shutdown_rx: mpsc::Receiver<()>) -> anyhow::Result<()> {
@@ -49,7 +47,7 @@ pub async fn run_server(config: Config, shutdown_rx: mpsc::Receiver<()>) -> anyh
     let address = SocketAddr::new(config.http.host, config.http.port);
 
     // build our application with a single route
-    let mut app = router()
+    let app = router()
         .layer(SessionLayer::new(session_store))
         .layer(Extension(database))
         .layer(Extension(executor))
@@ -58,9 +56,7 @@ pub async fn run_server(config: Config, shutdown_rx: mpsc::Receiver<()>) -> anyh
 
     // CORS layer required for development access
     #[cfg(debug_assertions)]
-    {
-        app = app.layer(debug_cors_layer());
-    }
+    let app = app.layer(debug_cors_layer());
 
     // Bind the TCP listener for the HTTP server
     let listener = tokio::net::TcpListener::bind(address).await.unwrap();
@@ -102,8 +98,11 @@ fn start_services(
 /// CORS Layer required in development mode where the web server is
 /// served through a separate dev server
 #[cfg(debug_assertions)]
-fn debug_cors_layer() -> CorsLayer {
-    CorsLayer::new()
+fn debug_cors_layer() -> tower_http::cors::CorsLayer {
+    use axum::http::HeaderValue;
+    use reqwest::{header, Method};
+
+    tower_http::cors::CorsLayer::new()
         .allow_methods([
             Method::GET,
             Method::POST,

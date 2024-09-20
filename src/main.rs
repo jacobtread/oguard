@@ -1,7 +1,6 @@
 use anyhow::Context;
 use clap::{Parser, Subcommand};
 use rust_i18n::i18n;
-use tokio::sync::mpsc;
 
 pub mod action;
 pub mod config;
@@ -128,7 +127,7 @@ fn server_main() -> anyhow::Result<()> {
     logging::setup(&config.logging, true).context("failed to setup logging")?;
 
     // Create a channel to safely shutdown the server when requested
-    let (shutdown_tx, shutdown_rx) = mpsc::channel(1);
+    let (shutdown_tx, shutdown_rx) = tokio::sync::mpsc::channel(1);
 
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
