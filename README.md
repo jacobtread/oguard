@@ -209,3 +209,7 @@ sudo systemctl status oguard
 - Config file: ./config.toml
 - Log file: ./data/server.log
 - Database file: ./data/app.db
+
+## Building Windows Setup
+
+You can build the Windows setup.exe installer which handles adding the Windows service and setting everything up. The installer setup uses [Inno Setup](https://jrsoftware.org/isinfo.php), download and install Inno Setup then load the `.iss` into the Inno Setup Compiler and select Build > Compile from the menu.

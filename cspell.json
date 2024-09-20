@@ -6,6 +6,7 @@
         "dndzone",
         "Dynamix",
         "hidraw",
+        "Inno",
         "libudev",
         "replug",
         "reqwest",
