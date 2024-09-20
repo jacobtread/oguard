@@ -44,25 +44,26 @@ pub fn setup(logging: &LoggingConfig, persist: bool) -> anyhow::Result<()> {
             .context("failed to create logging file appender")?,
     );
 
-    const APPENDERS: [&str; 2] = ["stdout", "file"];
-
     let mut config = Config::builder().appender(Appender::builder().build("stdout", console));
+
+    let mut appenders = vec!["stdout".to_string()];
 
     // Only add file appender if persisting logs
     if persist {
         config = config.appender(Appender::builder().build("file", file));
+        appenders.push("file".to_string());
     }
 
     let config = config
         .logger(
             Logger::builder()
-                .appenders(APPENDERS)
+                .appenders(&appenders)
                 .additive(false)
                 .build("oguard", logging_level),
         )
         .build(
             Root::builder()
-                .appenders(APPENDERS)
+                .appenders(&appenders)
                 .build(LevelFilter::Warn),
         )
         .context("failed to create logging config")?;
