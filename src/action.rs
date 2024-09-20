@@ -3,9 +3,9 @@ use crate::{
         event_pipeline::{CancellableEventPipeline, EventPipelineId, EventPipelineModel},
         events::UPSEvent,
     },
+    services::watcher::UPSWatcherHandle,
     ups::{device::Device, DeviceExecutorHandle, QueryDeviceBattery, ScheduleUPSShutdown},
     utils::validate::is_non_zero_duration,
-    watcher::UPSWatcherHandle,
 };
 use anyhow::{anyhow, Context};
 use axum::http::{HeaderMap, HeaderName, HeaderValue};
@@ -948,8 +948,8 @@ mod test {
         action::ExecutableAction,
         database::{connect_database, entities::events::UPSEvent},
         logging::setup_test_logging,
+        services::watcher::UPSWatcherHandle,
         ups::{DeviceExecutor, HidDeviceCreator},
-        watcher::UPSWatcherHandle,
     };
     use chrono::Utc;
     use log::debug;

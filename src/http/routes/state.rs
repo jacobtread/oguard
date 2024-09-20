@@ -1,16 +1,21 @@
+use crate::{
+    http::error::HttpResult,
+    services::watcher::UPSWatcherHandle,
+    ups::{
+        device::Device, DeviceBattery, DeviceExecutorHandle, DeviceState, QueryDeviceBattery,
+        QueryDeviceState,
+    },
+};
+use axum::{
+    response::{
+        sse::{Event, KeepAlive},
+        Sse,
+    },
+    Extension, Json,
+};
+use futures::Stream;
 use std::convert::Infallible;
 use std::time::Duration;
-
-use crate::http::error::HttpResult;
-use crate::ups::device::Device;
-use crate::ups::{
-    DeviceBattery, DeviceExecutorHandle, DeviceState, QueryDeviceBattery, QueryDeviceState,
-};
-use crate::watcher::UPSWatcherHandle;
-use axum::response::sse::{Event, KeepAlive};
-use axum::response::Sse;
-use axum::{Extension, Json};
-use futures::Stream;
 use tokio_stream::StreamExt;
 
 /// GET /api/device-state

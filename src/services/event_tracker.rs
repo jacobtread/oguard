@@ -5,7 +5,7 @@ use chrono::Utc;
 use log::error;
 use sea_orm::DatabaseConnection;
 
-use crate::{database::entities::events::EventModel, watcher::UPSWatcherHandle};
+use crate::{database::entities::events::EventModel, services::watcher::UPSWatcherHandle};
 
 pub struct UPSEventTracker {
     /// Database connection to store the data
