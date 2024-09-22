@@ -75,6 +75,11 @@ impl EventPipelineRunner {
         }
     }
 
+    /// Starts a new event pipeline runner from the provided parts. Listens
+    /// using the provided `watcher_handle` loading pipelines from the provided
+    /// `db` sending UPS requests to the provided `executor`
+    ///
+    /// This will run as a background task
     pub fn start(
         db: DatabaseConnection,
         watcher_handle: UPSWatcherHandle,
