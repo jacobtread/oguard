@@ -38,17 +38,21 @@ impl DeviceState {
             return WorkMode::Fault;
         }
 
+        // Low output voltage, device is on standby
         if self.output_voltage < OrderedFloat(20.0) {
             return WorkMode::Standby;
         }
 
-        match (self.device_power_state, self.battery_self_test) {
-            // Running from utility power and in testing state
-            (DevicePowerState::Utility, true) => WorkMode::BatteryTest,
+        // Device is in battery test mode
+        if self.battery_self_test {
+            return WorkMode::BatteryTest;
+        }
+
+        match self.device_power_state {
             // Running from utility power
-            (DevicePowerState::Utility, false) => WorkMode::Line,
+            DevicePowerState::Utility => WorkMode::Line,
             // Running from battery
-            (DevicePowerState::Battery, _) => WorkMode::Battery,
+            DevicePowerState::Battery => WorkMode::Battery,
         }
     }
 }
