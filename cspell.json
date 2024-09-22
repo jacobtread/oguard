@@ -1,20 +1,23 @@
 {
-    "words": [
-        "Appender",
-        "appenders",
-        "devel",
-        "dndzone",
-        "Dynamix",
-        "hidraw",
-        "Inno",
-        "libudev",
-        "replug",
-        "reqwest",
-        "sonner",
-        "tanstack",
-        "uaccess",
-        "udev",
-        "udevadm",
-        "UPSD"
-    ]
+  "words": [
+    "Appender",
+    "appenders",
+    "canonicalize",
+    "devel",
+    "dndzone",
+    "Dynamix",
+    "embeddy",
+    "hidraw",
+    "Inno",
+    "Jacobtread",
+    "libudev",
+    "replug",
+    "reqwest",
+    "sonner",
+    "tanstack",
+    "uaccess",
+    "udev",
+    "udevadm",
+    "UPSD"
+  ]
 }
