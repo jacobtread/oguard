@@ -718,6 +718,12 @@ const EVENT_PLACEHOLDER: &str = "{OGUARD_EVENT}";
 const EVENT_NAME_PLACEHOLDER: &str = "{OGUARD_EVENT_NAME}";
 const EVENT_DESCRIPTION_PLACEHOLDER: &str = "{OGUARD_EVENT_DESCRIPTION}";
 
+/// Replaces the [EVENT_PLACEHOLDER], [EVENT_NAME_PLACEHOLDER], and [EVENT_DESCRIPTION_PLACEHOLDER]
+/// from within the provided value string with the actual values for the event
+///
+/// - [EVENT_PLACEHOLDER] is replaced with the event name
+/// - [EVENT_NAME_PLACEHOLDER] is replaced with the translation key for the event label
+/// - [EVENT_DESCRIPTION_PLACEHOLDER] is replaced with the translation key for the event description
 fn replace_event_placeholders(event: UPSEvent, value: &str) -> String {
     let mut value = Cow::Borrowed(value);
     let event_name = event.to_string();
