@@ -118,6 +118,8 @@ extern "system" fn ffi_service_main(num_service_arguments: u32, service_argument
     utils::windows_service::service_main(arguments);
 }
 
+/// When running a debug build or a linux build we run the server
+/// directly without any of the windows service code
 #[cfg(any(debug_assertions, target_os = "linux"))]
 fn server_main() -> anyhow::Result<()> {
     // Load the configuration
