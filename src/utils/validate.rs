@@ -1,3 +1,8 @@
+//! # Validation
+//!
+//! Special validators for [Duration] and [DateTimeUtc] to check things
+//! like non-zero durations and valid date ranges
+
 use std::time::Duration;
 
 use sea_orm::prelude::DateTimeUtc;
