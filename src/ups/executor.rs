@@ -1,3 +1,15 @@
+//! # Device Executor
+//!
+//! Executor implementation for accessing a UPS device, allows a generic underlying
+//! implementation so that testing can use a mock implementation.
+//!
+//! Provides a handle that allows the device to have multiple commands sent in an
+//! asynchronous manner without attempting to write multiple at the same time.
+//!
+//! The HID device can only write and read a single request and response at a time so
+//! the device executor will process each request one-by-one ensuring multiple requests
+//! don't corrupt the previous request
+
 use super::{
     command::{FromDeviceResponse, IntoDeviceCommand, ResponseCache},
     device::{DefaultDevice, Device, DeviceCreator},
