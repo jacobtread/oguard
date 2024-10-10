@@ -2,9 +2,10 @@ use chrono::Utc;
 
 use crate::database::entities::events::{EventModel, UPSEvent};
 
+/// Seeds 50 AC failure events into the database
 #[tokio::test]
 #[ignore = "Seeding logic, not a real test"]
-async fn seed() {
+async fn seed_ac() {
     let db = crate::database::init().await;
 
     let start = Utc::now();
