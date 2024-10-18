@@ -43,9 +43,6 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .drop_table(Table::drop().table(StateHistory::Table).to_owned())
-            .await?;
         // Drop the index
         manager
             .drop_index(
@@ -54,6 +51,10 @@ impl MigrationTrait for Migration {
                     .name("idx-state-history-created-at")
                     .to_owned(),
             )
+            .await?;
+
+        manager
+            .drop_table(Table::drop().table(StateHistory::Table).to_owned())
             .await?;
 
         Ok(())

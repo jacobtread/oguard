@@ -43,10 +43,6 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .drop_table(Table::drop().table(BatteryHistory::Table).to_owned())
-            .await?;
-
         // Drop the index
         manager
             .drop_index(
@@ -55,6 +51,10 @@ impl MigrationTrait for Migration {
                     .name("idx-battery-history-created-at")
                     .to_owned(),
             )
+            .await?;
+
+        manager
+            .drop_table(Table::drop().table(BatteryHistory::Table).to_owned())
             .await?;
 
         Ok(())
