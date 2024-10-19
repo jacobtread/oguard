@@ -32,7 +32,7 @@
 					<p class="description">{$t('login_description')}</p>
 					<div class="field">
 						<label class="field__label" for="password">{$t('password')}</label>
-						<input class="field__input input" type="text" bind:value={password} required />
+						<input class="field__input input" type="password" bind:value={password} required />
 					</div>
 				</Container.Section>
 			</Container.Content>
