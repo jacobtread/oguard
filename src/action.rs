@@ -203,7 +203,10 @@ impl EventPipelineRunner {
     }
 }
 
-/// Runs an event pipeline (Parallel)
+/// Runs an event pipeline
+///
+/// Initial executions of the pipeline happens sequentially, any repeated
+/// actions will happen in parallel after the first sequential execution.
 async fn run_pipeline(
     db: DatabaseConnection,
     pipeline: EventPipelineModel,
