@@ -26,9 +26,13 @@ pub type SharedConfig = Arc<Config>;
 #[derive(Debug, Deserialize)]
 #[serde(default)]
 pub struct Config {
+    /// Locale to use when creating error messages and prompts
     pub locale: String,
+    /// HTTP configuration
     pub http: HttpConfig,
+    /// Login configuration and credentials
     pub login: LoginConfig,
+    /// Logging configuration
     pub logging: LoggingConfig,
 }
 
@@ -43,10 +47,11 @@ impl Default for Config {
     }
 }
 
-/// Configurations for the HTTP server
+/// Configurations for logging
 #[derive(Debug, Deserialize)]
 #[serde(default)]
 pub struct LoggingConfig {
+    /// Logging level filter
     pub level: LevelFilter,
 }
 
@@ -87,7 +92,9 @@ pub struct LoginConfig {
     pub password: Option<String>,
 }
 
-pub fn load_default() -> Config {
+/// Loads the user configuration from their expected configuration
+/// path see [CONFIG_PATH]
+pub fn load_user() -> Config {
     let path = Path::new(CONFIG_PATH);
     match from_file(path) {
         Ok(value) => value,
@@ -98,11 +105,13 @@ pub fn load_default() -> Config {
     }
 }
 
+/// Loads a configuration from a file
 pub fn from_file(path: &Path) -> anyhow::Result<Config> {
     let value = read_to_string(path).context("read config file")?;
     from_str(&value)
 }
 
+/// Loads a configuration from a string
 pub fn from_str(value: &str) -> anyhow::Result<Config> {
     toml::from_str(value).context("failed to parse config")
 }

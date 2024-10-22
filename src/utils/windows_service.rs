@@ -37,7 +37,7 @@ pub fn service_main(_arguments: Vec<OsString>) {
     setup_working_directory().expect("failed to setup working directory");
 
     // Load the configuration
-    let config = config::load_default();
+    let config = config::load_user();
 
     // Setup logging
     logging::setup(&config.logging, true).expect("failed to setup logging");

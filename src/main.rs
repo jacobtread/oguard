@@ -60,7 +60,7 @@ fn main() -> anyhow::Result<()> {
 
     if let Some(command) = cli.command {
         // Load the configuration
-        let config = config::load_default();
+        let config = config::load_user();
 
         // Setup logging (Don't persist in cli mode)
         logging::setup(&config.logging, false).expect("failed to setup logging");
@@ -123,7 +123,7 @@ extern "system" fn ffi_service_main(num_service_arguments: u32, service_argument
 #[cfg(any(debug_assertions, target_os = "linux"))]
 fn server_main() -> anyhow::Result<()> {
     // Load the configuration
-    let config = config::load_default();
+    let config = config::load_user();
 
     // Setup logging
     logging::setup(&config.logging, true).context("failed to setup logging")?;
