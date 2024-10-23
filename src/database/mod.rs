@@ -1,3 +1,9 @@
+//! # Database
+//!
+//! Database connection logic, entity models, database specific logic and
+//! a pattern similar to the repository pattern for working with database
+//! data
+
 use log::{debug, warn};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::Database as SeaDatabase;

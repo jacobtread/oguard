@@ -1,3 +1,8 @@
+//! # UPS
+//!
+//! Modules related to interacting with the UPS itself, commands executors and device
+//! handle management.
+
 pub mod command;
 pub mod commands;
 pub mod device;
