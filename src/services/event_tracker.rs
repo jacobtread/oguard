@@ -1,5 +1,7 @@
+//! # Event Tracker
+//!
 //! Service that listens to a [UPSWatcherHandle] and stores any events
-//! that occur in the database
+//! that occur on the device into the database database
 
 use chrono::Utc;
 use log::error;

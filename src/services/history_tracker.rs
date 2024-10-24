@@ -1,3 +1,5 @@
+//! # History Tracker
+//!
 //! Service that polls the UPS device at fixed intervals obtaining the
 //! current device state and battery persisting them to the database for
 //! historical tracking
