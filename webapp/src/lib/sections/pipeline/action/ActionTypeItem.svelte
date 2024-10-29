@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ActionTypeKey } from '$lib/api/types';
-	import { _ } from 'svelte-i18n';
+	import { t } from 'svelte-i18n';
 	import ActionTypeIcon from './ActionTypeIcon.svelte';
 
 	export let actionType: ActionTypeKey;
@@ -16,8 +16,8 @@
 	on:click={onClick}>
 	<div class="item__icon"><ActionTypeIcon {actionType} /></div>
 	<div class="item__content">
-		<p class="item__name">{$_(`actions.${actionType}.label`)}</p>
-		<p class="item__description">{$_(`actions.${actionType}.description`)}</p>
+		<p class="item__name">{$t(`actions.${actionType}.label`)}</p>
+		<p class="item__description">{$t(`actions.${actionType}.description`)}</p>
 	</div>
 </button>
 

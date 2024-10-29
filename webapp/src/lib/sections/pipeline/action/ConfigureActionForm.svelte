@@ -7,7 +7,7 @@
 		type ActionType,
 		type ActionTypeConfig
 	} from '$lib/api/types';
-	import { _ } from 'svelte-i18n';
+	import { t } from 'svelte-i18n';
 	import { Collapsible } from 'bits-ui';
 	import ExpandIcon from '~icons/solar/double-alt-arrow-down-bold-duotone';
 	import { slide } from 'svelte/transition';
@@ -106,8 +106,8 @@
 	<div class="section">
 		<Collapsible.Root>
 			<Collapsible.Trigger>
-				{$_('action.settings', {
-					values: { setting: $_(`actions.${currentScreenData.config.type}.label`) }
+				{$t('action.settings', {
+					values: { setting: $t(`actions.${currentScreenData.config.type}.label`) }
 				})}
 				<span data-collapsible-icon> <ExpandIcon /> </span>
 			</Collapsible.Trigger>
@@ -131,7 +131,7 @@
 	{:else}
 		<Collapsible.Root>
 			<Collapsible.Trigger>
-				{$_('action.delay')}
+				{$t('action.delay')}
 				<div class="section__actions">
 					<span data-collapsible-icon> <ExpandIcon /> </span>
 					<button class="button" on:click={removeDelay}>Remove</button>
@@ -154,7 +154,7 @@
 	{:else}
 		<Collapsible.Root>
 			<Collapsible.Trigger>
-				{$_('action.repeat')}
+				{$t('action.repeat')}
 				<div class="section__actions">
 					<span data-collapsible-icon> <ExpandIcon /> </span>
 					<button class="button" on:click={removeRepeat}>Remove</button>
@@ -177,7 +177,7 @@
 	{:else}
 		<Collapsible.Root>
 			<Collapsible.Trigger>
-				{$_('action.retry')}
+				{$t('action.retry')}
 				<div class="section__actions">
 					<span data-collapsible-icon> <ExpandIcon /> </span>
 					<button class="button" on:click={removeRetry}>Remove</button>

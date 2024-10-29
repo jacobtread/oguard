@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Action } from '$lib/api/types';
-	import { _ } from 'svelte-i18n';
+	import { t } from 'svelte-i18n';
 	import ActionTypeIcon from '$lib/sections/pipeline/action/ActionTypeIcon.svelte';
 	import { Tooltip } from 'bits-ui';
 	import dayjs from 'dayjs';
@@ -17,8 +17,8 @@
 	<div class="item__icon"><ActionTypeIcon actionType={item.ty.type} /></div>
 
 	<div class="item__text">
-		<p class="item__label">{$_(`actions.${item.ty.type}.label`)}</p>
-		<p class="item__description">{$_(`actions.${item.ty.type}.description`)}</p>
+		<p class="item__label">{$t(`actions.${item.ty.type}.label`)}</p>
+		<p class="item__description">{$t(`actions.${item.ty.type}.description`)}</p>
 
 		<div class="item__flags">
 			{#if item.delay !== null && (item.delay.duration !== null || item.delay.below_capacity !== null)}
@@ -26,18 +26,18 @@
 					<Tooltip.Trigger><span class="item__flag">Delayed</span></Tooltip.Trigger>
 					<Tooltip.Content>
 						{#if item.delay.duration !== null && item.delay.below_capacity !== null}
-							{$_('action.delay_explain.duration_capacity', {
+							{$t('action.delay_explain.duration_capacity', {
 								values: {
 									duration: dayjs.duration(item.delay.duration.secs, 'seconds').humanize(),
 									capacity: item.delay.below_capacity
 								}
 							})}
 						{:else if item.delay.duration !== null}
-							{$_('action.delay_explain.duration', {
+							{$t('action.delay_explain.duration', {
 								values: { duration: dayjs.duration(item.delay.duration.secs, 'seconds').humanize() }
 							})}
 						{:else if item.delay.below_capacity !== null}
-							{$_('action.delay_explain.below_capacity', {
+							{$t('action.delay_explain.below_capacity', {
 								values: { capacity: item.delay.below_capacity }
 							})}
 						{/if}
@@ -50,30 +50,30 @@
 					<Tooltip.Trigger><span class="item__flag">Repeating</span></Tooltip.Trigger>
 					<Tooltip.Content>
 						{#if item.repeat.interval !== null && item.repeat.capacity_decrease !== null}
-							{$_('action.repeat_explain.interval_capacity', {
+							{$t('action.repeat_explain.interval_capacity', {
 								values: {
 									duration: dayjs.duration(item.repeat.interval.secs, 'seconds').humanize(),
 									capacity: item.repeat.capacity_decrease
 								}
 							})}
 						{:else if item.repeat.interval !== null}
-							{$_('action.repeat_explain.interval', {
+							{$t('action.repeat_explain.interval', {
 								values: {
 									duration: dayjs.duration(item.repeat.interval.secs, 'seconds').humanize()
 								}
 							})}
 						{:else if item.repeat.capacity_decrease !== null}
-							{$_('action.repeat_explain.capacity', {
+							{$t('action.repeat_explain.capacity', {
 								values: { capacity: item.repeat.capacity_decrease }
 							})}
 						{/if}
 
 						{#if item.repeat.limit}
-							{$_('action.repeat_explain.limit', {
+							{$t('action.repeat_explain.limit', {
 								values: { limit: item.repeat.limit }
 							})}
 						{:else}
-							{$_('action.repeat_explain.no_limit')}
+							{$t('action.repeat_explain.no_limit')}
 						{/if}
 					</Tooltip.Content>
 				</Tooltip.Root>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Action } from '$lib/api/types';
-	import { _ } from 'svelte-i18n';
+	import { t } from 'svelte-i18n';
 	import ConfigureActionForm from './ConfigureActionForm.svelte';
 	import { fade, scale } from 'svelte/transition';
 	import { Dialog } from 'bits-ui';
@@ -35,8 +35,8 @@
 			{#if editingAction !== null}
 				<div class="dialog__subheader">
 					<h3>
-						{$_('action.configure', {
-							values: { action: $_(`actions.${editingAction.ty.type}.label`) }
+						{$t('action.configure', {
+							values: { action: $t(`actions.${editingAction.ty.type}.label`) }
 						})}
 					</h3>
 				</div>

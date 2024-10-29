@@ -5,7 +5,7 @@
 		getDefaultActionType,
 		type Action
 	} from '$lib/api/types';
-	import { _ } from 'svelte-i18n';
+	import { t } from 'svelte-i18n';
 	import ActionTypeItem from './ActionTypeItem.svelte';
 	import ConfigureActionForm from './ConfigureActionForm.svelte';
 	import { fade, fly, scale } from 'svelte/transition';
@@ -86,8 +86,8 @@
 						{:else}
 							<div class="dialog__subheader">
 								<h3>
-									{$_('action.configure', {
-										values: { action: $_(`actions.${action.ty.type}.label`) }
+									{$t('action.configure', {
+										values: { action: $t(`actions.${action.ty.type}.label`) }
 									})}
 								</h3>
 							</div>
