@@ -5,6 +5,9 @@ import { HttpMethod, queryClient, requestJson, requestText } from './utils';
 export const DEVICE_STATE_KEY: [string] = ['device-state'];
 export const BATTERY_INFO_KEY: [string] = ['battery-info'];
 
+/**
+ * Creates a request that starts a battery test
+ */
 export function startBatteryTestRequest(): Promise<string> {
 	return requestText({
 		method: HttpMethod.POST,
@@ -12,6 +15,9 @@ export function startBatteryTestRequest(): Promise<string> {
 	});
 }
 
+/**
+ * Mutation to start a battery test
+ */
 export function createStartBatteryTestMutation() {
 	return createMutation({
 		mutationFn: startBatteryTestRequest,
@@ -32,6 +38,9 @@ export function createStartBatteryTestMutation() {
 	});
 }
 
+/**
+ * Creates a request to cancel a battery test
+ */
 export function cancelBatteryTestRequest(): Promise<string> {
 	return requestText({
 		method: HttpMethod.POST,
@@ -39,6 +48,9 @@ export function cancelBatteryTestRequest(): Promise<string> {
 	});
 }
 
+/**
+ * Mutation to cancel a battery test
+ */
 export function createCancelBatteryTestMutation() {
 	return createMutation({
 		mutationFn: cancelBatteryTestRequest,
@@ -59,6 +71,9 @@ export function createCancelBatteryTestMutation() {
 	});
 }
 
+/**
+ * Creates a request to get the current device state
+ */
 export function deviceStateRequest(): Promise<DeviceState> {
 	return requestJson<DeviceState>({
 		method: HttpMethod.GET,
@@ -66,6 +81,9 @@ export function deviceStateRequest(): Promise<DeviceState> {
 	});
 }
 
+/**
+ * Creates a request to get the current device battery info
+ */
 export function batteryInfoRequest(): Promise<DeviceBattery> {
 	return requestJson<DeviceBattery>({
 		method: HttpMethod.GET,
@@ -73,6 +91,11 @@ export function batteryInfoRequest(): Promise<DeviceBattery> {
 	});
 }
 
+/**
+ * Query to get the device battery at a fixed refetch interval
+ *
+ * @param refetchInterval The interval between fetches
+ */
 export function createBatteryInfoPollingQuery(refetchInterval: number) {
 	return createQuery<DeviceBattery>({
 		queryKey: ['battery-info'],
@@ -81,6 +104,11 @@ export function createBatteryInfoPollingQuery(refetchInterval: number) {
 	});
 }
 
+/**
+ * Query to get the device state at a fixed refetch interval
+ *
+ * @param refetchInterval The interval between fetches
+ */
 export function createDeviceStatePollingQuery(refetchInterval: number) {
 	return createQuery<DeviceState>({
 		queryKey: DEVICE_STATE_KEY,
@@ -89,6 +117,13 @@ export function createDeviceStatePollingQuery(refetchInterval: number) {
 	});
 }
 
+/**
+ * Mutation helper to update the cached device state
+ *
+ * @param client The query client
+ * @param action The action to update the cached device state
+ * @returns The device state if one was cached
+ */
 export function updateDeviceState(
 	client: QueryClient,
 	action: (deviceState: DeviceState) => DeviceState
@@ -102,6 +137,9 @@ export function updateDeviceState(
 	return previousState;
 }
 
+/**
+ * Mutation to toggle the device buzzer state
+ */
 export function createToggleBuzzerMutation() {
 	return createMutation({
 		mutationFn: async () =>
