@@ -32,6 +32,12 @@ export interface RequestConfig<B> {
 	headers?: Record<string, string>;
 }
 
+/**
+ * Performs an HTTP request returning the response
+ *
+ * @param config The request config
+ * @returns The promise to the response
+ */
 async function requestInner<B>(config: RequestConfig<B>): Promise<Response> {
 	const init: RequestInit = { method: config.method };
 	const headers: Record<string, string> = config.headers ?? {};
@@ -58,6 +64,12 @@ async function requestInner<B>(config: RequestConfig<B>): Promise<Response> {
 	return response;
 }
 
+/**
+ * Makes a HTTP request expecting a text (or empty) response
+ *
+ * @param config The request config
+ * @returns The promise to response text
+ */
 export async function requestText<B = never>(config: RequestConfig<B>): Promise<string> {
 	const response = await requestInner(config);
 	/// Handle 2xx status codes
@@ -113,6 +125,9 @@ export async function requestStatus<B = never>(config: RequestConfig<B>): Promis
 	throw new HttpResponseError(response.status, text);
 }
 
+/**
+ * Error type for a non 200 status code response. Contains the request status code
+ */
 export class HttpResponseError extends Error {
 	statusCode: number;
 
@@ -122,6 +137,12 @@ export class HttpResponseError extends Error {
 	}
 }
 
+/**
+ * Makes a HTTP request expecting a JSON response
+ *
+ * @param config The request config
+ * @returns The promise to the JSON response
+ */
 export async function requestJson<T, B = never>(config: RequestConfig<B>): Promise<T> {
 	const response = await requestInner(config);
 
