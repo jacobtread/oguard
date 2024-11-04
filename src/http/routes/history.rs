@@ -12,7 +12,7 @@ use sea_orm::DatabaseConnection;
 
 /// GET /api/history/battery-state
 ///
-/// Requests the battery state history for the provided range
+/// Get the battery state history for the provided date range
 pub async fn battery_state_history(
     Extension(db): Extension<DatabaseConnection>,
     Garde(Query(RangeQuery { start, end })): Garde<Query<RangeQuery>>,
@@ -26,7 +26,7 @@ pub async fn battery_state_history(
 
 /// GET /api/history/device-state
 ///
-/// Requests the device state history for the provided range
+/// Get the device state history for the provided date range
 pub async fn device_state_history(
     Extension(db): Extension<DatabaseConnection>,
     Garde(Query(RangeQuery { start, end })): Garde<Query<RangeQuery>>,
@@ -40,7 +40,7 @@ pub async fn device_state_history(
 
 /// GET /api/history/event
 ///
-/// Requests the device state history for the provided range
+/// Get the device state history for the provided date range
 pub async fn event_history(
     Extension(db): Extension<DatabaseConnection>,
     Garde(Query(RangeQuery { start, end })): Garde<Query<RangeQuery>>,
