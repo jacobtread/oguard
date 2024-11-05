@@ -146,6 +146,12 @@ export type ActionType =
 			timeout: Duration | null;
 	  };
 
+/**
+ * Gets a default action type config for the provided action type key
+ *
+ * @param actionType The action type key
+ * @returns The default config for the key
+ */
 export function getDefaultActionType(actionType: ActionTypeKey): ActionType {
 	switch (actionType) {
 		case ActionTypeKey.Notification:
@@ -201,6 +207,13 @@ export enum ActionRetryDelayKey {
 	ExponentialBackoff = 'ExponentialBackoff'
 }
 
+/**
+ * Get the default action retry delay configuration for the provided
+ * action type key
+ *
+ * @param key The action retry delay type key
+ * @returns The default config for the key
+ */
 export function getDefaultActionRetryDelay(key: ActionRetryDelayKey): ActionRetryDelay {
 	switch (key) {
 		case ActionRetryDelayKey.Fixed:
