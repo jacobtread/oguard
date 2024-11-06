@@ -38,6 +38,7 @@ You can preview the production build with `npm run preview`.
 > To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
 
 Libraries good for the svelte v5 upgrade:
+
 - [-] svelte-sonner
 - [x] svelte-i18n
 - [x] svelte-dnd-action
@@ -46,4 +47,4 @@ Libraries good for the svelte v5 upgrade:
 - [x] @tanstack/svelte-query-devtools
 - [x] @tanstack/svelte-query
 - [-] @carbon/charts-svelte (Maybe not yet?)
-- [-] bits-ui (Yes? peer dep on 5.0.0-next) 
+- [-] bits-ui (Yes? peer dep on 5.0.0-next)

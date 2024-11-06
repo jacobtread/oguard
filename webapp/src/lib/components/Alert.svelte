@@ -55,7 +55,4 @@
 			color: #b71d18;
 		}
 	}
-
-	.alert__message {
-	}
 </style>
