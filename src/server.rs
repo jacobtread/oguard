@@ -112,6 +112,7 @@ fn debug_cors_layer() -> tower_http::cors::CorsLayer {
         ])
         .allow_headers([header::ACCEPT, header::CONTENT_TYPE])
         .allow_origin(
+            // Development server host
             "http://localhost:5173"
                 .parse::<HeaderValue>()
                 .expect("origin was not valid"),
