@@ -6,6 +6,7 @@ use reqwest::StatusCode;
 use thiserror::Error;
 
 /// Extractor that will error when the user is not logged in
+/// restricting a handler to only authenticated users
 pub struct AuthGate;
 
 #[derive(Debug, Error)]
