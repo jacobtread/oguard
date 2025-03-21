@@ -1,4 +1,4 @@
-use sea_orm_migration::prelude::*;
+use sea_orm_migration::{prelude::*, schema::*};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -18,12 +18,8 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(StateHistory::State).json().not_null())
-                    .col(
-                        ColumnDef::new(StateHistory::CreatedAt)
-                            .date_time()
-                            .not_null(),
-                    )
+                    .col(json(StateHistory::State))
+                    .col(date_time(StateHistory::CreatedAt))
                     .to_owned(),
             )
             .await?;
@@ -43,16 +39,6 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Drop the index
-        manager
-            .drop_index(
-                Index::drop()
-                    .table(StateHistory::Table)
-                    .name("idx-state-history-created-at")
-                    .to_owned(),
-            )
-            .await?;
-
         manager
             .drop_table(Table::drop().table(StateHistory::Table).to_owned())
             .await?;

@@ -1,4 +1,4 @@
-use sea_orm_migration::prelude::*;
+use sea_orm_migration::{prelude::*, schema::*};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -18,30 +18,14 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(EventPipelines::Name).string().not_null())
-                    .col(ColumnDef::new(EventPipelines::Event).integer().not_null())
-                    .col(ColumnDef::new(EventPipelines::Pipeline).json().not_null())
-                    .col(
-                        ColumnDef::new(EventPipelines::Cancellable)
-                            .boolean()
-                            .not_null(),
-                    )
-                    .col(ColumnDef::new(EventPipelines::Enabled).boolean().not_null())
-                    .col(
-                        ColumnDef::new(EventPipelines::CreatedAt)
-                            .date_time()
-                            .not_null(),
-                    )
-                    .col(
-                        ColumnDef::new(EventPipelines::ModifiedAt)
-                            .date_time()
-                            .not_null(),
-                    )
-                    .col(
-                        ColumnDef::new(EventPipelines::LastExecutedAt)
-                            .date_time()
-                            .null(),
-                    )
+                    .col(string(EventPipelines::Name))
+                    .col(integer(EventPipelines::Event))
+                    .col(json(EventPipelines::Pipeline))
+                    .col(boolean(EventPipelines::Cancellable))
+                    .col(boolean(EventPipelines::Enabled))
+                    .col(date_time(EventPipelines::CreatedAt))
+                    .col(date_time(EventPipelines::ModifiedAt))
+                    .col(date_time(EventPipelines::LastExecutedAt))
                     .to_owned(),
             )
             .await?;
@@ -102,55 +86,6 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Drop the index
-        manager
-            .drop_index(
-                Index::drop()
-                    .table(EventPipelines::Table)
-                    .name("idx-event-pl-name")
-                    .to_owned(),
-            )
-            .await?;
-
-        // Drop the index
-        manager
-            .drop_index(
-                Index::drop()
-                    .table(EventPipelines::Table)
-                    .name("idx-event-pl-event")
-                    .to_owned(),
-            )
-            .await?;
-
-        // Drop the index
-        manager
-            .drop_index(
-                Index::drop()
-                    .table(EventPipelines::Table)
-                    .name("idx-event-pl-cancellable")
-                    .to_owned(),
-            )
-            .await?;
-
-        // Drop the index
-        manager
-            .drop_index(
-                Index::drop()
-                    .table(EventPipelines::Table)
-                    .name("idx-event-pl-created-at")
-                    .to_owned(),
-            )
-            .await?;
-        // Drop the index
-        manager
-            .drop_index(
-                Index::drop()
-                    .table(EventPipelines::Table)
-                    .name("idx-event-pl-modified-at")
-                    .to_owned(),
-            )
-            .await?;
-
         manager
             .drop_table(Table::drop().table(EventPipelines::Table).to_owned())
             .await?;

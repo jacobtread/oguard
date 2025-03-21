@@ -1,4 +1,4 @@
-use sea_orm_migration::prelude::*;
+use sea_orm_migration::{prelude::*, schema::*};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -18,8 +18,8 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Events::Type).integer().not_null())
-                    .col(ColumnDef::new(Events::CreatedAt).date_time().not_null())
+                    .col(integer(Events::Type))
+                    .col(date_time(Events::CreatedAt))
                     .to_owned(),
             )
             .await?;
@@ -50,26 +50,6 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Drop the index
-        manager
-            .drop_index(
-                Index::drop()
-                    .table(Events::Table)
-                    .name("idx-event-type")
-                    .to_owned(),
-            )
-            .await?;
-
-        // Drop the index
-        manager
-            .drop_index(
-                Index::drop()
-                    .table(Events::Table)
-                    .name("idx-event-created-at")
-                    .to_owned(),
-            )
-            .await?;
-
         manager
             .drop_table(Table::drop().table(Events::Table).to_owned())
             .await?;
