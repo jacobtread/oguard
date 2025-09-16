@@ -46,11 +46,10 @@ pub async fn init() -> DatabaseConnection {
     let path = Path::new(&DATABASE_PATH);
 
     // Create path to database file if missing
-    if let Some(parent) = path.parent() {
-        if !parent.exists() {
+    if let Some(parent) = path.parent()
+        && !parent.exists() {
             create_dir_all(parent).expect("Unable to create parent directory for sqlite database");
         }
-    }
 
     // Create the database if file is missing
     if !path.exists() {

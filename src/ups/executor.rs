@@ -204,11 +204,10 @@ impl<D: Device, R: FromDeviceResponse> DeviceCommandProxy<D> for DeviceCommand<R
         }
 
         // Store successful responses
-        if let Some(cache_key) = cache_key {
-            if let Ok(value) = result.as_ref() {
+        if let Some(cache_key) = cache_key
+            && let Ok(value) = result.as_ref() {
                 cache.insert(cache_key, value);
             }
-        }
 
         // Invalidate cache keys
         self.command.invalidate_cache(cache);

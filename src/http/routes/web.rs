@@ -72,9 +72,9 @@ impl Service<Request<Body>> for PublicContent {
             let mime_header = HeaderValue::from_str(mime_type);
 
             // File exists in public data folder server try serve that and fallback to next on failure
-            if let Some(local_path) = find_local_path(&path) {
-                if local_path.exists() && local_path.is_file() {
-                    if let Ok(contents) = tokio::fs::read(local_path).await {
+            if let Some(local_path) = find_local_path(&path)
+                && local_path.exists() && local_path.is_file()
+                    && let Ok(contents) = tokio::fs::read(local_path).await {
                         // Create byte response from the embedded file
                         let mut response = Body::from(contents).into_response();
 
@@ -84,8 +84,6 @@ impl Service<Request<Body>> for PublicContent {
 
                         return Ok(response);
                     }
-                }
-            }
 
             // File exists within binary serve that
             if let Some(contents) = Self::get(&path) {
