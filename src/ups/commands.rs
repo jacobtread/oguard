@@ -1,5 +1,5 @@
 use anyhow::Context;
-use compact_str::{format_compact, CompactString};
+use compact_str::{CompactString, format_compact};
 use ordered_float::OrderedFloat;
 
 use super::{

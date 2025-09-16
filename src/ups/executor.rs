@@ -14,7 +14,7 @@ use super::{
     command::{FromDeviceResponse, IntoDeviceCommand, ResponseCache},
     device::{DefaultDevice, Device, DeviceCreator},
 };
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use hidapi::HidError;
 use log::{error, info, warn};
 use std::time::Duration;

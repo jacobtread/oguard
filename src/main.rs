@@ -25,11 +25,11 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Interact with the oguard system service
-    #[cfg(target_os = "windows")]
+    #[cfg(windows)]
     Service(ServiceArgs),
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 #[derive(Debug, clap::Args)]
 #[command(args_conflicts_with_subcommands = true)]
 struct ServiceArgs {
@@ -37,7 +37,7 @@ struct ServiceArgs {
     command: ServiceCommands,
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 #[derive(Debug, Subcommand)]
 enum ServiceCommands {
     /// Create the service (Will fail if the service is already created)
@@ -67,7 +67,7 @@ fn main() -> anyhow::Result<()> {
 
         #[allow(unreachable_code)]
         return match command {
-            #[cfg(target_os = "windows")]
+            #[cfg(windows)]
             Commands::Service(service) => match service.command {
                 ServiceCommands::Create => utils::windows_service::create_service(),
                 ServiceCommands::Start => utils::windows_service::start_service(),
@@ -78,7 +78,7 @@ fn main() -> anyhow::Result<()> {
         };
     }
 
-    #[cfg(target_os = "windows")]
+    #[cfg(windows)]
     {
         // Debug builds run the server directly
         #[cfg(debug_assertions)]
@@ -97,7 +97,7 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(unix)]
     {
         server_main()?;
     }
@@ -105,7 +105,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[cfg(not(any(debug_assertions, target_os = "linux")))]
+#[cfg(not(any(debug_assertions, unix)))]
 #[doc = r" Static callback used by the system to bootstrap the service."]
 #[doc = r" Do not call it directly."]
 extern "system" fn ffi_service_main(num_service_arguments: u32, service_arguments: *mut *mut u16) {
@@ -118,9 +118,9 @@ extern "system" fn ffi_service_main(num_service_arguments: u32, service_argument
     utils::windows_service::service_main(arguments);
 }
 
-/// When running a debug build or a linux build we run the server
+/// When running a debug build or a unix build we run the server
 /// directly without any of the windows service code
-#[cfg(any(debug_assertions, target_os = "linux"))]
+#[cfg(any(debug_assertions, unix))]
 fn server_main() -> anyhow::Result<()> {
     // Load the configuration
     let config = config::load_user();

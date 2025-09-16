@@ -4,8 +4,8 @@ use crate::http::router;
 use crate::services::event_tracker::UPSEventTracker;
 use crate::services::history_tracker::UPSHistoryTracker;
 use crate::services::watcher::{UPSWatcher, UPSWatcherHandle};
-use crate::ups::device::HidDeviceCreator;
 use crate::ups::DeviceExecutor;
+use crate::ups::device::HidDeviceCreator;
 use crate::{action::EventPipelineRunner, ups::DeviceExecutorHandle};
 use axum::Extension;
 use axum_session::{Key, SessionConfig, SessionLayer, SessionMode, SessionNullPool, SessionStore};
@@ -100,7 +100,7 @@ fn start_services(
 #[cfg(debug_assertions)]
 fn debug_cors_layer() -> tower_http::cors::CorsLayer {
     use axum::http::HeaderValue;
-    use reqwest::{header, Method};
+    use reqwest::{Method, header};
 
     tower_http::cors::CorsLayer::new()
         .allow_methods([

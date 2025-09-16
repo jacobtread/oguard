@@ -6,7 +6,7 @@ script = "cd webapp && npm run build"
 # Copy the built web app into the embedded server resources
 [tasks.embed-webapp]
 script_runner = "@shell"
-script = "mv webapp/build ./src/resources/web"
+script = "mkdir -p ./src/resources/web && mv webapp/build ./src/resources/web"
 dependencies = ["build-webapp", "delete-embedded-webapp"]
 
 # Delete the old web ap presources

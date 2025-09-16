@@ -1,10 +1,11 @@
 use anyhow::Context;
 use log::LevelFilter;
 use log4rs::{
+    Config,
     append::{console::ConsoleAppender, file::FileAppender},
     config::{Appender, Logger, Root},
     encode::pattern::PatternEncoder,
-    init_config, Config,
+    init_config,
 };
 
 use crate::config::LoggingConfig;
@@ -12,16 +13,16 @@ use crate::config::LoggingConfig;
 /// The pattern to use when logging
 const LOGGING_PATTERN: &str = "[{d} {h({l})} {M}] {m}{n}";
 
-/// On windows the log file is saved to the working directory
-#[cfg(target_os = "windows")]
-const LOG_FILE_NAME: &str = "data/server.log";
-
 /// Linux release builds save the log file to /usr/local/share/oguard/server.log
 #[cfg(all(target_os = "linux", not(debug_assertions)))]
 const LOG_FILE_NAME: &str = "/usr/local/share/oguard/server.log";
 
-/// Linux debug builds the log file is saved to the working directory
-#[cfg(all(target_os = "linux", debug_assertions))]
+/// Macos release builds save the log file to /Library/Logs/oguard/server.log
+#[cfg(all(target_os = "macos", not(debug_assertions)))]
+const LOG_FILE_NAME: &str = "/Library/Logs/oguard/server.log";
+
+/// Windows and debug builds the log file is saved to the working directory
+#[cfg(any(windows, debug_assertions))]
 const LOG_FILE_NAME: &str = "data/server.log";
 
 /// Setup function for setting up the Log4rs logging configuring it

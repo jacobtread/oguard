@@ -6,9 +6,9 @@ use crate::{
         middleware::auth_gate::AuthGate,
         models::{CreateEventPipeline, UpdateEventPipeline},
     },
-    ups::{device::Device, DeviceExecutorHandle},
+    ups::{DeviceExecutorHandle, device::Device},
 };
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use axum::extract::Path;
 use axum::{Extension, Json};
 use axum_valid::Garde;

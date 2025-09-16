@@ -14,7 +14,7 @@ use sea_orm::DatabaseConnection;
 use std::time::Duration;
 use tokio::{
     task::JoinHandle,
-    time::{interval_at, Instant, MissedTickBehavior},
+    time::{Instant, MissedTickBehavior, interval_at},
 };
 
 /// Interval between each device state poll

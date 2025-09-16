@@ -4,19 +4,19 @@ use crate::{
         events::UPSEvent,
     },
     services::watcher::UPSWatcherHandle,
-    ups::{device::Device, DeviceExecutorHandle, QueryDeviceBattery, ScheduleUPSShutdown},
+    ups::{DeviceExecutorHandle, QueryDeviceBattery, ScheduleUPSShutdown, device::Device},
     utils::validate::is_non_zero_duration,
 };
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use axum::http::{HeaderMap, HeaderName, HeaderValue};
 use chrono::Utc;
-use futures::{stream::FuturesUnordered, StreamExt};
+use futures::{StreamExt, stream::FuturesUnordered};
 use garde::Validate;
 use log::{debug, error, warn};
 use native_dialog::{MessageDialog, MessageType};
 use notify_rust::Notification;
 use ordered_float::OrderedFloat;
-use reqwest::{header, Method};
+use reqwest::{Method, header};
 use rust_i18n::t;
 use sea_orm::{DatabaseConnection, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
@@ -31,8 +31,8 @@ use tokio::{
     process::Command,
     select,
     sync::RwLock,
-    task::{spawn_blocking, AbortHandle, JoinSet},
-    time::{interval_at, sleep, timeout, MissedTickBehavior},
+    task::{AbortHandle, JoinSet, spawn_blocking},
+    time::{MissedTickBehavior, interval_at, sleep, timeout},
 };
 
 type SharedActiveTasks = Arc<RwLock<Vec<EventPipelineTask>>>;
@@ -815,8 +815,10 @@ pub async fn execute_sleep() -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Executes a shutdown
-#[cfg(target_os = "windows")]
+/// Executes a shutdown (Windows)
+///
+/// Windows supports a shutdown message
+#[cfg(windows)]
 pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyhow::Result<()> {
     let message = config
         .message
@@ -839,8 +841,11 @@ pub async fn execute_shutdown(event: UPSEvent, config: &ShutdownAction) -> anyho
     Ok(())
 }
 
-/// Executes a shutdown
-#[cfg(target_os = "linux")]
+/// Executes a shutdown (Linux/Macos)
+///
+/// These platforms don't support a shutdown message so this is just a
+/// regular shutdown for them
+#[cfg(unix)]
 pub async fn execute_shutdown(_event: UPSEvent, _config: &ShutdownAction) -> anyhow::Result<()> {
     spawn_blocking(system_shutdown::shutdown)
         .await
@@ -848,6 +853,14 @@ pub async fn execute_shutdown(_event: UPSEvent, _config: &ShutdownAction) -> any
         .context("failed to shutdown")?;
 
     Ok(())
+}
+
+/// Execute a shutdown (Unsupported platform)
+#[cfg(not(any(unix, windows)))]
+pub async fn execute_shutdown(_event: UPSEvent, _config: &ShutdownAction) -> anyhow::Result<()> {
+    Err(anyhow::Error::new(
+        "shutdown command unsupported on this platform",
+    ))
 }
 
 /// Triggers the UPS to shutdown

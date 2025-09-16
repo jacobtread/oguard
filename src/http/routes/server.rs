@@ -1,8 +1,8 @@
 use axum::Json;
 
 use crate::{
-    http::{error::HttpResult, models::ServerDetails},
     VERSION,
+    http::{error::HttpResult, models::ServerDetails},
 };
 
 /// GET /api/server

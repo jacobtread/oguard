@@ -5,20 +5,20 @@ use std::{
 };
 
 use anyhow::Context;
-use log::{error, LevelFilter};
+use log::{LevelFilter, error};
 use serde::Deserialize;
 use std::fs::read_to_string;
-
-/// On windows the configuration is loaded from the working directory
-#[cfg(target_os = "windows")]
-const CONFIG_PATH: &str = "config.toml";
 
 /// Linux release builds load config from /etc/oguard
 #[cfg(all(target_os = "linux", not(debug_assertions)))]
 const CONFIG_PATH: &str = "/etc/oguard/config.toml";
 
-/// Linux debug builds load config from the working directory
-#[cfg(all(target_os = "linux", debug_assertions))]
+/// Macos release builds load config from /Library/Application Support/oguard
+#[cfg(all(target_os = "linux", not(debug_assertions)))]
+const CONFIG_PATH: &str = "/Library/Application Support/oguard/config.toml";
+
+/// Windows and debug builds load config from the working directory
+#[cfg(any(windows, debug_assertions))]
 const CONFIG_PATH: &str = "config.toml";
 
 pub type SharedConfig = Arc<Config>;

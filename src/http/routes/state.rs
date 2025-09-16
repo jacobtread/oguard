@@ -2,16 +2,16 @@ use crate::{
     http::error::HttpResult,
     services::watcher::UPSWatcherHandle,
     ups::{
-        device::Device, DeviceBattery, DeviceExecutorHandle, DeviceState, QueryDeviceBattery,
-        QueryDeviceState,
+        DeviceBattery, DeviceExecutorHandle, DeviceState, QueryDeviceBattery, QueryDeviceState,
+        device::Device,
     },
 };
 use axum::{
-    response::{
-        sse::{Event, KeepAlive},
-        Sse,
-    },
     Extension, Json,
+    response::{
+        Sse,
+        sse::{Event, KeepAlive},
+    },
 };
 use futures::Stream;
 use std::convert::Infallible;
