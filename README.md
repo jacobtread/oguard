@@ -1,23 +1,19 @@
-
-
 ![Banner](assets/banner.jpg)
-
 
 # <img src="./assets/oguard.svg" height="32px" alt="OGuard Logo"> OGuard
 
-> Work in progress 
+> Work in progress
 
-**OGuard** is an open source alternative to the [NetGuard](https://powershield.com.au/support-menu/download-area/netguard-software-downloads/) software used by Dynamix UPSs. This is only intended to support 
-the "Dynamix UPSD2000 Defender" as this is the only model I own so I won't be implementing the protocols 
+**OGuard** is an open source alternative to the [NetGuard](https://powershield.com.au/support-menu/download-area/netguard-software-downloads/) software used by Dynamix UPSs. This is only intended to support
+the "Dynamix UPSD2000 Defender" as this is the only model I own so I won't be implementing the protocols
 for other UPS devices
-
 
 ## Stack
 
-* Monitor (Rust) - Software that tracks the state changes, interacts with the UPS, stores the data, exposes an HTTP API
-* Webapp (Svelte, Typescript) - Web application for viewing the app information, state, graphs etc, managing actions and configuration
+- Monitor (Rust) - Software that tracks the state changes, interacts with the UPS, stores the data, exposes an HTTP API
+- Webapp (Svelte, Typescript) - Web application for viewing the app information, state, graphs etc, managing actions and configuration
 
-## Implemented 
+## Implemented
 
 - Can detect common events (AC Lost, AC Recovered, Fault, Low Battery Start, Low Battery End, Battery Test Start, Battery Test End)
 - Events are stored in a SQLite database
@@ -28,7 +24,6 @@ for other UPS devices
 - Current state API, get the current device and battery states
 - Event Pipeline system for triggering actions based on different events (Configurable from webapp)
 - Authentication & Authorization for mutating actions
-
 
 ## WebUI
 
@@ -113,7 +108,6 @@ Below is a screenshot of the WIP web UI for the app to monitor the capacity and 
   </tr>
 </table>
 
-
 ## Linux
 
 ## Configuration
@@ -121,7 +115,6 @@ Below is a screenshot of the WIP web UI for the app to monitor the capacity and 
 The configuration file is loaded from `/etc/oguard/config.toml` you can find an example [Here](./example-config.toml)
 
 The commands below will set the current config to the example config
-
 
 ```sh
 # Create the config directory (Only required for first time)
@@ -138,7 +131,7 @@ Development is done on **Fedora** you will need to adapt these commands to your 
 libudev - Used for USB device access, required to build the executable
 
 ```sh
-sudo dnf install libudev-devel 
+sudo dnf install libudev-devel
 ```
 
 ## Unprivileged USB access
@@ -179,9 +172,9 @@ sudo mkdir /etc/oguard
 sudo cp ./example-config.toml /etc/oguard/config.toml
 
 # Copy service to systemd
-sudo cp ./oguard.service /etc/systemd/system/oguard.service
+sudo cp ./platform/linux/oguard.service /etc/systemd/system/oguard.service
 
-# Reload systemctl 
+# Reload systemctl
 sudo systemctl daemon-reload
 
 # Start the service
@@ -212,4 +205,4 @@ sudo systemctl status oguard
 
 ## Building Windows Setup
 
-You can build the Windows setup.exe installer which handles adding the Windows service and setting everything up. The installer setup uses [Inno Setup](https://jrsoftware.org/isinfo.php), download and install Inno Setup then load the `.iss` into the Inno Setup Compiler and select Build > Compile from the menu.
+You can build the Windows setup.exe installer which handles adding the Windows service and setting everything up. The installer setup uses [Inno Setup](https://jrsoftware.org/isinfo.php), download and install Inno Setup then load the `platform/windows/.iss` into the Inno Setup Compiler and select Build > Compile from the menu.
