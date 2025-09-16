@@ -5,7 +5,7 @@ use std::{
 };
 
 use anyhow::Context;
-use log::{LevelFilter, error};
+use log::{error, LevelFilter};
 use serde::Deserialize;
 use std::fs::read_to_string;
 
@@ -14,7 +14,7 @@ use std::fs::read_to_string;
 const CONFIG_PATH: &str = "/etc/oguard/config.toml";
 
 /// Macos release builds load config from /Library/Application Support/oguard
-#[cfg(all(target_os = "linux", not(debug_assertions)))]
+#[cfg(all(target_os = "macos", not(debug_assertions)))]
 const CONFIG_PATH: &str = "/Library/Application Support/oguard/config.toml";
 
 /// Windows and debug builds load config from the working directory

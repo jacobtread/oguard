@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+
+USER=$(stat -f%Su /dev/console)
+
+mkdir -p "$HOME/Library/LaunchAgents"
+
+# Use the system-installed plist
+cp /Library/LaunchAgents/com.jacobtread.oguard.plist \
+   "$HOME/Library/LaunchAgents/"
+
+launchctl asuser $(id -u "$USER") \
+   bootstrap "$HOME/Library/LaunchAgents" \
+   "$HOME/Library/LaunchAgents/com.jacobtread.oguard.plist"
+
+exit 0

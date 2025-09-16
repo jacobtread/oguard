@@ -11,7 +11,7 @@ SolidCompression=yes
 
 ; Specify the application files
 [Files]
-Source: ".\target\release\oguard.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\target\release\oguard.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Create the service
 [Run]
@@ -37,7 +37,7 @@ UninstallMessage=OGuard service is being uninstalled...
  var
      mres : integer;
  begin
-    case CurUninstallStep of                   
+    case CurUninstallStep of
       usPostUninstall:
         begin
           mres := MsgBox('Do you want to delete the configuration file, data folder and its contents? This will delete any historical data, logging and configuration?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2)

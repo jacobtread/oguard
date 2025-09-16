@@ -1,0 +1,8 @@
+#!/bin/bash
+
+pkgbuild \
+  --root OGuard \
+  --scripts Scripts \
+  --identifier com.jacobtread.oguard \
+  --version 1.0 \
+  OGuard.pkg
