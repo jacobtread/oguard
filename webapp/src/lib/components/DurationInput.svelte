@@ -43,7 +43,7 @@
 </div>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	.part__input {
 		padding: 0.5rem 0.75rem;

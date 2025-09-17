@@ -24,14 +24,14 @@
 			<Container.Section>
 				<div class="fls">
 					<div>
-						{#if $deviceStateQuery.isPending}
+						{#if deviceStateQuery.isPending}
 							<Spinner />
 						{/if}
-						{#if $deviceStateQuery.error}
+						{#if deviceStateQuery.error}
 							An error has occurred:
-							{$deviceStateQuery.error.message}
+							{deviceStateQuery.error.message}
 						{/if}
-						{#if $deviceStateQuery.isSuccess}
+						{#if deviceStateQuery.isSuccess}
 							<div class="fl">
 								<div class="fl__text">
 									<h3 class="fl__name">{$t('battery_self_test.name')}</h3>
@@ -40,19 +40,19 @@
 									</p>
 
 									<span class="toggling">
-										{#if $startBatteryTestMutation.isPending}
+										{#if startBatteryTestMutation.isPending}
 											<Spinner />
 											{$t('battery_self_test.starting')}
 										{/if}
 									</span>
 									<span class="toggling">
-										{#if $cancelBatteryTestMutation.isPending}
+										{#if cancelBatteryTestMutation.isPending}
 											<Spinner />
 											{$t('battery_self_test.cancelling')}
 										{/if}
 									</span>
 
-									{#if $deviceStateQuery.data.battery_self_test}
+									{#if deviceStateQuery.data.battery_self_test}
 										<span class="toggling">
 											<Spinner />
 											{$t('battery_self_test.running')}
@@ -61,18 +61,18 @@
 								</div>
 
 								<div class="self-test">
-									{#if $deviceStateQuery.data.battery_self_test}
+									{#if deviceStateQuery.data.battery_self_test}
 										<button
 											class="button"
-											on:click={() => $cancelBatteryTestMutation.mutate()}
-											disabled={$cancelBatteryTestMutation.isPending}>
+											on:click={() => cancelBatteryTestMutation.mutate()}
+											disabled={cancelBatteryTestMutation.isPending}>
 											{$t('battery_self_test.cancel')}
 										</button>
 									{:else}
 										<button
 											class="button"
-											on:click={() => $startBatteryTestMutation.mutate()}
-											disabled={$startBatteryTestMutation.isPending}>
+											on:click={() => startBatteryTestMutation.mutate()}
+											disabled={startBatteryTestMutation.isPending}>
 											{$t('battery_self_test.start')}
 										</button>
 									{/if}
@@ -87,7 +87,7 @@
 </Container.Wrapper>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	$borderWidth: 0.1rem;
 	$borderStyle: solid;

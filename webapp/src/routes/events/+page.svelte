@@ -3,21 +3,19 @@
 	import dayjs from 'dayjs';
 	import { DateInput } from 'date-picker-svelte';
 	import DateIcon from '~icons/solar/calendar-date-bold-duotone';
-	import { derived, writable } from 'svelte/store';
+	import { toStore } from 'svelte/store';
 	import { t } from 'svelte-i18n';
 	import { Container } from '$lib/components';
 	import Breadcrumbs from '$/lib/components/Breadcrumbs.svelte';
 	import { fly } from 'svelte/transition';
 	import Spinner from '$/lib/components/Spinner.svelte';
 	import EventLevelIcon from '$/lib/components/pipeline/EventLevelIcon.svelte';
+	import { createRender, createTable, Render, Subscribe } from '@humanspeak/svelte-headless-table';
 	import {
-		createRender,
-		createTable,
-		Render,
-		Subscribe,
-		type HeaderLabel
-	} from 'svelte-headless-table';
-	import { addHiddenColumns, addPagination, addSortBy } from 'svelte-headless-table/plugins';
+		addHiddenColumns,
+		addPagination,
+		addSortBy
+	} from '@humanspeak/svelte-headless-table/plugins';
 
 	import SortDesc from '~icons/solar/alt-arrow-down-bold';
 	import SortAsc from '~icons/solar/alt-arrow-up-bold';
@@ -29,44 +27,51 @@
 
 	const currentDate = dayjs();
 
-	const start = writable(currentDate.startOf('month').toDate());
-	const end = writable(currentDate.endOf('month').toDate());
+	let start = $state(currentDate.startOf('month').toDate());
+	let end = $state(currentDate.endOf('month').toDate());
 
 	// Query the event history, refreshing the data every minute
-	const eventHistory = createEventHistoryQuery(start, end, 1000 * 60);
+	const eventHistory = createEventHistoryQuery(
+		() => start,
+		() => end,
+		1000 * 60
+	);
 
-	const history = derived(eventHistory, ($eventHistory) => $eventHistory.data ?? []);
+	const history = $derived(eventHistory.data ?? []);
 
-	const table = createTable(history, {
-		sort: addSortBy({
-			initialSortKeys: [{ id: 'timestamp', order: 'desc' }]
-		}),
-		page: addPagination({
-			initialPageSize: 50
-		}),
-		hideColumns: addHiddenColumns()
-	});
+	const table = createTable(
+		toStore(() => history),
+		{
+			sort: addSortBy({
+				initialSortKeys: [{ id: 'timestamp', order: 'desc' }]
+			}),
+			page: addPagination({
+				initialPageSize: 50
+			}),
+			hideColumns: addHiddenColumns()
+		}
+	);
 
-	const header: HeaderLabel<EventHistory> = ({ id }) =>
+	const header = ({ id }: { id: string }) =>
 		createRender(Localized, { key: `event.columns.${id}` });
 
 	const columns = table.createColumns([
 		table.column({
 			id: 'level',
 			header,
-			accessor: (item) => EVENT_TYPE_DATA[item.type]?.level ?? EventLevel.Info,
+			accessor: (item: EventHistory) => EVENT_TYPE_DATA[item.type]?.level ?? EventLevel.Info,
 			cell: ({ value }) => createRender(EventLevelIcon, { level: value })
 		}),
 		table.column({
 			id: 'type',
 			header,
-			accessor: (item) => item.type,
+			accessor: (item: EventHistory) => item.type,
 			cell: ({ value }) => createRender(Localized, { key: `events.${value}.label` })
 		}),
 		table.column({
 			id: 'description',
 			header,
-			accessor: (item) => item.type,
+			accessor: (item: EventHistory) => item.type,
 			cell: ({ value }) => createRender(Localized, { key: `events.${value}.description` }),
 
 			plugins: {
@@ -78,7 +83,7 @@
 		table.column({
 			id: 'timestamp',
 			header,
-			accessor: (item) => item.created_at,
+			accessor: (item: EventHistory) => item.created_at,
 			cell: ({ value }) => createRender(LocalizedDateTime, { value })
 		})
 	]);
@@ -107,7 +112,7 @@
 						<DateIcon />
 						{$t('event.filters.start')}
 					</label>
-					<DateInput id="startDate" timePrecision="minute" bind:value={$start} />
+					<DateInput id="startDate" timePrecision="minute" bind:value={start} />
 				</div>
 
 				<div class=" date-input">
@@ -115,18 +120,18 @@
 						<DateIcon />
 						{$t('event.filters.end')}
 					</label>
-					<DateInput id="endDate" timePrecision="minute" bind:value={$end} />
+					<DateInput id="endDate" timePrecision="minute" bind:value={end} />
 				</div>
 			</div>
 		</Container.Section>
 
 		<Container.Section indent>
-			{#if $eventHistory.isPending}
+			{#if eventHistory.isPending}
 				<Spinner />
 			{/if}
-			{#if $eventHistory.error}
+			{#if eventHistory.error}
 				An error has occurred:
-				{$eventHistory.error.message}
+				{eventHistory.error.message}
 			{/if}
 
 			<div class="history">
@@ -193,7 +198,7 @@
 </Container.Wrapper>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	.column {
 		&--level {

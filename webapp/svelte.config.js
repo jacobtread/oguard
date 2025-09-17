@@ -17,16 +17,8 @@ const config = {
 			css: {
 				preprocessorOptions: {
 					scss: {
-						importer: [
-							(url) => {
-								if (url.startsWith('$lib')) {
-									return {
-										file: url.replace(/^\$lib/, path.join(__dirname, 'src', 'lib'))
-									};
-								}
-								return url;
-							}
-						]
+						includePaths: [path.resolve('src', 'lib', 'styles')],
+						loadPaths: [path.resolve('src', 'lib', 'styles')],
 					}
 				}
 			}

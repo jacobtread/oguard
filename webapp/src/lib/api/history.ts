@@ -2,7 +2,6 @@ import type { Dayjs } from 'dayjs';
 import type { DeviceBatteryHistory, DeviceStateHistory, EventHistory } from './types';
 import { HttpMethod, requestJson } from './utils';
 import { createQuery, type CreateQueryResult } from '@tanstack/svelte-query';
-import { derived, type Readable } from 'svelte/store';
 import dayjs from 'dayjs';
 
 export const DEVICE_BATTERY_HISTORY_KEY = 'device-battery-history';
@@ -38,12 +37,14 @@ export function batteryHistoryRequest(
  * @param end Store containing the query end date
  */
 export function createDeviceBatteryHistoryQuery(
-	start: Readable<Date>,
-	end: Readable<Date>,
+	start: () => Date,
+	end: () => Date,
 	refetchInterval?: number
 ): CreateQueryResult<DeviceBatteryHistory[], Error> {
-	return createQuery<DeviceBatteryHistory[]>(
-		derived([start, end], ([$start, $end]) => ({
+	return createQuery<DeviceBatteryHistory[]>(() => {
+		const $start = start();
+		const $end = end();
+		return {
 			queryKey: [DEVICE_BATTERY_HISTORY_KEY, $start.toISOString(), $end.toISOString()],
 			queryFn: () => {
 				const startDate = dayjs($start).utc();
@@ -52,8 +53,8 @@ export function createDeviceBatteryHistoryQuery(
 				return batteryHistoryRequest(startDate, endDate);
 			},
 			refetchInterval
-		}))
-	);
+		};
+	});
 }
 
 /**
@@ -85,11 +86,13 @@ export function deviceStateHistoryRequest(
  * @param end Store containing the query end date
  */
 export function createDeviceStateHistoryQuery(
-	start: Readable<Date>,
-	end: Readable<Date>
+	start: () => Date,
+	end: () => Date
 ): CreateQueryResult<DeviceStateHistory[], Error> {
-	return createQuery<DeviceStateHistory[]>(
-		derived([start, end], ([$start, $end]) => ({
+	return createQuery<DeviceStateHistory[]>(() => {
+		const $start = start();
+		const $end = end();
+		return {
 			queryKey: [DEVICE_STATE_HISTORY_KEY, $start.toISOString(), $end.toISOString()],
 			queryFn: () => {
 				const startDate = dayjs($start).utc();
@@ -97,8 +100,8 @@ export function createDeviceStateHistoryQuery(
 
 				return deviceStateHistoryRequest(startDate, endDate);
 			}
-		}))
-	);
+		};
+	});
 }
 
 /**
@@ -127,12 +130,14 @@ export function eventHistoryRequest(startDate: Dayjs, endDate: Dayjs): Promise<E
  * @param end Store containing the query end date
  */
 export function createEventHistoryQuery(
-	start: Readable<Date>,
-	end: Readable<Date>,
+	start: () => Date,
+	end: () => Date,
 	refetchInterval?: number
 ): CreateQueryResult<EventHistory[], Error> {
-	return createQuery<EventHistory[]>(
-		derived([start, end], ([$start, $end]) => ({
+	return createQuery<EventHistory[]>(() => {
+		const $start = start();
+		const $end = end();
+		return {
 			queryKey: [EVENT_HISTORY_KEY, $start.toISOString(), $end.toISOString()],
 			queryFn: () => {
 				const startDate = dayjs($start).utc();
@@ -141,6 +146,6 @@ export function createEventHistoryQuery(
 				return eventHistoryRequest(startDate, endDate);
 			},
 			refetchInterval
-		}))
-	);
+		};
+	});
 }

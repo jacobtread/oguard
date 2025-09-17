@@ -7,7 +7,6 @@ import type {
 	UpdateEventPipeline
 } from './types';
 import { HttpMethod, queryClient, requestJson, requestStatus } from './utils';
-import { derived, type Readable } from 'svelte/store';
 
 // Key for event pipelines
 const EVENT_PIPELINES_KEY = 'event-pipelines';
@@ -44,16 +43,17 @@ function eventPipelineRequest(id: PipelineId): Promise<EventPipeline> {
  * @param pipelineId The readable store containing the pipeline ID
  */
 export function createEventPipelineQuery(
-	pipelineId: Readable<number>
+	pipelineId: () => number
 ): CreateQueryResult<EventPipeline, Error> {
-	return createQuery(
-		derived([pipelineId], ([$pipelineId]) => ({
+	return createQuery(() => {
+		const $pipelineId = pipelineId();
+		return {
 			queryKey: getEventPipelineKey($pipelineId),
 			queryFn: ({ queryKey: [, pipelineId] }: { queryKey: [string, number] }) =>
 				eventPipelineRequest(pipelineId),
 			retry: false
-		}))
-	);
+		};
+	});
 }
 
 /**
@@ -72,10 +72,10 @@ function eventPipelinesRequest(): Promise<ListEventPipeline[]> {
  * Creates a query to load the available event pipelines
  */
 export function createEventPipelinesQuery(): CreateQueryResult<ListEventPipeline[], Error> {
-	return createQuery<ListEventPipeline[]>({
+	return createQuery<ListEventPipeline[]>(() => ({
 		queryKey: [EVENT_PIPELINES_KEY],
 		queryFn: eventPipelinesRequest
-	});
+	}));
 }
 
 /**
@@ -98,7 +98,7 @@ function updateEventPipelineRequest(id: number, data: UpdateEventPipeline): Prom
  * Creates a mutation to update an event pipeline
  */
 export function createUpdateEventPipelineMutation() {
-	return createMutation<EventPipeline, Error, { id: number; data: UpdateEventPipeline }>({
+	return createMutation<EventPipeline, Error, { id: number; data: UpdateEventPipeline }>(() => ({
 		mutationFn: ({ id, data }) => updateEventPipelineRequest(id, data),
 		onSuccess: (pipeline) => {
 			queryClient.invalidateQueries({ queryKey: [EVENT_PIPELINES_KEY] });
@@ -106,7 +106,7 @@ export function createUpdateEventPipelineMutation() {
 			// Update the local state for the pipeline using the remote state
 			queryClient.setQueryData(getEventPipelineKey(pipeline.id), pipeline);
 		}
-	});
+	}));
 }
 
 /**
@@ -127,7 +127,7 @@ function createPipelineRequest(data: CreateEventPipeline): Promise<EventPipeline
  * Creates a mutation to create a new event pipeline
  */
 export function createCreateEventPipelineMutation() {
-	return createMutation<EventPipeline, Error, { data: CreateEventPipeline }>({
+	return createMutation<EventPipeline, Error, { data: CreateEventPipeline }>(() => ({
 		mutationFn: ({ data }) => createPipelineRequest(data),
 		onSuccess: (pipeline) => {
 			queryClient.invalidateQueries({ queryKey: [EVENT_PIPELINES_KEY] });
@@ -135,7 +135,7 @@ export function createCreateEventPipelineMutation() {
 			// We can preload the data for this since the server gives it back
 			queryClient.setQueryData(getEventPipelineKey(pipeline.id), pipeline);
 		}
-	});
+	}));
 }
 
 /**
@@ -154,9 +154,9 @@ function testPipelineRequest(id: PipelineId): Promise<void> {
  * Creates a mutation that will test a pipeline
  */
 export function createTestEventPipelineMutation() {
-	return createMutation<unknown, Error, { id: PipelineId }>({
+	return createMutation<unknown, Error, { id: PipelineId }>(() => ({
 		mutationFn: ({ id }) => testPipelineRequest(id)
-	});
+	}));
 }
 
 /**
@@ -164,12 +164,12 @@ export function createTestEventPipelineMutation() {
  * of an event pipeline to the provided value
  */
 export function createChangeEnabledMutation() {
-	return createMutation<unknown, Error, { id: PipelineId; enabled: boolean }>({
+	return createMutation<unknown, Error, { id: PipelineId; enabled: boolean }>(() => ({
 		mutationFn: ({ id, enabled }) => updateEventPipelineRequest(id, { enabled }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [EVENT_PIPELINES_KEY] });
 		}
-	});
+	}));
 }
 
 /**
@@ -188,7 +188,7 @@ function deletePipelineRequest(id: PipelineId): Promise<void> {
  * Creates a mutation that will delete an event pipeline
  */
 export function createDeletePipelineMutation() {
-	return createMutation<unknown, Error, { id: PipelineId }>({
+	return createMutation<unknown, Error, { id: PipelineId }>(() => ({
 		mutationFn: ({ id }) => deletePipelineRequest(id),
 		onSuccess: (_, { id }) => {
 			queryClient.invalidateQueries({ queryKey: [EVENT_PIPELINES_KEY] });
@@ -199,5 +199,5 @@ export function createDeletePipelineMutation() {
 			queryClient.removeQueries({ queryKey: pipelineKey });
 			queryClient.cancelQueries({ queryKey: pipelineKey });
 		}
-	});
+	}));
 }

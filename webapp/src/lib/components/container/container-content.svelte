@@ -3,5 +3,5 @@
 </div>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 </style>

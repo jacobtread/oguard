@@ -13,7 +13,7 @@
 
 	const onSubmitLogin = async () => {
 		try {
-			await $loginMutation.mutateAsync(password);
+			await loginMutation.mutateAsync(password);
 		} catch (err) {
 			console.error('login failed', err);
 		} finally {
@@ -42,7 +42,7 @@
 					<button
 						type="submit"
 						class="button"
-						disabled={password.length === 0 || $loginMutation.isPending}>{$t('login')}</button>
+						disabled={password.length === 0 || loginMutation.isPending}>{$t('login')}</button>
 					<div style="flex: auto;"></div>
 					<slot name="actions" />
 				</div>
@@ -52,7 +52,7 @@
 </Container.Wrapper>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	.description {
 		margin-bottom: 1rem;

@@ -27,7 +27,7 @@
 	async function doDelete(pipelineId: PipelineId) {
 		try {
 			toast.info('Deleting pipeline..');
-			await await $deleteMutation.mutateAsync({ id: pipelineId });
+			await await deleteMutation.mutateAsync({ id: pipelineId });
 
 			await goto(`${base}/pipelines`);
 			toast.success('Deleted pipeline.');
@@ -52,15 +52,15 @@
 			<div class="dialog__content">
 				<p>{$t('delete_pipeline.message')}</p>
 
-				{#if $deleteMutation.error !== null}
-					<p class="error">{$deleteMutation.error.message}</p>
+				{#if deleteMutation.error !== null}
+					<p class="error">{deleteMutation.error.message}</p>
 				{/if}
 			</div>
 			<div class="dialog__footer">
 				<div class="dialog__footer__actions">
 					<button
 						class="button"
-						disabled={$deleteMutation.isPending}
+						disabled={deleteMutation.isPending}
 						on:click={() => doDelete(pipeline.id)}>Delete</button>
 					<div style="flex: auto;"></div>
 					<button class="button button--secondary" on:click={onClose}>Cancel</button>
@@ -71,7 +71,7 @@
 </Dialog.Root>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	$borderWidth: 0.1rem;
 	$borderStyle: solid;

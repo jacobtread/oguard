@@ -27,7 +27,7 @@
 {/if}
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	.level {
 		font-size: 1.25rem;

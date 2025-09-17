@@ -10,10 +10,10 @@ export const LOGIN_STATE_KEY = 'login-state';
  * state from the backend
  */
 export function createLoginStateQuery(): CreateQueryResult<LoginState, Error> {
-	return createQuery<LoginState>({
+	return createQuery<LoginState>(() => ({
 		queryKey: [LOGIN_STATE_KEY],
 		queryFn: loginState
-	});
+	}));
 }
 
 /**
@@ -46,12 +46,12 @@ export function loginRequest(password: string): Promise<string> {
  * Creates a mutation that will trigger a login request
  */
 export function createLoginMutation() {
-	return createMutation<unknown, Error, string>({
+	return createMutation<unknown, Error, string>(() => ({
 		mutationFn: (password) => loginRequest(password),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [LOGIN_STATE_KEY] });
 		}
-	});
+	}));
 }
 
 /**
@@ -68,10 +68,10 @@ export function logoutRequest(): Promise<string> {
  * Creates a mutation that will trigger a logout request
  */
 export function createLogoutMutation() {
-	return createMutation({
+	return createMutation(() => ({
 		mutationFn: logoutRequest,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [LOGIN_STATE_KEY] });
 		}
-	});
+	}));
 }

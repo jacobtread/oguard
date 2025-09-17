@@ -6,7 +6,6 @@
 
 	import { t } from 'svelte-i18n';
 	import { fly } from 'svelte/transition';
-	import { writable } from 'svelte/store';
 
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import Container from '$lib/components/container';
@@ -21,18 +20,20 @@
 		Battery = 'Battery'
 	}
 
-	let historyType = HistoryType.Battery;
+	let historyType = $state(HistoryType.Battery);
 
-	let start = writable(currentDate.startOf('month').toDate());
-	let end = writable(currentDate.endOf('month').toDate());
+	let start = $state(currentDate.startOf('month').toDate());
+	let end = $state(currentDate.endOf('month').toDate());
 
-	$: options = [HistoryType.Battery, HistoryType.Device].map((value) => ({
-		value,
-		label: $t(`history.types.${value}.label`),
-		description: $t(`history.types.${value}.description`)
-	}));
+	const options = $derived(
+		[HistoryType.Battery, HistoryType.Device].map((value) => ({
+			value,
+			label: $t(`history.types.${value}.label`),
+			description: $t(`history.types.${value}.description`)
+		}))
+	);
 
-	$: selected = options.find((value) => value.value === historyType);
+	const selected = $derived(options.find((value) => value.value === historyType));
 
 	function onChangeType(option: { value: HistoryType } | undefined) {
 		if (option === undefined) return;
@@ -52,7 +53,7 @@
 		<Container.Section>
 			<div class="filters">
 				<div class=" date-input">
-					<Select.Root items={options} onSelectedChange={onChangeType} {selected}>
+					<Select.Root items={options} onValueChange={onChangeType} {selected}>
 						<Select.Trigger>{$t(`history.types.${historyType}.label`)}</Select.Trigger>
 						<Select.Content
 							transition={fly}
@@ -77,7 +78,7 @@
 						<DateIcon />
 						{$t('event.filters.start')}
 					</label>
-					<DateInput id="startDate" timePrecision="minute" bind:value={$start} />
+					<DateInput id="startDate" timePrecision="minute" bind:value={start} />
 				</div>
 
 				<div class=" date-input">
@@ -85,7 +86,7 @@
 						<DateIcon />
 						{$t('event.filters.end')}
 					</label>
-					<DateInput id="endDate" timePrecision="minute" bind:value={$end} />
+					<DateInput id="endDate" timePrecision="minute" bind:value={end} />
 				</div>
 			</div>
 		</Container.Section>
@@ -103,7 +104,7 @@
 </Container.Wrapper>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	.filters {
 		display: flex;

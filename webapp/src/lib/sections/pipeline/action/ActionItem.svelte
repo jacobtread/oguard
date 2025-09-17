@@ -94,7 +94,7 @@
 </div>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	:global(#dnd-action-dragged-el .item) {
 		border: 0.1rem solid palette.$gray-300;

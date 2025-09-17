@@ -22,7 +22,7 @@
 </button>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	.item {
 		$borderWidth: 0.1rem;

@@ -19,7 +19,7 @@ export function startBatteryTestRequest(): Promise<string> {
  * Mutation to start a battery test
  */
 export function createStartBatteryTestMutation() {
-	return createMutation({
+	return createMutation(() => ({
 		mutationFn: startBatteryTestRequest,
 		onMutate: async () => {
 			await queryClient.cancelQueries({ queryKey: DEVICE_STATE_KEY });
@@ -35,7 +35,7 @@ export function createStartBatteryTestMutation() {
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: DEVICE_STATE_KEY });
 		}
-	});
+	}));
 }
 
 /**
@@ -52,7 +52,7 @@ export function cancelBatteryTestRequest(): Promise<string> {
  * Mutation to cancel a battery test
  */
 export function createCancelBatteryTestMutation() {
-	return createMutation({
+	return createMutation(() => ({
 		mutationFn: cancelBatteryTestRequest,
 		onMutate: async () => {
 			await queryClient.cancelQueries({ queryKey: DEVICE_STATE_KEY });
@@ -68,7 +68,7 @@ export function createCancelBatteryTestMutation() {
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: DEVICE_STATE_KEY });
 		}
-	});
+	}));
 }
 
 /**
@@ -97,11 +97,11 @@ export function batteryInfoRequest(): Promise<DeviceBattery> {
  * @param refetchInterval The interval between fetches
  */
 export function createBatteryInfoPollingQuery(refetchInterval: number) {
-	return createQuery<DeviceBattery>({
+	return createQuery<DeviceBattery>(() => ({
 		queryKey: ['battery-info'],
 		queryFn: batteryInfoRequest,
 		refetchInterval
-	});
+	}));
 }
 
 /**
@@ -110,11 +110,11 @@ export function createBatteryInfoPollingQuery(refetchInterval: number) {
  * @param refetchInterval The interval between fetches
  */
 export function createDeviceStatePollingQuery(refetchInterval: number) {
-	return createQuery<DeviceState>({
+	return createQuery<DeviceState>(() => ({
 		queryKey: DEVICE_STATE_KEY,
 		queryFn: deviceStateRequest,
 		refetchInterval
-	});
+	}));
 }
 
 /**
@@ -141,7 +141,7 @@ export function updateDeviceState(
  * Mutation to toggle the device buzzer state
  */
 export function createToggleBuzzerMutation() {
-	return createMutation({
+	return createMutation(() => ({
 		mutationFn: async () =>
 			await requestText({
 				method: HttpMethod.POST,
@@ -162,5 +162,5 @@ export function createToggleBuzzerMutation() {
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: DEVICE_STATE_KEY });
 		}
-	});
+	}));
 }

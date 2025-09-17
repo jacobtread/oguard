@@ -8,7 +8,6 @@
 	import { t } from 'svelte-i18n';
 	import Alert, { AlertType } from '$/lib/components/Alert.svelte';
 	import { createBatteryInfoPollingQuery, createDeviceStatePollingQuery } from '$/lib/api/device';
-	import { readable } from 'svelte/store';
 	import { createDeviceBatteryHistoryQuery } from '$/lib/api/history';
 	import BatteryCapacityChart from '$/lib/components/charts/BatteryCapacityChart.svelte';
 
@@ -17,11 +16,15 @@
 
 	// Get the current date data
 	const currentDate = dayjs.utc();
-	const startOfDay = readable(currentDate.startOf('day').toDate());
-	const endOfDay = readable(currentDate.endOf('day').toDate());
+	const startOfDay = currentDate.startOf('day').toDate();
+	const endOfDay = currentDate.endOf('day').toDate();
 
 	// Device battery history, refreshing data every minute
-	const deviceBatteryHistory = createDeviceBatteryHistoryQuery(startOfDay, endOfDay, 1000 * 60);
+	const deviceBatteryHistory = createDeviceBatteryHistoryQuery(
+		() => startOfDay,
+		() => endOfDay,
+		1000 * 60
+	);
 </script>
 
 <svelte:head>
@@ -29,57 +32,54 @@
 </svelte:head>
 
 <div class="grid">
-	{#if $batteryInfoQuery.isPending}
+	<!-- Battery Info -->
+	{#if batteryInfoQuery.isPending}
 		<Spinner />
-	{/if}
-	{#if $batteryInfoQuery.error}
+	{:else if batteryInfoQuery.error}
 		<Alert
 			type={AlertType.ERROR}
-			message={`Failed to load device battery: ${$batteryInfoQuery.error.message}`} />
-	{/if}
-	{#if $batteryInfoQuery.isSuccess}
+			message={`Failed to load device battery: ${batteryInfoQuery.error.message}`} />
+	{:else if batteryInfoQuery.isSuccess}
 		<DeviceBatteryCard
-			capacity={$batteryInfoQuery.data.capacity}
-			remainingTime={$batteryInfoQuery.data.remaining_time}
-			lastUpdated={$batteryInfoQuery.dataUpdatedAt}
-			refreshing={$batteryInfoQuery.isFetching} />
+			capacity={batteryInfoQuery.data.capacity}
+			remainingTime={batteryInfoQuery.data.remaining_time}
+			lastUpdated={batteryInfoQuery.dataUpdatedAt}
+			refreshing={batteryInfoQuery.isFetching} />
 	{/if}
 
-	{#if $deviceStateQuery.isPending}
+	<!-- Device state -->
+	{#if deviceStateQuery.isPending}
 		<Spinner />
-	{/if}
-	{#if $deviceStateQuery.error}
+	{:else if deviceStateQuery.error}
 		<Alert
 			type={AlertType.ERROR}
-			message={`Failed to load device state: ${$deviceStateQuery.error.message}`} />
-	{/if}
-	{#if $deviceStateQuery.isSuccess}
+			message={`Failed to load device state: ${deviceStateQuery.error.message}`} />
+	{:else if deviceStateQuery.isSuccess}
 		<DeviceOutputCard
-			load={$deviceStateQuery.data.output_load_percent}
-			inputVoltage={$deviceStateQuery.data.input_voltage}
-			outputVoltage={$deviceStateQuery.data.output_voltage}
-			lastUpdated={$deviceStateQuery.dataUpdatedAt}
-			refreshing={$deviceStateQuery.isFetching} />
+			load={deviceStateQuery.data.output_load_percent}
+			inputVoltage={deviceStateQuery.data.input_voltage}
+			outputVoltage={deviceStateQuery.data.output_voltage}
+			lastUpdated={deviceStateQuery.dataUpdatedAt}
+			refreshing={deviceStateQuery.isFetching} />
 	{/if}
 </div>
 
 <div class="grid">
 	<Container.Root>
-		{#if $deviceBatteryHistory.isPending}
+		<!-- Battery History -->
+		{#if deviceBatteryHistory.isPending}
 			<Spinner />
-		{/if}
-		{#if $deviceBatteryHistory.error}
+		{:else if deviceBatteryHistory.error}
 			<Alert
 				type={AlertType.ERROR}
-				message={`Failed to load battery history: ${$deviceBatteryHistory.error.message}`} />
-		{/if}
-		{#if $deviceBatteryHistory.isSuccess}
-			<BatteryCapacityChart history={$deviceBatteryHistory.data} />
+				message={`Failed to load battery history: ${deviceBatteryHistory.error.message}`} />
+		{:else if deviceBatteryHistory.isSuccess}
+			<BatteryCapacityChart history={deviceBatteryHistory.data} />
 		{/if}
 	</Container.Root>
 </div>
 
-<style lang="scss">
+<style>
 	.grid {
 		display: flex;
 		gap: 1rem;

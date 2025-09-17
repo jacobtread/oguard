@@ -24,7 +24,7 @@
 		canToggleEnabled = false;
 
 		try {
-			await $changeEnabledMutation.mutate({
+			await changeEnabledMutation.mutate({
 				id: item.id,
 				enabled: !enabled
 			});
@@ -79,7 +79,7 @@
 </div>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	// Pipeline item
 	.item {

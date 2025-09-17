@@ -5,11 +5,11 @@
 	const loginStateQuery = createLoginStateQuery();
 </script>
 
-{#if $loginStateQuery.isError}
+{#if loginStateQuery.isError}
 	<p>Error</p>
-{:else if $loginStateQuery.isLoading}
+{:else if loginStateQuery.isLoading}
 	<p>Loading</p>
-{:else if $loginStateQuery.data === undefined || !$loginStateQuery.data.logged_in}
+{:else if loginStateQuery.data === undefined || !loginStateQuery.data.logged_in}
 	<LoginDialog open onClose={() => {}} />
 {:else}
 	<slot />

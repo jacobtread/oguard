@@ -9,7 +9,7 @@
 
 	const onLogout = async () => {
 		try {
-			await $logoutMutation.mutateAsync();
+			await logoutMutation.mutateAsync();
 		} catch (err) {
 			console.error('logout failed', err);
 		} finally {
@@ -18,6 +18,6 @@
 	};
 </script>
 
-<button disabled={$logoutMutation.isPending} class="button" on:click={onLogout}>
+<button disabled={logoutMutation.isPending} class="button" on:click={onLogout}>
 	{$t('logout')}
 </button>

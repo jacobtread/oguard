@@ -4,20 +4,18 @@
 	import { createDeviceBatteryHistoryQuery } from '$/lib/api/history';
 	import { type DeviceBatteryHistory } from '$lib/api/types';
 
-	import { derived, type Readable } from 'svelte/store';
+	import { toStore } from 'svelte/store';
 	import { fly } from 'svelte/transition';
 
 	import SortDesc from '~icons/solar/alt-arrow-down-bold';
 	import SortAsc from '~icons/solar/alt-arrow-up-bold';
 
+	import { createRender, createTable, Render, Subscribe } from '@humanspeak/svelte-headless-table';
 	import {
-		createRender,
-		createTable,
-		Render,
-		Subscribe,
-		type HeaderLabel
-	} from 'svelte-headless-table';
-	import { addHiddenColumns, addPagination, addSortBy } from 'svelte-headless-table/plugins';
+		addHiddenColumns,
+		addPagination,
+		addSortBy
+	} from '@humanspeak/svelte-headless-table/plugins';
 
 	import dayjs from 'dayjs';
 
@@ -28,43 +26,53 @@
 	import Container from '$lib/components/container';
 	import Pagination from '$lib/components/Pagination.svelte';
 
-	export let start: Readable<Date>;
-	export let end: Readable<Date>;
+	type Props = {
+		start: Date;
+		end: Date;
+	};
 
-	const eventHistory = createDeviceBatteryHistoryQuery(start, end);
+	const { start, end }: Props = $props();
 
-	const history = derived(eventHistory, ($eventHistory) => $eventHistory.data ?? []);
+	const eventHistory = createDeviceBatteryHistoryQuery(
+		() => start,
+		() => end
+	);
 
-	const table = createTable(history, {
-		sort: addSortBy({
-			initialSortKeys: [{ id: 'timestamp', order: 'desc' }]
-		}),
-		page: addPagination({
-			initialPageSize: 50
-		}),
-		hideColumns: addHiddenColumns()
-	});
+	const history = $derived(eventHistory.data ?? []);
 
-	const header: HeaderLabel<DeviceBatteryHistory> = ({ id }) =>
+	const table = createTable(
+		toStore(() => history),
+		{
+			sort: addSortBy({
+				initialSortKeys: [{ id: 'timestamp', order: 'desc' }]
+			}),
+			page: addPagination({
+				initialPageSize: 50
+			}),
+			hideColumns: addHiddenColumns()
+		}
+	);
+
+	const header = ({ id }: { id: string }) =>
 		createRender(Localized, { key: `history.columns.${id}` });
 
 	const columns = table.createColumns([
 		table.column({
 			id: 'capacity',
 			header,
-			accessor: (item) => item.state.capacity,
+			accessor: (item: DeviceBatteryHistory) => item.state.capacity,
 			cell: ({ value }) => `${value}%`
 		}),
 		table.column({
 			id: 'remaining_time',
 			header,
-			accessor: (item) => item.state.remaining_time,
+			accessor: (item: DeviceBatteryHistory) => item.state.remaining_time,
 			cell: ({ value }) => dayjs.duration(value, 'seconds').humanize()
 		}),
 		table.column({
 			id: 'timestamp',
 			header,
-			accessor: (item) => item.created_at,
+			accessor: (item: DeviceBatteryHistory) => item.created_at,
 			cell: ({ value }) => createRender(LocalizedDateTime, { value })
 		})
 	]);
@@ -77,12 +85,12 @@
 	const { hiddenColumnIds } = pluginStates.hideColumns;
 </script>
 
-{#if $eventHistory.isPending}
+{#if eventHistory.isPending}
 	<Spinner />
 {/if}
-{#if $eventHistory.error}
+{#if eventHistory.error}
 	An error has occurred:
-	{$eventHistory.error.message}
+	{eventHistory.error.message}
 {/if}
 
 <div class="history">
@@ -142,7 +150,7 @@
 </div>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	.filters {
 		display: flex;

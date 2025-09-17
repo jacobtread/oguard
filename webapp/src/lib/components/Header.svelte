@@ -93,14 +93,14 @@
 			<MenuIcon />
 		</button>
 
-		{#if $loginStateQuery.data !== undefined && $loginStateQuery.data.logged_in}
+		{#if loginStateQuery.data !== undefined && loginStateQuery.data.logged_in}
 			<LogoutButton />
 		{/if}
 	</div>
 </div>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	.header {
 		background-color: #fff;

@@ -24,13 +24,13 @@
 		<Container.Content>
 			<Container.Section indent>
 				<Container.Root>
-					{#if $eventPipelinesQuery.isPending}
+					{#if eventPipelinesQuery.isPending}
 						<Spinner />
-					{:else if $eventPipelinesQuery.error}
+					{:else if eventPipelinesQuery.error}
 						An error has occurred:
-						{$eventPipelinesQuery.error.message}
-					{:else if $eventPipelinesQuery.isSuccess}
-						{#each $eventPipelinesQuery.data as row, i (row.id)}
+						{eventPipelinesQuery.error.message}
+					{:else if eventPipelinesQuery.isSuccess}
+						{#each eventPipelinesQuery.data as row, i (row.id)}
 							<PipelineItem index={i} item={row} />
 						{:else}
 							<div class="empty">
@@ -49,7 +49,7 @@
 </Container.Wrapper>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	.empty {
 		padding: 1rem;

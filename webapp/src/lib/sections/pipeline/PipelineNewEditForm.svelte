@@ -82,7 +82,7 @@
 	async function doUpdatePipeline(pipelineId: PipelineId, data: UpdateEventPipeline) {
 		try {
 			toast.info('Saving pipeline..');
-			await await $updateMutation.mutateAsync({ id: pipelineId, data });
+			await await updateMutation.mutateAsync({ id: pipelineId, data });
 
 			toast.success('Saved changes.');
 		} catch (err) {
@@ -100,7 +100,7 @@
 	async function doCreatePipeline(data: CreateEventPipeline) {
 		try {
 			toast.info('Creating pipeline..');
-			const pipeline = await await $createPipelineMutation.mutateAsync({ data });
+			const pipeline = await await createPipelineMutation.mutateAsync({ data });
 
 			toast.success('Created new pipeline.');
 			goto(`${base}/pipelines/${pipeline.id}`);
@@ -118,7 +118,7 @@
 	async function doTestMutation(pipelineId: PipelineId) {
 		try {
 			toast.info('Starting pipeline test..');
-			await $testMutation.mutateAsync({ id: pipelineId });
+			await testMutation.mutateAsync({ id: pipelineId });
 			toast.success('Test started.');
 		} catch (err) {
 			toast.error('failed to test pipeline');
@@ -272,7 +272,7 @@
 				{#if existing !== undefined}
 					<button
 						class="button"
-						disabled={$updateMutation.isPending}
+						disabled={updateMutation.isPending}
 						on:click={() => {
 							const pipelineActions = actions.map((action) => omit(action, 'id'));
 							doUpdatePipeline(existing.id, {
@@ -374,7 +374,7 @@
 {/if}
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	$borderWidth: 0.1rem;
 	$borderStyle: solid;

@@ -5,7 +5,7 @@
 	<div></div>
 </div>
 
-<style lang="scss">
+<style>
 	.lds-ring,
 	.lds-ring div {
 		box-sizing: border-box;

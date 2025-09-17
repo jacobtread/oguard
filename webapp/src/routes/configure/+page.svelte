@@ -23,14 +23,14 @@
 			<Container.Section>
 				<div class="fls">
 					<div>
-						{#if $deviceStateQuery.isPending}
+						{#if deviceStateQuery.isPending}
 							<Spinner />
 						{/if}
-						{#if $deviceStateQuery.error}
+						{#if deviceStateQuery.error}
 							An error has occurred:
-							{$deviceStateQuery.error.message}
+							{deviceStateQuery.error.message}
 						{/if}
-						{#if $deviceStateQuery.isSuccess}
+						{#if deviceStateQuery.isSuccess}
 							<div class="fl">
 								<div class="fl__text">
 									<h3 class="fl__name">{$t('buzzer.name')}</h3>
@@ -39,7 +39,7 @@
 									</p>
 
 									<span class="toggling">
-										{#if $toggleBuzzerMutation.isPending}
+										{#if toggleBuzzerMutation.isPending}
 											<Spinner />
 											Toggling buzzer...
 										{/if}
@@ -48,10 +48,10 @@
 
 								<div>
 									<Switch.Root
-										disabled={$toggleBuzzerMutation.isPending}
-										checked={$deviceStateQuery.data.buzzer_control}
+										disabled={toggleBuzzerMutation.isPending}
+										checked={deviceStateQuery.data.buzzer_control}
 										onCheckedChange={() => {
-											$toggleBuzzerMutation.mutate();
+											toggleBuzzerMutation.mutate();
 										}}>
 										<Switch.Thumb />
 									</Switch.Root>
@@ -66,7 +66,7 @@
 </Container.Wrapper>
 
 <style lang="scss">
-	@use '$lib/styles/palette.scss' as palette;
+	@use '$styles/palette.scss' as palette;
 
 	$borderWidth: 0.1rem;
 	$borderStyle: solid;
