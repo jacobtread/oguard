@@ -1,21 +1,23 @@
 <script lang="ts">
-	import { base } from '$app/paths';
-
 	import EventsIcon from '~icons/solar/notification-unread-lines-bold-duotone';
 	import HomeIcon from '~icons/solar/home-bold-duotone';
 	import HistoryIcon from '~icons/solar/sort-by-time-bold-duotone';
 	import ConfigureIcon from '~icons/solar/settings-bold-duotone';
 	import PipelineIcon from '~icons/solar/square-sort-horizontal-bold-duotone';
 	import MenuIcon from '~icons/solar/hamburger-menu-outline';
+	import { resolve } from '$app/paths';
 
 	import { page } from '$app/stores';
-	import { t } from 'svelte-i18n';
 	import LogoutButton from '$lib/sections/auth/LogoutButton.svelte';
 	import { createLoginStateQuery } from '$lib/api/login';
+	import { i18nContext } from '../i18n/i18n.svelte';
+	import { base } from '$app/paths';
 
 	const loginStateQuery = createLoginStateQuery();
 
 	let navVisible = false;
+
+	const i18n = i18nContext.get();
 </script>
 
 <div class="header">
@@ -33,54 +35,57 @@
 			<nav class="nav">
 				<ul class="nav-list">
 					<li class="nav-list__item">
-						<a class="nav-link" href="{base}/" class:nav-link--selected={$page.route.id == '/'}>
+						<a
+							class="nav-link"
+							href={resolve('/')}
+							class:nav-link--selected={$page.route.id == '/'}>
 							<HomeIcon class="nav-link__item" />
-							{$t('pages.home')}
+							{i18n.f('pages.home')}
 						</a>
 					</li>
 					<li class="nav-list__item">
 						<a
 							class="nav-link"
-							href="{base}/events"
+							href={resolve('/events')}
 							class:nav-link--selected={$page.route.id == '/events'}>
 							<EventsIcon class="nav-link__item" />
-							{$t('pages.events')}
+							{i18n.f('pages.events')}
 						</a>
 					</li>
 					<li class="nav-list__item">
 						<a
 							class="nav-link"
-							href="{base}/history"
+							href={resolve('/history')}
 							class:nav-link--selected={$page.route.id == '/history'}>
 							<HistoryIcon class="nav-link__item" />
-							{$t('pages.history')}
+							{i18n.f('pages.history')}
 						</a>
 					</li>
 					<li class="nav-list__item">
 						<a
 							class="nav-link"
-							href="{base}/pipelines"
+							href={resolve('/pipelines')}
 							class:nav-link--selected={$page.route.id?.startsWith('/pipelines')}>
 							<PipelineIcon class="nav-link__item" />
-							{$t('pages.pipelines')}
+							{i18n.f('pages.pipelines')}
 						</a>
 					</li>
 					<li class="nav-list__item">
 						<a
 							class="nav-link"
-							href="{base}/configure"
+							href={resolve('/configure')}
 							class:nav-link--selected={$page.route.id == '/configure'}>
 							<ConfigureIcon class="nav-link__item" />
-							{$t('pages.configure')}
+							{i18n.f('pages.configure')}
 						</a>
 					</li>
 					<li class="nav-list__item">
 						<a
 							class="nav-link"
-							href="{base}/realtime"
+							href={resolve('/realtime')}
 							class:nav-link--selected={$page.route.id == '/realtime'}>
 							<ConfigureIcon class="nav-link__item" />
-							{$t('pages.realtime')}
+							{i18n.f('pages.realtime')}
 						</a>
 					</li>
 				</ul>

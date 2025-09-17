@@ -49,10 +49,10 @@
 		"bits-ui": "2.8.11",
 		"date-picker-svelte": "^2.16.0",
 		"dayjs": "^1.11.11",
+		"intl-messageformat": "^10.7.16",
 		"lodash": "^4.17.21",
 		"runed": "0.31.0",
 		"svelte-dnd-action": "^0.9.49",
-		"svelte-i18n": "^4.0.0",
 		"svelte-sonner": "1.0.5"
 	},
 	"overrides": {

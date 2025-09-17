@@ -2,23 +2,25 @@
 	import PipelineItem from '$/lib/sections/pipeline/PipelineItem.svelte';
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import { Container } from '$lib/components';
-	import { t } from 'svelte-i18n';
 	import Spinner from '$/lib/components/Spinner.svelte';
 	import { createEventPipelinesQuery } from '$/lib/api/event-pipelines';
+	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+
+	const i18n = i18nContext.get();
 
 	const eventPipelinesQuery = createEventPipelinesQuery();
 </script>
 
 <svelte:head>
-	<title>OGuard | {$t('pages.pipelines')}</title>
+	<title>OGuard | {i18n.f('pages.pipelines')}</title>
 </svelte:head>
 
 <Container.Wrapper>
-	<Breadcrumbs parts={[{ label: $t('pages.pipelines') }]} />
+	<Breadcrumbs parts={[{ label: i18n.f('pages.pipelines') }]} />
 
 	<Container.Root>
-		<Container.Header title={$t('pages.pipelines')}>
-			<a class="button" href="/pipelines/create">{$t('create')}</a>
+		<Container.Header title={i18n.f('pages.pipelines')}>
+			<a class="button" href="/pipelines/create">{i18n.f('create')}</a>
 		</Container.Header>
 
 		<Container.Content>
@@ -35,7 +37,7 @@
 						{:else}
 							<div class="empty">
 								<p class="empty__text">
-									{$t('pipelines.empty')}
+									{i18n.f('pipelines.empty')}
 								</p>
 							</div>
 						{/each}

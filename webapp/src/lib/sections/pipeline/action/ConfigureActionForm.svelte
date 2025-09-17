@@ -7,7 +7,6 @@
 		type ActionType,
 		type ActionTypeConfig
 	} from '$lib/api/types';
-	import { t } from 'svelte-i18n';
 	import { Collapsible } from 'bits-ui';
 	import ExpandIcon from '~icons/solar/double-alt-arrow-down-bold-duotone';
 	import { slide } from 'svelte/transition';
@@ -21,13 +20,14 @@
 		ActionRepeatConfig,
 		ActionRetryConfig
 	} from '$lib/sections/pipeline/action/config';
-	import type { ComponentType, SvelteComponent } from 'svelte';
+	import type { Component } from 'svelte';
+	import { i18nContext } from '$/lib/i18n/i18n.svelte';
 
 	export let action: Action;
 
-	type ActionConfigComponent<A extends ActionTypeKey> = ComponentType<
-		SvelteComponent<{ config: ActionTypeConfig<A> }>
-	>;
+	const i18n = i18nContext.get();
+
+	type ActionConfigComponent<A extends ActionTypeKey> = Component<{ config: ActionTypeConfig<A> }>;
 
 	// Type mapping between action types and their svelte component
 	type ConfigScreenMap = {
@@ -106,8 +106,8 @@
 	<div class="section">
 		<Collapsible.Root>
 			<Collapsible.Trigger>
-				{$t('action.settings', {
-					values: { setting: $t(`actions.${currentScreenData.config.type}.label`) }
+				{i18n.f('action.settings', {
+					values: { setting: i18n.f(`actions.${currentScreenData.config.type}.label`) }
 				})}
 				<span data-collapsible-icon> <ExpandIcon /> </span>
 			</Collapsible.Trigger>
@@ -131,7 +131,7 @@
 	{:else}
 		<Collapsible.Root>
 			<Collapsible.Trigger>
-				{$t('action.delay')}
+				{i18n.f('action.delay')}
 				<div class="section__actions">
 					<span data-collapsible-icon> <ExpandIcon /> </span>
 					<button class="button" on:click={removeDelay}>Remove</button>
@@ -154,7 +154,7 @@
 	{:else}
 		<Collapsible.Root>
 			<Collapsible.Trigger>
-				{$t('action.repeat')}
+				{i18n.f('action.repeat')}
 				<div class="section__actions">
 					<span data-collapsible-icon> <ExpandIcon /> </span>
 					<button class="button" on:click={removeRepeat}>Remove</button>
@@ -177,7 +177,7 @@
 	{:else}
 		<Collapsible.Root>
 			<Collapsible.Trigger>
-				{$t('action.retry')}
+				{i18n.f('action.retry')}
 				<div class="section__actions">
 					<span data-collapsible-icon> <ExpandIcon /> </span>
 					<button class="button" on:click={removeRetry}>Remove</button>

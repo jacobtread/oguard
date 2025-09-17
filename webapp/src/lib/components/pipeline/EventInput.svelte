@@ -1,16 +1,17 @@
 <script lang="ts">
 	import { EVENT_TYPE_DATA, EVENT_TYPES, EventType } from '$lib/api/types';
 	import { Select } from 'bits-ui';
-	import { t } from 'svelte-i18n';
 	import EventLevelIcon from './EventLevelIcon.svelte';
 	import { fly } from 'svelte/transition';
+	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+	const i18n = i18nContext.get();
 
 	export let value: EventType = EventType.ACFailure;
 
 	$: values = EVENT_TYPES.map((eventType) => ({
 		value: eventType,
-		label: $t(`events.${eventType}.label`),
-		description: $t(`events.${eventType}.description`)
+		label: i18n.f(`events.${eventType}.label`),
+		description: i18n.f(`events.${eventType}.description`)
 	}));
 
 	$: selected = values.find((otherValue) => otherValue.value === value);
@@ -24,11 +25,11 @@
 			value = selected.value;
 		}
 	}}>
-	<Select.Trigger aria-label={$t('event.select')}>
+	<Select.Trigger aria-label={i18n.f('event.select')}>
 		<div class="event-current-item">
 			<EventLevelIcon level={EVENT_TYPE_DATA[value].level} />
 
-			<Select.Value placeholder={$t('event.select')} />
+			<Select.Value placeholder={i18n.f('event.select')} />
 		</div>
 	</Select.Trigger>
 	<Select.Content
@@ -57,7 +58,7 @@
 				</Select.Item>
 			{/if}
 		{:else}
-			<span>{$t('no_results')}</span>
+			<span>{i18n.f('no_results')}</span>
 		{/each}
 	</Select.Content>
 	<Select.Input bind:value />

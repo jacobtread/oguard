@@ -7,15 +7,17 @@
 	} from '$lib/api/types';
 	import { Select } from 'bits-ui';
 	import DurationInput from '$lib/components/DurationInput.svelte';
-	import { t } from 'svelte-i18n';
 	import { fly } from 'svelte/transition';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
+
+	const i18n = i18nContext.get();
 
 	export let retry: ActionRetry;
 
 	$: options = ACTION_RETRY_DELAY_KEYS.map((value) => ({
 		value,
-		label: $t(`action.retry_keys.${value}.label`),
-		description: $t(`action.retry_keys.${value}.description`)
+		label: i18n.f(`action.retry_keys.${value}.label`),
+		description: i18n.f(`action.retry_keys.${value}.description`)
 	}));
 
 	$: selected = options.find((value) => value.value === retry.delay.type);
@@ -35,7 +37,7 @@
 	<p class="field__description">Method of delaying the next retry attempt</p>
 
 	<Select.Root items={options} onSelectedChange={onChangeType} {selected}>
-		<Select.Trigger>{$t(`action.retry_keys.${retry.delay.type}.label`)}</Select.Trigger>
+		<Select.Trigger>{i18n.f(`action.retry_keys.${retry.delay.type}.label`)}</Select.Trigger>
 		<Select.Content
 			transition={fly}
 			transitionConfig={{ duration: 150, y: -10 }}

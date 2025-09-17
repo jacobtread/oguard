@@ -5,8 +5,10 @@
 		createStartBatteryTestMutation
 	} from '$/lib/api/device';
 	import Spinner from '$/lib/components/Spinner.svelte';
+	import { i18nContext } from '$/lib/i18n/i18n.svelte';
 	import { Container } from '$lib/components';
-	import { t } from 'svelte-i18n';
+
+	const i18n = i18nContext.get();
 
 	const deviceStateQuery = createDeviceStatePollingQuery(1000);
 	const startBatteryTestMutation = createStartBatteryTestMutation();
@@ -14,12 +16,12 @@
 </script>
 
 <svelte:head>
-	<title>OGuard | {$t('pages.realtime')}</title>
+	<title>OGuard | {i18n.f('pages.realtime')}</title>
 </svelte:head>
 
 <Container.Wrapper>
 	<Container.Root>
-		<Container.Header title={$t('pages.realtime')} />
+		<Container.Header title={i18n.f('pages.realtime')} />
 		<Container.Content>
 			<Container.Section>
 				<div class="fls">
@@ -34,28 +36,28 @@
 						{#if deviceStateQuery.isSuccess}
 							<div class="fl">
 								<div class="fl__text">
-									<h3 class="fl__name">{$t('battery_self_test.name')}</h3>
+									<h3 class="fl__name">{i18n.f('battery_self_test.name')}</h3>
 									<p class="fl__description">
-										{$t('battery_self_test.description')}
+										{i18n.f('battery_self_test.description')}
 									</p>
 
 									<span class="toggling">
 										{#if startBatteryTestMutation.isPending}
 											<Spinner />
-											{$t('battery_self_test.starting')}
+											{i18n.f('battery_self_test.starting')}
 										{/if}
 									</span>
 									<span class="toggling">
 										{#if cancelBatteryTestMutation.isPending}
 											<Spinner />
-											{$t('battery_self_test.cancelling')}
+											{i18n.f('battery_self_test.cancelling')}
 										{/if}
 									</span>
 
 									{#if deviceStateQuery.data.battery_self_test}
 										<span class="toggling">
 											<Spinner />
-											{$t('battery_self_test.running')}
+											{i18n.f('battery_self_test.running')}
 										</span>
 									{/if}
 								</div>
@@ -66,14 +68,14 @@
 											class="button"
 											on:click={() => cancelBatteryTestMutation.mutate()}
 											disabled={cancelBatteryTestMutation.isPending}>
-											{$t('battery_self_test.cancel')}
+											{i18n.f('battery_self_test.cancel')}
 										</button>
 									{:else}
 										<button
 											class="button"
 											on:click={() => startBatteryTestMutation.mutate()}
 											disabled={startBatteryTestMutation.isPending}>
-											{$t('battery_self_test.start')}
+											{i18n.f('battery_self_test.start')}
 										</button>
 									{/if}
 								</div>

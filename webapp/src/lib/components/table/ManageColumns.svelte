@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { i18nContext } from '$/lib/i18n/i18n.svelte';
 	import { Popover, Switch } from 'bits-ui';
-	import { t } from 'svelte-i18n';
 	import type { Writable } from 'svelte/store';
 	import { fly } from 'svelte/transition';
 
 	import SettingsIcon from '~icons/solar/settings-bold-duotone';
+
+	const i18n = i18nContext.get();
 
 	export let translateKey: string;
 	export let columnIds: string[];
@@ -43,7 +45,7 @@
 						}}>
 						<Switch.Thumb />
 					</Switch.Root>
-					<label for="hide-{id}">{$t(`${translateKey}.${id}`)}</label>
+					<label for="hide-{id}">{i18n.f(`${translateKey}.${id}`)}</label>
 				</div>
 			{/each}
 		</div>

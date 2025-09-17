@@ -5,11 +5,13 @@
 
 	import Spinner from '$/lib/components/Spinner.svelte';
 	import { Container } from '$/lib/components';
-	import { t } from 'svelte-i18n';
 	import Alert, { AlertType } from '$/lib/components/Alert.svelte';
 	import { createBatteryInfoPollingQuery, createDeviceStatePollingQuery } from '$/lib/api/device';
 	import { createDeviceBatteryHistoryQuery } from '$/lib/api/history';
 	import BatteryCapacityChart from '$/lib/components/charts/BatteryCapacityChart.svelte';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
+
+	const i18n = i18nContext.get();
 
 	const batteryInfoQuery = createBatteryInfoPollingQuery(3000);
 	const deviceStateQuery = createDeviceStatePollingQuery(3000);
@@ -28,7 +30,7 @@
 </script>
 
 <svelte:head>
-	<title>OGuard | {$t('pages.home')}</title>
+	<title>OGuard | {i18n.f('pages.home')}</title>
 </svelte:head>
 
 <div class="grid">

@@ -5,9 +5,11 @@
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { Dialog } from 'bits-ui';
-	import { t } from 'svelte-i18n';
 	import { toast } from 'svelte-sonner';
 	import { fade, scale } from 'svelte/transition';
+	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+
+	const i18n = i18nContext.get();
 
 	// The pipeline to delete
 	export let pipeline: EventPipeline;
@@ -47,10 +49,10 @@
 	<Dialog.Portal>
 		<Dialog.Overlay transition={fade} transitionConfig={{ duration: 300 }} />
 		<Dialog.Content transition={scale} transitionConfig={{ duration: 300, start: 0.95 }}>
-			<div class="dialog__header"><h3>{$t('delete_pipeline.title')}</h3></div>
+			<div class="dialog__header"><h3>{i18n.f('delete_pipeline.title')}</h3></div>
 
 			<div class="dialog__content">
-				<p>{$t('delete_pipeline.message')}</p>
+				<p>{i18n.f('delete_pipeline.message')}</p>
 
 				{#if deleteMutation.error !== null}
 					<p class="error">{deleteMutation.error.message}</p>

@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { ActionTypeKey } from '$lib/api/types';
-	import { t } from 'svelte-i18n';
 	import ActionTypeIcon from './ActionTypeIcon.svelte';
+	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+
+	const i18n = i18nContext.get();
 
 	export let actionType: ActionTypeKey;
 	export let selected: boolean;
@@ -16,8 +18,8 @@
 	on:click={onClick}>
 	<div class="item__icon"><ActionTypeIcon {actionType} /></div>
 	<div class="item__content">
-		<p class="item__name">{$t(`actions.${actionType}.label`)}</p>
-		<p class="item__description">{$t(`actions.${actionType}.description`)}</p>
+		<p class="item__name">{i18n.f(`actions.${actionType}.label`)}</p>
+		<p class="item__description">{i18n.f(`actions.${actionType}.description`)}</p>
 	</div>
 </button>
 

@@ -34,7 +34,9 @@
 
 	import { flip } from 'svelte/animate';
 	import { toast } from 'svelte-sonner';
-	import { t } from 'svelte-i18n';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
+
+	const i18n = i18nContext.get();
 
 	// Existing pipeline to edit if editing
 	export let existing: EventPipeline | undefined = undefined;
@@ -173,7 +175,9 @@
 
 	<Container.Root>
 		<Container.Header
-			title={existing !== undefined ? $t('pipelines.editing_title') : $t('pipelines.create_title')}>
+			title={existing !== undefined
+				? i18n.f('pipelines.editing_title')
+				: i18n.f('pipelines.create_title')}>
 			<div class="actions">
 				{#if existing !== undefined}
 					<span class="pipeline-name">{existing.name}</span>

@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { createDeviceStatePollingQuery, createToggleBuzzerMutation } from '$/lib/api/device';
-	import Spinner from '$/lib/components/Spinner.svelte';
+	import { createDeviceStatePollingQuery, createToggleBuzzerMutation } from '$lib/api/device';
+	import Spinner from '$lib/components/Spinner.svelte';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
 	import { Container } from '$lib/components';
 	import { Switch } from 'bits-ui';
-	import { t } from 'svelte-i18n';
+
+	const i18n = i18nContext.get();
 
 	// Query device state, refetching every second
 	const deviceStateQuery = createDeviceStatePollingQuery(1000);
@@ -13,12 +15,12 @@
 </script>
 
 <svelte:head>
-	<title>OGuard | {$t('pages.configure')}</title>
+	<title>OGuard | {i18n.f('pages.configure')}</title>
 </svelte:head>
 
 <Container.Wrapper>
 	<Container.Root>
-		<Container.Header title={$t('pages.configure')} />
+		<Container.Header title={i18n.f('pages.configure')} />
 		<Container.Content>
 			<Container.Section>
 				<div class="fls">
@@ -33,9 +35,9 @@
 						{#if deviceStateQuery.isSuccess}
 							<div class="fl">
 								<div class="fl__text">
-									<h3 class="fl__name">{$t('buzzer.name')}</h3>
+									<h3 class="fl__name">{i18n.f('buzzer.name')}</h3>
 									<p class="fl__description">
-										{$t('buzzer.description')}
+										{i18n.f('buzzer.description')}
 									</p>
 
 									<span class="toggling">

@@ -14,7 +14,6 @@
 	import utc from 'dayjs/plugin/utc';
 	import timezone from 'dayjs/plugin/timezone';
 
-	import { getLocaleFromNavigator, init, register } from 'svelte-i18n';
 	import { Toaster } from 'svelte-sonner';
 	import { navigating, page } from '$app/stores';
 	import { queryClient } from '$lib/api/utils';
@@ -23,14 +22,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import Alert, { AlertType } from '$/lib/components/Alert.svelte';
 	import LoadingScreen from '$/lib/sections/LoadingScreen.svelte';
-
-	register('en', () => import('../locales/en.json'));
-
-	const i18nPromise = init({
-		fallbackLocale: 'en',
-		initialLocale: getLocaleFromNavigator() ?? 'en',
-		ignoreTag: false
-	});
+	import I18nProvider from "$lib/components/i18n/I18nProvider.svelte"
 
 	dayjs.extend(duration);
 	dayjs.extend(relativeTime, {
@@ -78,10 +70,8 @@
 	<title>OGuard</title>
 </svelte:head>
 
-<QueryClientProvider client={queryClient}>
-	{#await i18nPromise}
-		<LoadingScreen />
-	{:then}
+<I18nProvider>
+	<QueryClientProvider client={queryClient}>
 		<div class="layout">
 			<Header />
 			{#if $navigating}
@@ -94,14 +84,12 @@
 				</main>
 			{/if}
 		</div>
-	{:catch error}
-		<Alert type={AlertType.ERROR} message={`Failed to load translations: ${error.messages}`} />
-	{/await}
+		
+		<Toaster />
 
-	<Toaster />
-
-	<SvelteQueryDevtools />
-</QueryClientProvider>
+		<SvelteQueryDevtools />
+	</QueryClientProvider>
+</I18nProvider>
 
 <style lang="scss">
 	.layout {

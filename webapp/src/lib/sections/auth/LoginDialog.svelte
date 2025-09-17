@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { t } from 'svelte-i18n';
-
 	import Container from '$lib/components/container';
 	import { createLoginMutation } from '$/lib/api/login';
+	import { i18nContext } from '$/lib/i18n/i18n.svelte';
 
 	export let open = true;
 	export let onClose: () => void = () => (open = false);
+
+	const i18n = i18nContext.get();
 
 	const loginMutation = createLoginMutation();
 
@@ -25,13 +26,13 @@
 <Container.Wrapper maxWidth="xs">
 	<Container.Root>
 		<form on:submit|preventDefault={onSubmitLogin}>
-			<Container.Header dark title={$t('login')}></Container.Header>
+			<Container.Header dark title={i18n.f('login')}></Container.Header>
 
 			<Container.Content>
 				<Container.Section>
-					<p class="description">{$t('login_description')}</p>
+					<p class="description">{i18n.f('login_description')}</p>
 					<div class="field">
-						<label class="field__label" for="password">{$t('password')}</label>
+						<label class="field__label" for="password">{i18n.f('password')}</label>
 						<input class="field__input input" type="password" bind:value={password} required />
 					</div>
 				</Container.Section>
@@ -42,7 +43,7 @@
 					<button
 						type="submit"
 						class="button"
-						disabled={password.length === 0 || loginMutation.isPending}>{$t('login')}</button>
+						disabled={password.length === 0 || loginMutation.isPending}>{i18n.f('login')}</button>
 					<div style="flex: auto;"></div>
 					<slot name="actions" />
 				</div>

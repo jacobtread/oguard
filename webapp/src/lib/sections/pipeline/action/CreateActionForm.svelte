@@ -5,12 +5,14 @@
 		getDefaultActionType,
 		type Action
 	} from '$lib/api/types';
-	import { t } from 'svelte-i18n';
 	import ActionTypeItem from './ActionTypeItem.svelte';
 	import ConfigureActionForm from './ConfigureActionForm.svelte';
 	import { fade, fly, scale } from 'svelte/transition';
 	import { Dialog } from 'bits-ui';
 	import { cloneDeep } from 'lodash';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
+
+	const i18n = i18nContext.get();
 
 	export let open: boolean;
 
@@ -49,7 +51,7 @@
 	};
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-	$: open, setDefaults();
+	$: (open, setDefaults());
 </script>
 
 <Dialog.Root
@@ -86,8 +88,8 @@
 						{:else}
 							<div class="dialog__subheader">
 								<h3>
-									{$t('action.configure', {
-										values: { action: $t(`actions.${action.ty.type}.label`) }
+									{i18n.f('action.configure', {
+										values: { action: i18n.f(`actions.${action.ty.type}.label`) }
 									})}
 								</h3>
 							</div>

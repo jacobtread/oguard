@@ -4,12 +4,11 @@
 	import { DateInput } from 'date-picker-svelte';
 	import DateIcon from '~icons/solar/calendar-date-bold-duotone';
 	import { toStore } from 'svelte/store';
-	import { t } from 'svelte-i18n';
 	import { Container } from '$lib/components';
-	import Breadcrumbs from '$/lib/components/Breadcrumbs.svelte';
+	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import { fly } from 'svelte/transition';
-	import Spinner from '$/lib/components/Spinner.svelte';
-	import EventLevelIcon from '$/lib/components/pipeline/EventLevelIcon.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
+	import EventLevelIcon from '$lib/components/pipeline/EventLevelIcon.svelte';
 	import { createRender, createTable, Render, Subscribe } from '@humanspeak/svelte-headless-table';
 	import {
 		addHiddenColumns,
@@ -19,11 +18,14 @@
 
 	import SortDesc from '~icons/solar/alt-arrow-down-bold';
 	import SortAsc from '~icons/solar/alt-arrow-up-bold';
-	import Localized from '$/lib/components/i18n/Localized.svelte';
-	import LocalizedDateTime from '$/lib/components/i18n/LocalizedDateTime.svelte';
-	import Pagination from '$/lib/components/Pagination.svelte';
-	import ManageColumns from '$/lib/components/table/ManageColumns.svelte';
-	import { createEventHistoryQuery } from '$/lib/api/history';
+	import Localized from '$lib/components/i18n/Localized.svelte';
+	import LocalizedDateTime from '$lib/components/i18n/LocalizedDateTime.svelte';
+	import Pagination from '$lib/components/Pagination.svelte';
+	import ManageColumns from '$lib/components/table/ManageColumns.svelte';
+	import { createEventHistoryQuery } from '$lib/api/history';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
+
+	const i18n = i18nContext.get();
 
 	const currentDate = dayjs();
 
@@ -97,20 +99,20 @@
 </script>
 
 <svelte:head>
-	<title>OGuard | {$t('pages.events')}</title>
+	<title>OGuard | {i18n.f('pages.events')}</title>
 </svelte:head>
 
 <Container.Wrapper>
-	<Breadcrumbs parts={[{ label: $t('pages.events') }]} />
+	<Breadcrumbs parts={[{ label: i18n.f('pages.events') }]} />
 
 	<Container.Root>
-		<Container.Header title={$t('pages.events')}></Container.Header>
+		<Container.Header title={i18n.f('pages.events')}></Container.Header>
 		<Container.Section>
 			<div class="top-filters">
 				<div class=" date-input">
 					<label class="date-input__label" for="startDate">
 						<DateIcon />
-						{$t('event.filters.start')}
+						{i18n.f('event.filters.start')}
 					</label>
 					<DateInput id="startDate" timePrecision="minute" bind:value={start} />
 				</div>
@@ -118,7 +120,7 @@
 				<div class=" date-input">
 					<label class="date-input__label" for="endDate">
 						<DateIcon />
-						{$t('event.filters.end')}
+						{i18n.f('event.filters.end')}
 					</label>
 					<DateInput id="endDate" timePrecision="minute" bind:value={end} />
 				</div>
@@ -142,7 +144,7 @@
 					</div>
 				</Container.Root>
 
-				<table {...$tableAttrs}>
+				<table {...i18n.fableAttrs}>
 					<thead>
 						{#each $headerRows as headerRow (headerRow.id)}
 							<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
@@ -167,7 +169,7 @@
 							</Subscribe>
 						{/each}
 					</thead>
-					<tbody {...$tableBodyAttrs}>
+					<tbody {...i18n.fableBodyAttrs}>
 						{#each $pageRows as row, index (row.id)}
 							<Subscribe attrs={row.attrs()} let:attrs rowProps={row.props()}>
 								<tr {...attrs} in:fly|global={{ delay: index * 25, duration: 100, x: -10 }}>

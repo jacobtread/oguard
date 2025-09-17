@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { t } from 'svelte-i18n';
+	import { i18nContext } from '$/lib/i18n/i18n.svelte';
 
 	export let key: string;
+
+	const i18n = i18nContext.get();
 </script>
 
-{$t(key)}
+{i18n.f(key)}

@@ -4,7 +4,6 @@
 	import DateIcon from '~icons/solar/calendar-date-bold-duotone';
 	import { Select } from 'bits-ui';
 
-	import { t } from 'svelte-i18n';
 	import { fly } from 'svelte/transition';
 
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
@@ -12,6 +11,9 @@
 
 	import DeviceBatteryHistoryTable from '$lib/sections/history/DeviceBatteryHistoryTable.svelte';
 	import DeviceStateHistoryTable from '$lib/sections/history/DeviceStateHistoryTable.svelte';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
+
+	const i18n = i18nContext.get();
 
 	const currentDate = dayjs();
 
@@ -28,8 +30,8 @@
 	const options = $derived(
 		[HistoryType.Battery, HistoryType.Device].map((value) => ({
 			value,
-			label: $t(`history.types.${value}.label`),
-			description: $t(`history.types.${value}.description`)
+			label: i18n.f(`history.types.${value}.label`),
+			description: i18n.f(`history.types.${value}.description`)
 		}))
 	);
 
@@ -42,19 +44,19 @@
 </script>
 
 <svelte:head>
-	<title>OGuard | {$t('pages.history')}</title>
+	<title>OGuard | {i18n.f('pages.history')}</title>
 </svelte:head>
 
 <Container.Wrapper>
-	<Breadcrumbs parts={[{ label: $t('pages.history') }]} />
+	<Breadcrumbs parts={[{ label: i18n.f('pages.history') }]} />
 
 	<Container.Root>
-		<Container.Header title={$t('pages.history')}></Container.Header>
+		<Container.Header title={i18n.f('pages.history')}></Container.Header>
 		<Container.Section>
 			<div class="filters">
 				<div class=" date-input">
 					<Select.Root items={options} onValueChange={onChangeType} {selected}>
-						<Select.Trigger>{$t(`history.types.${historyType}.label`)}</Select.Trigger>
+						<Select.Trigger>{i18n.f(`history.types.${historyType}.label`)}</Select.Trigger>
 						<Select.Content
 							transition={fly}
 							transitionConfig={{ duration: 150, y: -10 }}
@@ -76,7 +78,7 @@
 				<div class=" date-input">
 					<label class="date-input__label" for="startDate">
 						<DateIcon />
-						{$t('event.filters.start')}
+						{i18n.f('event.filters.start')}
 					</label>
 					<DateInput id="startDate" timePrecision="minute" bind:value={start} />
 				</div>
@@ -84,7 +86,7 @@
 				<div class=" date-input">
 					<label class="date-input__label" for="endDate">
 						<DateIcon />
-						{$t('event.filters.end')}
+						{i18n.f('event.filters.end')}
 					</label>
 					<DateInput id="endDate" timePrecision="minute" bind:value={end} />
 				</div>

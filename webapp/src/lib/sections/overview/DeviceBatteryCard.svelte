@@ -2,8 +2,8 @@
 	import SolarRefreshLineDuotone from '~icons/solar/refresh-line-duotone';
 	import Container from '$lib/components/container';
 
-	import { t } from 'svelte-i18n';
 	import dayjs from 'dayjs';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
 
 	// The current capacity % of the battery
 	export let capacity: number;
@@ -20,6 +20,8 @@
 	// Timestamp in human readable formats
 	const remainingTimeFormatted = dayjs.duration(remainingTime, 'seconds').humanize();
 	const lastUpdatedFormatted = dayjs(lastUpdated).format('LT');
+
+	const i18n = i18nContext.get();
 </script>
 
 <div class="wrapper">
@@ -38,23 +40,23 @@
 
 			<p class="battery-capacity">
 				<span class="battery-capacity__value">{capacity}%</span>
-				{$t('capacity')}
+				{i18n.f('capacity')}
 			</p>
 
 			<p class="battery-remaining">
-				{$t('remaining', { values: { duration: remainingTimeFormatted } })}
+				{i18n.f('remaining', { values: { duration: remainingTimeFormatted } })}
 			</p>
 		</div>
 
 		<div class="card-content">
 			<p class="battery-last-fetched">
-				{$t('last_fetched', { values: { at: lastUpdatedFormatted } })}
+				{i18n.f('last_fetched', { values: { at: lastUpdatedFormatted } })}
 			</p>
 
 			{#if refreshing}
 				<div class="refresh">
 					<SolarRefreshLineDuotone />
-					{$t('refreshing')}
+					{i18n.f('refreshing')}
 				</div>
 			{/if}
 		</div>
