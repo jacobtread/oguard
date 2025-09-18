@@ -1,7 +1,11 @@
 <script lang="ts">
 	import type { ActionTypeConfig, ActionTypeKey } from '$lib/api/types';
 
-	export let config: ActionTypeConfig<ActionTypeKey.USPShutdown>;
+	interface Props {
+		config: ActionTypeConfig<ActionTypeKey.USPShutdown>;
+	}
+
+	let { config = $bindable() }: Props = $props();
 </script>
 
 <div class="field">

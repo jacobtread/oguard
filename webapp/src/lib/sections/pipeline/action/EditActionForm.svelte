@@ -4,24 +4,32 @@
 	import { fade, scale } from 'svelte/transition';
 	import { Dialog } from 'bits-ui';
 	import { cloneDeep } from 'lodash';
-	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
+	import { watch } from 'runed';
 
 	const i18n = i18nContext.get();
 
-	export let open: boolean;
-	export let action: Action | null;
+	interface Props {
+		open: boolean;
+		action: Action | null;
 
-	export let onSubmit: (action: Action) => void;
-	export let onCancel: () => void;
+		onSubmit: (action: Action) => void;
+		onCancel: () => void;
+	}
+
+	const { open, action, onSubmit, onCancel }: Props = $props();
 
 	// Operate on a copy of the action rather than the action itself
-	let editingAction = cloneDeep(action);
+	let editingAction = $state(cloneDeep(action));
 
 	function setEditingAction(action: Action | null) {
 		editingAction = cloneDeep(action);
 	}
 
-	$: setEditingAction(action);
+	watch(
+		() => action,
+		(action) => setEditingAction(action)
+	);
 </script>
 
 <Dialog.Root
@@ -30,32 +38,45 @@
 		if (!open) onCancel();
 	}}>
 	<Dialog.Portal>
-		<Dialog.Overlay transition={fade} transitionConfig={{ duration: 300 }} />
-		<Dialog.Content transition={scale} transitionConfig={{ duration: 300, start: 0.95 }}>
-			<div class="dialog__header"><h3>Edit Action</h3></div>
+		<Dialog.Overlay>
+			{#snippet child({ open, props })}
+				{#if open}
+					<div {...props} transition:fade={{ duration: 300 }}></div>
+				{/if}
+			{/snippet}
+		</Dialog.Overlay>
+		<Dialog.Content>
+			{#snippet child({ open, props })}
+				{#if open}
+					<div {...props} transition:scale={{ duration: 300, start: 0.95 }}>
+						<div class="dialog__header"><h3>Edit Action</h3></div>
 
-			{#if editingAction !== null}
-				<div class="dialog__subheader">
-					<h3>
-						{i18n.f('action.configure', {
-							values: { action: i18n.f(`actions.${editingAction.ty.type}.label`) }
-						})}
-					</h3>
-				</div>
+						{#if editingAction !== null}
+							<div class="dialog__subheader">
+								<h3>
+									{i18n.f('action.configure', {
+										values: { action: i18n.f(`actions.${editingAction.ty.type}.label`) }
+									})}
+								</h3>
+							</div>
 
-				<div class="dialog__content">
-					<ConfigureActionForm bind:action={editingAction} />
-				</div>
-				<div class="dialog__footer">
-					<div class="dialog__footer__actions">
-						<button
-							class="button"
-							on:click={() => editingAction !== null && onSubmit(editingAction)}>Update</button>
-						<div style="flex: auto;"></div>
-						<button class="button button--secondary" on:click={onCancel}>Cancel</button>
+							<div class="dialog__content">
+								<ConfigureActionForm bind:action={editingAction} />
+							</div>
+							<div class="dialog__footer">
+								<div class="dialog__footer__actions">
+									<button
+										class="button"
+										onclick={() => editingAction !== null && onSubmit(editingAction)}
+										>Update</button>
+									<div style="flex: auto;"></div>
+									<button class="button button--secondary" onclick={onCancel}>Cancel</button>
+								</div>
+							</div>
+						{/if}
 					</div>
-				</div>
-			{/if}
+				{/if}
+			{/snippet}
 		</Dialog.Content>
 	</Dialog.Portal>
 </Dialog.Root>

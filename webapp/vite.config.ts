@@ -11,5 +11,13 @@ export default defineConfig({
 	],
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}']
+	},
+	build: {
+		rollupOptions: {
+			onwarn(warning, defaultHandler) {
+				if (warning.code === 'PURE_ANNOTATION') return;
+				defaultHandler(warning);
+			}
+		}
 	}
 });

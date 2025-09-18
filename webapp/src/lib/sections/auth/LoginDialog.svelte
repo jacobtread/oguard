@@ -1,18 +1,26 @@
 <script lang="ts">
 	import Container from '$lib/components/container';
-	import { createLoginMutation } from '$/lib/api/login';
-	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+	import { createLoginMutation } from '$lib/api/login';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
+	import type { Snippet } from 'svelte';
 
-	export let open = true;
-	export let onClose: () => void = () => (open = false);
+	interface Props {
+		open?: boolean;
+		onClose?: VoidFunction;
+		actions?: Snippet;
+	}
+
+	let { open = $bindable(true), onClose = () => (open = false), actions }: Props = $props();
 
 	const i18n = i18nContext.get();
 
 	const loginMutation = createLoginMutation();
 
-	let password = '';
+	let password = $state('');
 
-	const onSubmitLogin = async () => {
+	const onSubmitLogin = async (event: SubmitEvent) => {
+		event.preventDefault();
+
 		try {
 			await loginMutation.mutateAsync(password);
 		} catch (err) {
@@ -25,7 +33,7 @@
 
 <Container.Wrapper maxWidth="xs">
 	<Container.Root>
-		<form on:submit|preventDefault={onSubmitLogin}>
+		<form onsubmit={onSubmitLogin}>
 			<Container.Header dark title={i18n.f('login')}></Container.Header>
 
 			<Container.Content>
@@ -45,7 +53,8 @@
 						class="button"
 						disabled={password.length === 0 || loginMutation.isPending}>{i18n.f('login')}</button>
 					<div style="flex: auto;"></div>
-					<slot name="actions" />
+
+					{@render actions?.()}
 				</div>
 			</Container.Footer>
 		</form>

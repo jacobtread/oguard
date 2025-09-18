@@ -1,11 +1,15 @@
 <script lang="ts">
-	import type { DeviceBatteryHistory } from '$/lib/api/types';
+	import type { DeviceBatteryHistory } from '$lib/api/types';
 	import { AreaChart, ScaleTypes, type AreaChartOptions } from '@carbon/charts-svelte';
 	import dayjs from 'dayjs';
 
-	export let history: DeviceBatteryHistory[];
+	interface Props {
+		history: DeviceBatteryHistory[];
+	}
 
-	const options: AreaChartOptions = {
+	const { history }: Props = $props();
+
+	const options: AreaChartOptions = $derived({
 		title: 'Battery Capacity (Today)',
 		canvasZoom: { enabled: true },
 		locale: {
@@ -32,12 +36,14 @@
 
 		curve: 'curveMonotoneX',
 		height: '400px'
-	};
+	});
 
-	const data = history.map((value) => ({
-		date: value.created_at,
-		value: value.state.capacity
-	}));
+	const data = $derived(
+		history.map((value) => ({
+			date: value.created_at,
+			value: value.state.capacity
+		}))
+	);
 </script>
 
 <AreaChart {data} {options} style="padding:2rem;height:400px;" />

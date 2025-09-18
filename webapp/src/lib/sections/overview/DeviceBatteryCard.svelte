@@ -5,23 +5,27 @@
 	import dayjs from 'dayjs';
 	import { i18nContext } from '$lib/i18n/i18n.svelte';
 
-	// The current capacity % of the battery
-	export let capacity: number;
+	interface Props {
+		// The current capacity % of the battery
+		capacity: number;
 
-	// Remaining time in seconds the battery has left
-	export let remainingTime: number;
+		// Remaining time in seconds the battery has left
+		remainingTime: number;
 
-	// When the device battery was last updated
-	export let lastUpdated: number;
+		// When the device battery was last updated
+		lastUpdated: number;
 
-	// Whether new data is currently being requested
-	export let refreshing: boolean;
+		// Whether new data is currently being requested
+		refreshing: boolean;
+	}
 
-	// Timestamp in human readable formats
-	const remainingTimeFormatted = dayjs.duration(remainingTime, 'seconds').humanize();
-	const lastUpdatedFormatted = dayjs(lastUpdated).format('LT');
+	const { capacity, remainingTime, lastUpdated, refreshing }: Props = $props();
 
 	const i18n = i18nContext.get();
+
+	// Timestamp in human readable formats
+	const remainingTimeFormatted = $derived(dayjs.duration(remainingTime, 'seconds').humanize());
+	const lastUpdatedFormatted = $derived(dayjs(lastUpdated).format('LT'));
 </script>
 
 <div class="wrapper">
@@ -63,7 +67,7 @@
 	</Container.Root>
 </div>
 
-<style lang="scss">
+<style>
 	.battery-header {
 		display: block;
 		width: 100%;
@@ -100,10 +104,10 @@
 		font-weight: bold;
 		margin-top: 0.75em;
 		margin-bottom: 0.5em;
+	}
 
-		&__value {
-			color: #fff;
-		}
+	.battery-capacity__value {
+		color: #fff;
 	}
 
 	.battery-remaining {
@@ -142,18 +146,18 @@
 		background: linear-gradient(90deg, #30b455 25%, #3b8650 50%, #30b455 75%);
 		background-size: 200% 100%;
 		animation: charge 2s infinite ease;
+	}
 
-		&.warn {
-			background: linear-gradient(90deg, #efaf13 25%, #b48d2a 50%, #efaf13 75%);
-			background-size: 200% 100%;
-			animation: charge 2s infinite reverse ease;
-		}
+	.battery-level.warn {
+		background: linear-gradient(90deg, #efaf13 25%, #b48d2a 50%, #efaf13 75%);
+		background-size: 200% 100%;
+		animation: charge 2s infinite reverse ease;
+	}
 
-		&.alert {
-			background: linear-gradient(90deg, #e81309 25%, #86201b 50%, #e81309 75%);
-			background-size: 200% 100%;
-			animation: charge 2s infinite reverse ease;
-		}
+	.battery-level.alert {
+		background: linear-gradient(90deg, #e81309 25%, #86201b 50%, #e81309 75%);
+		background-size: 200% 100%;
+		animation: charge 2s infinite reverse ease;
 	}
 
 	@keyframes charge {

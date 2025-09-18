@@ -12,6 +12,7 @@
 	import DeviceBatteryHistoryTable from '$lib/sections/history/DeviceBatteryHistoryTable.svelte';
 	import DeviceStateHistoryTable from '$lib/sections/history/DeviceStateHistoryTable.svelte';
 	import { i18nContext } from '$lib/i18n/i18n.svelte';
+	import { wrap } from 'lodash';
 
 	const i18n = i18nContext.get();
 
@@ -37,9 +38,9 @@
 
 	const selected = $derived(options.find((value) => value.value === historyType));
 
-	function onChangeType(option: { value: HistoryType } | undefined) {
-		if (option === undefined) return;
-		historyType = option.value;
+	function onChangeType(value: string) {
+		if (value === undefined) return;
+		historyType = value as HistoryType;
 	}
 </script>
 
@@ -55,23 +56,30 @@
 		<Container.Section>
 			<div class="filters">
 				<div class=" date-input">
-					<Select.Root items={options} onValueChange={onChangeType} {selected}>
+					<Select.Root
+						type="single"
+						items={options}
+						value={historyType}
+						onValueChange={onChangeType}>
 						<Select.Trigger>{i18n.f(`history.types.${historyType}.label`)}</Select.Trigger>
-						<Select.Content
-							transition={fly}
-							transitionConfig={{ duration: 150, y: -10 }}
-							sideOffset={8}
-							sameWidth={false}>
-							{#each options as option}
-								<Select.Item value={option.value} label={option.label}>
-									<div class="history-type">
-										<p class="history-type__label">{option.label}</p>
-										<p class="history-type__description">{option.description}</p>
-									</div>
-								</Select.Item>
-							{/each}
+						<Select.Content sideOffset={8}>
+							{#snippet child({ open, wrapperProps, props })}
+								<div {...wrapperProps}>
+									{#if open}
+										<div {...props} transition:fly={{ duration: 150, y: -10 }}>
+											{#each options as option}
+												<Select.Item value={option.value} label={option.label}>
+													<div class="history-type">
+														<p class="history-type__label">{option.label}</p>
+														<p class="history-type__description">{option.description}</p>
+													</div>
+												</Select.Item>
+											{/each}
+										</div>
+									{/if}
+								</div>
+							{/snippet}
 						</Select.Content>
-						<Select.Input value={historyType} />
 					</Select.Root>
 				</div>
 

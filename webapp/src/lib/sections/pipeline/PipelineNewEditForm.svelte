@@ -11,15 +11,15 @@
 		createCreateEventPipelineMutation,
 		createTestEventPipelineMutation,
 		createUpdateEventPipelineMutation
-	} from '$/lib/api/event-pipelines';
+	} from '$lib/api/event-pipelines';
 
 	import { goto } from '$app/navigation';
-	import { base } from '$app/paths';
+	import { resolve } from '$app/paths';
 
-	import ActionItem from '$/lib/sections/pipeline/action/ActionItem.svelte';
+	import ActionItem from '$lib/sections/pipeline/action/ActionItem.svelte';
 	import CreateActionForm from '$lib/sections/pipeline/action/CreateActionForm.svelte';
 	import EditActionForm from '$lib/sections/pipeline/action/EditActionForm.svelte';
-	import DeletePipelineDialog from '$/lib/sections/pipeline/PipelineDeleteDialog.svelte';
+	import DeletePipelineDialog from '$lib/sections/pipeline/PipelineDeleteDialog.svelte';
 
 	import EventInput from '$lib/components/pipeline/EventInput.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -35,24 +35,29 @@
 	import { flip } from 'svelte/animate';
 	import { toast } from 'svelte-sonner';
 	import { i18nContext } from '$lib/i18n/i18n.svelte';
+	import { watch } from 'runed';
+
+	interface Props {
+		// Existing pipeline to edit if editing
+		existing?: EventPipeline | undefined;
+	}
+
+	const { existing }: Props = $props();
 
 	const i18n = i18nContext.get();
 
-	// Existing pipeline to edit if editing
-	export let existing: EventPipeline | undefined = undefined;
-
 	// Local dialog and editing state
-	let confirmDelete = false;
-	let confirmTest = false;
-	let addAction = false;
-	let editAction: number | null = null;
+	let confirmDelete = $state(false);
+	let confirmTest = $state(false);
+	let addAction = $state(false);
+	let editAction: number | null = $state(null);
 
 	// Local state for updates
-	let eventType: EventType = EventType.ACFailure;
-	let name: string = '';
-	let cancellable: boolean = false;
-	let enabled: boolean = true;
-	let actions: ActionWithId[] = [];
+	let eventType: EventType = $state(EventType.ACFailure);
+	let name: string = $state('');
+	let cancellable: boolean = $state(false);
+	let enabled: boolean = $state(true);
+	let actions: ActionWithId[] = $state([]);
 
 	type ActionWithId = Action & { id: string };
 
@@ -61,10 +66,13 @@
 	}
 
 	// Setup default state
-	$: setDefaultState(existing);
+	watch(
+		() => existing,
+		(existing) => setDefaultState(existing)
+	);
 
 	// Determine the current editing action from its index
-	$: editingAction = editAction === null ? null : actions[editAction];
+	const editingAction = $derived(editAction === null ? null : actions[editAction]);
 
 	// Mutation to update an existing pipeline
 	const updateMutation = createUpdateEventPipelineMutation();
@@ -105,7 +113,7 @@
 			const pipeline = await await createPipelineMutation.mutateAsync({ data });
 
 			toast.success('Created new pipeline.');
-			goto(`${base}/pipelines/${pipeline.id}`);
+			goto(resolve(`/pipelines/${pipeline.id}`));
 		} catch (err) {
 			toast.error('failed to create pipeline');
 			console.error('failed to create pipeline', err);
@@ -169,7 +177,7 @@
 <Container.Wrapper>
 	<Breadcrumbs
 		parts={[
-			{ label: 'Event Pipelines', href: `${base}/pipelines` },
+			{ label: 'Event Pipelines', href: resolve(`/pipelines`) },
 			existing !== undefined ? { label: existing.name } : { label: 'Create' }
 		]} />
 
@@ -182,7 +190,7 @@
 				{#if existing !== undefined}
 					<span class="pipeline-name">{existing.name}</span>
 				{/if}
-				<a class="button button--secondary" href="{base}/pipelines">Back</a>
+				<a class="button button--secondary" href={resolve('/pipelines')}>Back</a>
 			</div>
 		</Container.Header>
 
@@ -251,8 +259,8 @@
 			<div
 				class="items"
 				use:dndzone={{ items: actions, flipDurationMs: 200, dropTargetStyle: {} }}
-				on:consider={handleSort}
-				on:finalize={handleSort}>
+				onconsider={handleSort}
+				onfinalize={handleSort}>
 				{#each actions as action, index (action.id)}
 					<div tabindex="0" class="item" role="button" animate:flip={{ duration: 200 }}>
 						<ActionItem
@@ -269,72 +277,74 @@
 			</div>
 		</div>
 
-		<Container.Footer>
-			<svelte:fragment slot="actions">
-				<button class="button" on:click={() => (addAction = true)}>Add Action</button>
-				<div style="flex: auto;"></div>
-				{#if existing !== undefined}
-					<button
-						class="button"
-						disabled={updateMutation.isPending}
-						on:click={() => {
-							const pipelineActions = actions.map((action) => omit(action, 'id'));
-							doUpdatePipeline(existing.id, {
-								event: eventType,
-								name,
-								cancellable,
-								enabled,
-								pipeline: {
-									actions: pipelineActions
-								}
-							});
-						}}>
-						Save
-					</button>
-
-					<button
-						class="button button--secondary"
-						on:click={() => {
-							setDefaultState(existing);
-							toast.info('Reverted changes.');
-						}}>
-						Reset
-					</button>
-					<button
-						class="button button--secondary"
-						on:click={() => {
-							confirmTest = true;
-						}}>
-						Test
-					</button>
-					<button
-						class="button button--secondary"
-						on:click={() => {
-							confirmDelete = true;
-						}}>
-						Delete
-					</button>
-				{:else}
-					<button
-						class="button"
-						on:click={() => {
-							// Strip local ID from actions
-							const pipelineActions = actions.map((action) => omit(action, 'id'));
-
-							doCreatePipeline({
-								name,
-								event: eventType,
-								pipeline: { actions: pipelineActions },
-								cancellable
-							});
-						}}>
-						Create
-					</button>
-				{/if}
-			</svelte:fragment>
-		</Container.Footer>
+		<Container.Footer actions={footerActions}></Container.Footer>
 	</Container.Root>
 </Container.Wrapper>
+
+{#snippet footerActions()}
+	<button class="button" onclick={() => (addAction = true)}>Add Action</button>
+	<div style="flex: auto;"></div>
+
+	{#if existing !== undefined}
+		<button
+			class="button"
+			disabled={updateMutation.isPending}
+			onclick={() => {
+				if (existing === undefined) return;
+				const pipelineActions = actions.map((action) => omit(action, 'id'));
+				doUpdatePipeline(existing.id, {
+					event: eventType,
+					name,
+					cancellable,
+					enabled,
+					pipeline: {
+						actions: pipelineActions
+					}
+				});
+			}}>
+			Save
+		</button>
+
+		<button
+			class="button button--secondary"
+			onclick={() => {
+				setDefaultState(existing);
+				toast.info('Reverted changes.');
+			}}>
+			Reset
+		</button>
+		<button
+			class="button button--secondary"
+			onclick={() => {
+				confirmTest = true;
+			}}>
+			Test
+		</button>
+		<button
+			class="button button--secondary"
+			onclick={() => {
+				confirmDelete = true;
+			}}>
+			Delete
+		</button>
+	{:else}
+		<button
+			class="button"
+			onclick={() => {
+				// Strip local ID from actions
+				const pipelineActions = actions.map((action) => omit(action, 'id'));
+
+				doCreatePipeline({
+					name,
+					event: eventType,
+					pipeline: { actions: pipelineActions },
+					cancellable
+				});
+			}}>
+			Create
+		</button>
+	{/if}
+{/snippet}
 
 {#if existing !== undefined}
 	<ConfirmDialog

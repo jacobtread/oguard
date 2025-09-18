@@ -1,19 +1,11 @@
 <script lang="ts">
-	/** eslint-disable svelte/valid-compile */
-
-	import { createDeviceStateHistoryQuery } from '$/lib/api/history';
+	import { createDeviceStateHistoryQuery } from '$lib/api/history';
 	import { type DeviceStateHistory } from '$lib/api/types';
 
-	import { derived, toStore, type Readable } from 'svelte/store';
+	import { toStore } from 'svelte/store';
 	import { fly } from 'svelte/transition';
 
-	import {
-		createRender,
-		createTable,
-		Render,
-		Subscribe,
-		type HeaderLabel
-	} from '@humanspeak/svelte-headless-table';
+	import { createTable, Render, Subscribe } from '@humanspeak/svelte-headless-table';
 	import {
 		addHiddenColumns,
 		addPagination,
@@ -23,12 +15,11 @@
 	import SortDesc from '~icons/solar/alt-arrow-down-bold';
 	import SortAsc from '~icons/solar/alt-arrow-up-bold';
 
-	import LocalizedDateTime from '$lib/components/i18n/LocalizedDateTime.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import ManageColumns from '$lib/components/table/ManageColumns.svelte';
-	import Localized from '$lib/components/i18n/Localized.svelte';
 	import Container from '$lib/components/container';
 	import Pagination from '$lib/components/Pagination.svelte';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
 
 	type Props = {
 		start: Date;
@@ -36,6 +27,7 @@
 	};
 
 	const { start, end }: Props = $props();
+	const i18n = i18nContext.get();
 
 	const eventHistory = createDeviceStateHistoryQuery(
 		() => start,
@@ -57,111 +49,110 @@
 		}
 	);
 
-	const header = ({ id }: { id: string }) =>
-		createRender(Localized, { key: `history.columns.${id}` });
+	const columns = $derived(
+		table.createColumns([
+			table.column({
+				id: 'input_voltage',
+				header: i18n.f('history.columns.input_voltage'),
+				accessor: (item: DeviceStateHistory) => item.state.input_voltage,
+				cell: ({ value }) => `${value}V`
+			}),
+			table.column({
+				id: 'output_voltage',
+				header: i18n.f('history.columns.output_voltage'),
+				accessor: (item: DeviceStateHistory) => item.state.output_voltage,
+				cell: ({ value }) => `${value}V`
+			}),
+			table.column({
+				id: 'output_load_percent',
+				header: i18n.f('history.columns.output_load_percent'),
+				accessor: (item: DeviceStateHistory) => item.state.output_load_percent,
+				cell: ({ value }) => `${value}%`
+			}),
+			table.column({
+				id: 'output_frequency',
+				header: i18n.f('history.columns.output_frequency'),
+				accessor: (item: DeviceStateHistory) => item.state.output_frequency,
+				cell: ({ value }) => `${value}Hz`
+			}),
+			table.column({
+				id: 'battery_voltage',
+				header: i18n.f('history.columns.battery_voltage'),
+				accessor: (item: DeviceStateHistory) => item.state.battery_voltage,
+				cell: ({ value }) => `${value}V`
+			}),
+			table.column({
+				id: 'device_power_state',
+				header: i18n.f('history.columns.device_power_state'),
+				accessor: (item: DeviceStateHistory) => item.state.device_power_state,
+				cell: ({ value }) => `${value}`
+			}),
+			table.column({
+				id: 'battery_low',
+				header: i18n.f('history.columns.battery_low'),
+				accessor: (item: DeviceStateHistory) => item.state.battery_low,
+				cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
+				plugins: {
+					sort: {
+						getSortValue: (value: boolean) => (value ? 1 : 0)
+					}
+				}
+			}),
+			table.column({
+				id: 'fault_mode',
+				header: i18n.f('history.columns.fault_mode'),
+				accessor: (item: DeviceStateHistory) => item.state.fault_mode,
+				cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
+				plugins: {
+					sort: {
+						getSortValue: (value: boolean) => (value ? 1 : 0)
+					}
+				}
+			}),
 
-	const columns = table.createColumns([
-		table.column({
-			id: 'input_voltage',
-			header,
-			accessor: (item: DeviceStateHistory) => item.state.input_voltage,
-			cell: ({ value }) => `${value}V`
-		}),
-		table.column({
-			id: 'output_voltage',
-			header,
-			accessor: (item: DeviceStateHistory) => item.state.output_voltage,
-			cell: ({ value }) => `${value}V`
-		}),
-		table.column({
-			id: 'output_load_percent',
-			header,
-			accessor: (item: DeviceStateHistory) => item.state.output_load_percent,
-			cell: ({ value }) => `${value}%`
-		}),
-		table.column({
-			id: 'output_frequency',
-			header,
-			accessor: (item: DeviceStateHistory) => item.state.output_frequency,
-			cell: ({ value }) => `${value}Hz`
-		}),
-		table.column({
-			id: 'battery_voltage',
-			header,
-			accessor: (item: DeviceStateHistory) => item.state.battery_voltage,
-			cell: ({ value }) => `${value}V`
-		}),
-		table.column({
-			id: 'device_power_state',
-			header,
-			accessor: (item: DeviceStateHistory) => item.state.device_power_state,
-			cell: ({ value }) => `${value}`
-		}),
-		table.column({
-			id: 'battery_low',
-			header,
-			accessor: (item: DeviceStateHistory) => item.state.battery_low,
-			cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
-			plugins: {
-				sort: {
-					getSortValue: (value: boolean) => (value ? 1 : 0)
+			table.column({
+				id: 'device_line_type',
+				header: i18n.f('history.columns.device_line_type'),
+				accessor: (item: DeviceStateHistory) => item.state.device_line_type,
+				cell: ({ value }) => `${value}`
+			}),
+			table.column({
+				id: 'battery_self_test',
+				header: i18n.f('history.columns.battery_self_test'),
+				accessor: (item: DeviceStateHistory) => item.state.battery_self_test,
+				cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
+				plugins: {
+					sort: {
+						getSortValue: (value: boolean) => (value ? 1 : 0)
+					}
 				}
-			}
-		}),
-		table.column({
-			id: 'fault_mode',
-			header,
-			accessor: (item: DeviceStateHistory) => item.state.fault_mode,
-			cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
-			plugins: {
-				sort: {
-					getSortValue: (valu: boolean) => (value ? 1 : 0)
+			}),
+			table.column({
+				id: 'buzzer_control',
+				header: i18n.f('history.columns.buzzer_control'),
+				accessor: (item: DeviceStateHistory) => item.state.buzzer_control,
+				cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
+				plugins: {
+					sort: {
+						getSortValue: (value) => (value ? 1 : 0)
+					}
 				}
-			}
-		}),
-
-		table.column({
-			id: 'device_line_type',
-			header,
-			accessor: (item: DeviceStateHistory) => item.state.device_line_type,
-			cell: ({ value }) => `${value}`
-		}),
-		table.column({
-			id: 'battery_self_test',
-			header,
-			accessor: (item: DeviceStateHistory) => item.state.battery_self_test,
-			cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
-			plugins: {
-				sort: {
-					getSortValue: (value: boolean) => (value ? 1 : 0)
-				}
-			}
-		}),
-		table.column({
-			id: 'buzzer_control',
-			header,
-			accessor: (item: DeviceStateHistory) => item.state.buzzer_control,
-			cell: ({ value }) => `${value ? 'Yes' : 'No'}`,
-			plugins: {
-				sort: {
-					getSortValue: (value) => (value ? 1 : 0)
-				}
-			}
-		}),
-		table.column({
-			id: 'timestamp',
-			header,
-			accessor: (item: DeviceStateHistory) => item.created_at,
-			cell: ({ value }) => createRender(LocalizedDateTime, { value })
-		})
-	]);
+			}),
+			table.column({
+				id: 'timestamp',
+				header: i18n.f('history.columns.timestamp'),
+				accessor: (item: DeviceStateHistory) => item.created_at,
+				cell: ({ value }) => dayjs(value).format('L LT')
+			})
+		])
+	);
 
 	const { flatColumns, headerRows, rows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } =
-		table.createViewModel(columns);
+		$derived(table.createViewModel(columns));
 
-	const ids = flatColumns.map((c) => c.id);
-	const { pageIndex, pageSize } = pluginStates.page;
-	const { hiddenColumnIds } = pluginStates.hideColumns;
+	const ids = $derived(flatColumns.map((c) => c.id));
+	const { pageIndex, pageSize } = $derived(pluginStates.page);
+	const { hiddenColumnIds } = $derived(pluginStates.hideColumns);
 </script>
 
 {#if eventHistory.isPending}
@@ -189,7 +180,7 @@
 							<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
 								<th
 									{...attrs}
-									on:click={props.sort.toggle}
+									onclick={props.sort.toggle}
 									class:sorted={props.sort.order !== undefined}>
 									<Render of={cell.render()} />
 									{#if props.sort.order === 'asc'}

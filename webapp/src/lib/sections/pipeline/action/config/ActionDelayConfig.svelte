@@ -2,7 +2,11 @@
 	import type { ActionDelay } from '$lib/api/types';
 	import DurationInput from '$lib/components/DurationInput.svelte';
 
-	export let delay: ActionDelay;
+	interface Props {
+		delay: ActionDelay;
+	}
+
+	let { delay = $bindable() }: Props = $props();
 
 	const addFixedDelay = () => (delay.duration = { secs: 100, nanos: 0 });
 	const addPercentageDelay = () => (delay.below_capacity = 50);
@@ -22,10 +26,10 @@
 	</p>
 
 	{#if delay.duration === null}
-		<button class="button" on:click={addFixedDelay}>Add Fixed Delay</button>
+		<button class="button" onclick={addFixedDelay}>Add Fixed Delay</button>
 	{:else}
 		<DurationInput bind:duration={delay.duration} />
-		<button class="button" on:click={removeFixedDelay}>Remove Fixed Delay</button>
+		<button class="button" onclick={removeFixedDelay}>Remove Fixed Delay</button>
 	{/if}
 </div>
 
@@ -37,12 +41,12 @@
 	</p>
 
 	{#if delay.below_capacity === null}
-		<button class="button" on:click={addPercentageDelay}>Add Capacity Delay</button>
+		<button class="button" onclick={addPercentageDelay}>Add Capacity Delay</button>
 	{:else}
 		<label>
 			Capacity:
 			<input class="input" type="number" bind:value={delay.below_capacity} min="0" max="100" />
 		</label>
-		<button class="button" on:click={removePercentageDelay}>Remove Capacity Delay</button>
+		<button class="button" onclick={removePercentageDelay}>Remove Capacity Delay</button>
 	{/if}
 </div>

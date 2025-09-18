@@ -1,7 +1,11 @@
 <script lang="ts">
 	import dayjs from 'dayjs';
 
-	export let value: string;
+	interface Props {
+		value: string;
+	}
+
+	const { value }: Props = $props();
 </script>
 
 {dayjs(value).format('L LT')}

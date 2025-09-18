@@ -1,9 +1,16 @@
 <script lang="ts">
-	export let indent: boolean = false;
+	import type { Snippet } from 'svelte';
+
+	interface Props {
+		indent?: boolean;
+		children?: Snippet;
+	}
+
+	const { indent = false, children }: Props = $props();
 </script>
 
 <div class="container__section" class:container__section--indent={indent}>
-	<slot />
+	{@render children?.()}
 </div>
 
 <style lang="scss">

@@ -1,7 +1,13 @@
-<div class="container__content">
-	<slot />
-</div>
+<script lang="ts">
+	import type { Snippet } from 'svelte';
 
-<style lang="scss">
-	@use '$styles/palette.scss' as palette;
-</style>
+	interface Props {
+		children?: Snippet;
+	}
+
+	const { children }: Props = $props();
+</script>
+
+<div class="container__content">
+	{@render children?.()}
+</div>

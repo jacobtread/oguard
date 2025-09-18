@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import PipelineNewEditForm from '$lib/sections/pipeline/PipelineNewEditForm.svelte';
-	import Spinner from '$/lib/components/Spinner.svelte';
-	import { createEventPipelineQuery } from '$/lib/api/event-pipelines';
+	import Spinner from '$lib/components/Spinner.svelte';
+	import { createEventPipelineQuery } from '$lib/api/event-pipelines';
 
 	const pipelineId: number = $derived(parseInt(page.params.id!));
 	const pipelineQuery = createEventPipelineQuery(() => pipelineId);

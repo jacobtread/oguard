@@ -15,14 +15,16 @@
 	import timezone from 'dayjs/plugin/timezone';
 
 	import { Toaster } from 'svelte-sonner';
-	import { navigating, page } from '$app/stores';
+	import { navigating, page } from '$app/state';
 	import { queryClient } from '$lib/api/utils';
 
-	import PageTransition from '$lib/components/PageTransition.svelte';
 	import Header from '$lib/components/Header.svelte';
-	import Alert, { AlertType } from '$/lib/components/Alert.svelte';
-	import LoadingScreen from '$/lib/sections/LoadingScreen.svelte';
-	import I18nProvider from "$lib/components/i18n/I18nProvider.svelte"
+	import LoadingScreen from '$lib/sections/LoadingScreen.svelte';
+	import I18nProvider from '$lib/components/i18n/I18nProvider.svelte';
+	import type { LayoutProps } from './$types';
+	import PageTransition from '$lib/components/PageTransition.svelte';
+
+	const { children }: LayoutProps = $props();
 
 	dayjs.extend(duration);
 	dayjs.extend(relativeTime, {
@@ -74,24 +76,24 @@
 	<QueryClientProvider client={queryClient}>
 		<div class="layout">
 			<Header />
-			{#if $navigating}
+			{#if navigating.to}
 				<LoadingScreen />
 			{:else}
 				<main class="main">
-					<PageTransition url={$page.url.toString()}>
-						<slot />
+					<PageTransition url={page.url.toString()}>
+						{@render children?.()}
 					</PageTransition>
 				</main>
 			{/if}
 		</div>
-		
+
 		<Toaster />
 
 		<SvelteQueryDevtools />
 	</QueryClientProvider>
 </I18nProvider>
 
-<style lang="scss">
+<style>
 	.layout {
 		display: flex;
 		flex-flow: column;

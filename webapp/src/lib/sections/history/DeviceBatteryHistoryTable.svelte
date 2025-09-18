@@ -1,7 +1,5 @@
 <script lang="ts">
-	/** eslint-disable svelte/valid-compile */
-
-	import { createDeviceBatteryHistoryQuery } from '$/lib/api/history';
+	import { createDeviceBatteryHistoryQuery } from '$lib/api/history';
 	import { type DeviceBatteryHistory } from '$lib/api/types';
 
 	import { toStore } from 'svelte/store';
@@ -19,12 +17,11 @@
 
 	import dayjs from 'dayjs';
 
-	import LocalizedDateTime from '$lib/components/i18n/LocalizedDateTime.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
-	import Localized from '$lib/components/i18n/Localized.svelte';
 	import ManageColumns from '$lib/components/table/ManageColumns.svelte';
 	import Container from '$lib/components/container';
 	import Pagination from '$lib/components/Pagination.svelte';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
 
 	type Props = {
 		start: Date;
@@ -32,6 +29,8 @@
 	};
 
 	const { start, end }: Props = $props();
+
+	const i18n = i18nContext.get();
 
 	const eventHistory = createDeviceBatteryHistoryQuery(
 		() => start,
@@ -53,36 +52,35 @@
 		}
 	);
 
-	const header = ({ id }: { id: string }) =>
-		createRender(Localized, { key: `history.columns.${id}` });
-
-	const columns = table.createColumns([
-		table.column({
-			id: 'capacity',
-			header,
-			accessor: (item: DeviceBatteryHistory) => item.state.capacity,
-			cell: ({ value }) => `${value}%`
-		}),
-		table.column({
-			id: 'remaining_time',
-			header,
-			accessor: (item: DeviceBatteryHistory) => item.state.remaining_time,
-			cell: ({ value }) => dayjs.duration(value, 'seconds').humanize()
-		}),
-		table.column({
-			id: 'timestamp',
-			header,
-			accessor: (item: DeviceBatteryHistory) => item.created_at,
-			cell: ({ value }) => createRender(LocalizedDateTime, { value })
-		})
-	]);
+	const columns = $derived(
+		table.createColumns([
+			table.column({
+				id: 'capacity',
+				header: i18n.f('history.columns.capacity'),
+				accessor: (item: DeviceBatteryHistory) => item.state.capacity,
+				cell: ({ value }) => `${value}%`
+			}),
+			table.column({
+				id: 'remaining_time',
+				header: i18n.f('history.columns.remaining_time'),
+				accessor: (item: DeviceBatteryHistory) => item.state.remaining_time,
+				cell: ({ value }) => dayjs.duration(value, 'seconds').humanize()
+			}),
+			table.column({
+				id: 'timestamp',
+				header: i18n.f('history.columns.timestamp'),
+				accessor: (item: DeviceBatteryHistory) => item.created_at,
+				cell: ({ value }) => dayjs(value).format('L LT')
+			})
+		])
+	);
 
 	const { flatColumns, headerRows, rows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } =
-		table.createViewModel(columns);
+		$derived(table.createViewModel(columns));
 
-	const ids = flatColumns.map((c) => c.id);
-	const { pageIndex, pageSize } = pluginStates.page;
-	const { hiddenColumnIds } = pluginStates.hideColumns;
+	const ids = $derived(flatColumns.map((c) => c.id));
+	const { pageIndex, pageSize } = $derived(pluginStates.page);
+	const { hiddenColumnIds } = $derived(pluginStates.hideColumns);
 </script>
 
 {#if eventHistory.isPending}
@@ -110,7 +108,7 @@
 							<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
 								<th
 									{...attrs}
-									on:click={props.sort.toggle}
+									onclick={props.sort.toggle}
 									class:sorted={props.sort.order !== undefined}>
 									<Render of={cell.render()} />
 									{#if props.sort.order === 'asc'}

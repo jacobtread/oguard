@@ -1,54 +1,53 @@
-<script lang="ts">
-	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+<script lang="ts" generics="T">
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
+	import type { Table } from '@tanstack/table-core';
 	import { Popover, Switch } from 'bits-ui';
-	import type { Writable } from 'svelte/store';
 	import { fly } from 'svelte/transition';
 
 	import SettingsIcon from '~icons/solar/settings-bold-duotone';
 
 	const i18n = i18nContext.get();
 
-	export let translateKey: string;
-	export let columnIds: string[];
-	export let hiddenColumnIds: Writable<string[]>;
-
-	function onChangeChecked(id: string, checked: boolean) {
-		if (checked) {
-			hiddenColumnIds.update((ids) => ids.filter((otherId) => otherId !== id));
-		} else {
-			hiddenColumnIds.update((ids) => [...ids, id]);
-		}
+	interface Props {
+		translateKey: string;
+		table: Table<T>;
 	}
+
+	let { translateKey, table }: Props = $props();
 </script>
 
 <Popover.Root>
 	<Popover.Trigger class="button">
 		<SettingsIcon />
 	</Popover.Trigger>
-	<Popover.Content
-		transition={fly}
-		transitionConfig={{ duration: 150, y: -10 }}
-		sideOffset={8}
-		sameWidth={false}>
-		<Popover.Arrow />
+	<Popover.Content sideOffset={8}>
+		{#snippet child({ open, props, wrapperProps })}
+			<div {...wrapperProps}>
+				{#if open}
+					<div {...props} transition:fly={{ duration: 150, y: -100 }}>
+						<Popover.Arrow />
 
-		<p class="title">Manage Columns</p>
+						<p class="title">Manage Columns</p>
 
-		<div class="columns">
-			{#each columnIds as id}
-				<div class="column">
-					<Switch.Root
-						id="hide-{id}"
-						checked={!$hiddenColumnIds.includes(id)}
-						onCheckedChange={(value) => {
-							onChangeChecked(id, value);
-						}}>
-						<Switch.Thumb />
-					</Switch.Root>
-					<label for="hide-{id}">{i18n.f(`${translateKey}.${id}`)}</label>
-				</div>
-			{/each}
-		</div>
+						<div class="columns">
+							{#each table.getAllColumns().filter((col) => col.getCanHide()) as column (column)}
+								<div class="column">
+									<Switch.Root
+										id="hide-{column.id}"
+										checked={column.getIsVisible()}
+										onCheckedChange={(value) => {
+											column.toggleVisibility(value);
+										}}>
+										<Switch.Thumb />
+									</Switch.Root>
+									<label for="hide-{column.id}">{i18n.f(`${translateKey}.${column.id}`)}</label>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
+			</div>
+		{/snippet}
 	</Popover.Content>
 </Popover.Root>
 

@@ -1,12 +1,19 @@
 <script lang="ts">
-	export let maxWidth: 'xs' | 'sm' | 'md' | 'lg' = 'lg';
+	import type { Snippet } from 'svelte';
+
+	interface Props {
+		maxWidth?: 'xs' | 'sm' | 'md' | 'lg';
+		children?: Snippet;
+	}
+
+	const { maxWidth = 'lg', children }: Props = $props();
 </script>
 
 <div class="wrapper" data-max-width={maxWidth}>
-	<slot />
+	{@render children?.()}
 </div>
 
-<style lang="scss">
+<style>
 	.wrapper {
 		padding: 1rem;
 		width: 100%;

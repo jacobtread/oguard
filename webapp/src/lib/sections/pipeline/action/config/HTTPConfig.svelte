@@ -1,12 +1,17 @@
 <script lang="ts">
 	import type { ActionTypeConfig, ActionTypeKey } from '$lib/api/types';
 	import DurationInput from '$lib/components/DurationInput.svelte';
+	import { watch } from 'runed';
 
-	export let config: ActionTypeConfig<ActionTypeKey.HttpRequest>;
+	interface Props {
+		config: ActionTypeConfig<ActionTypeKey.HttpRequest>;
+	}
+
+	let { config = $bindable() }: Props = $props();
 
 	const HTTP_METHODS = ['POST', 'PUT', 'PATCH', 'GET', 'DELETE'];
 
-	let headers: [string, string][] = [];
+	let headers: [string, string][] = $state([]);
 
 	const addHeader = () => {
 		headers.push(['', '']);
@@ -24,22 +29,23 @@
 	const addTimeout = () => (config.timeout = { secs: 100, nanos: 0 });
 	const removeTimeout = () => (config.timeout = null);
 
-	function updateHeaders() {
-		const headerMap: Record<string, string> = {};
+	// TODO: Check this synchronizes properly
+	watch(
+		() => ({ headers }),
+		({ headers }) => {
+			const headerMap: Record<string, string> = {};
 
-		for (const [key, value] of headers) {
-			const trimmedKey = key.trim();
-			const trimmedValue = value.trim();
-			if (trimmedKey.length === 0 || trimmedValue.length === 0) continue;
+			for (const [key, value] of headers) {
+				const trimmedKey = key.trim();
+				const trimmedValue = value.trim();
+				if (trimmedKey.length === 0 || trimmedValue.length === 0) continue;
 
-			headerMap[key] = value;
+				headerMap[key] = value;
+			}
+
+			config.headers = headerMap;
 		}
-
-		config.headers = headerMap;
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-	$: headers, updateHeaders();
+	);
 </script>
 
 <div class="field">
@@ -73,13 +79,13 @@
 				<input class="input" type="text" bind:value={header[1]} required />
 
 				{#if headers.length > 0}
-					<button class="button" on:click={() => removeHeader(index)}>Remove</button>
+					<button class="button" onclick={() => removeHeader(index)}>Remove</button>
 				{/if}
 			</li>
 		{/each}
 	</ul>
 
-	<button class="button" on:click={addHeader}>Add Header</button>
+	<button class="button" onclick={addHeader}>Add Header</button>
 </div>
 
 <div class="field">
@@ -91,11 +97,11 @@
 	</p>
 
 	{#if config.body === null}
-		<button class="button" on:click={addBody}>Add Body</button>
+		<button class="button" onclick={addBody}>Add Body</button>
 	{:else}
 		<textarea class="input" name="" id="" bind:value={config.body.payload}></textarea>
 		<input class="input" name="" id="" bind:value={config.body.content_type} />
-		<button class="button" on:click={removeBody}>Remove Body</button>
+		<button class="button" onclick={removeBody}>Remove Body</button>
 	{/if}
 </div>
 
@@ -108,9 +114,9 @@
 	</p>
 
 	{#if config.timeout === null}
-		<button class="button" on:click={addTimeout}>Add Timeout</button>
+		<button class="button" onclick={addTimeout}>Add Timeout</button>
 	{:else}
 		<DurationInput bind:duration={config.timeout} />
-		<button class="button" on:click={removeTimeout}>Remove Timeout</button>
+		<button class="button" onclick={removeTimeout}>Remove Timeout</button>
 	{/if}
 </div>

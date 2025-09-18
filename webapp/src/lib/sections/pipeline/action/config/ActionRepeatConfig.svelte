@@ -2,7 +2,11 @@
 	import type { ActionRepeat } from '$lib/api/types';
 	import DurationInput from '$lib/components/DurationInput.svelte';
 
-	export let repeat: ActionRepeat;
+	interface Props {
+		repeat: ActionRepeat;
+	}
+
+	const { repeat = $bindable() }: Props = $props();
 
 	const addFixedInterval = () => (repeat.interval = { secs: 100, nanos: 0 });
 	const removeFixedInterval = () => (repeat.interval = null);
@@ -29,10 +33,10 @@
 	<p class="field__description">Repeat the action at a fixed timing interval</p>
 
 	{#if repeat.interval === null}
-		<button class="button" on:click={addFixedInterval}>Add Fixed Interval</button>
+		<button class="button" onclick={addFixedInterval}>Add Fixed Interval</button>
 	{:else}
 		<DurationInput bind:duration={repeat.interval} />
-		<button class="button" on:click={removeFixedInterval}>Remove Fixed Interval</button>
+		<button class="button" onclick={removeFixedInterval}>Remove Fixed Interval</button>
 	{/if}
 </div>
 
@@ -44,13 +48,13 @@
 	</p>
 
 	{#if repeat.capacity_decrease === null}
-		<button class="button" on:click={addCapacityDecrease}>Add Capacity Decrease</button>
+		<button class="button" onclick={addCapacityDecrease}>Add Capacity Decrease</button>
 	{:else}
 		<label class="field__label">
 			Capacity:
 			<input class="input" type="number" bind:value={repeat.capacity_decrease} min="0" max="100" />
 		</label>
-		<button class="button" on:click={removeCapacityDecrease}>Remove Capacity Decrease</button>
+		<button class="button" onclick={removeCapacityDecrease}>Remove Capacity Decrease</button>
 	{/if}
 </div>
 
@@ -63,12 +67,12 @@
 	</p>
 
 	{#if repeat.limit === null}
-		<button class="button" on:click={addLimit}>Add Limit</button>
+		<button class="button" onclick={addLimit}>Add Limit</button>
 	{:else}
 		<label>
 			Limit:
 			<input class="input" type="number" bind:value={repeat.limit} min="0" />
 		</label>
-		<button class="button" on:click={removeLimit}>Remove Limit</button>
+		<button class="button" onclick={removeLimit}>Remove Limit</button>
 	{/if}
 </div>

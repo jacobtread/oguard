@@ -1,10 +1,12 @@
-<script context="module" lang="ts">
-	export enum AlertType {
-		SUCCESS = 'success',
-		INFO = 'info',
-		WARN = 'warn',
-		ERROR = 'error'
-	}
+<script module lang="ts">
+	export const AlertType = {
+		SUCCESS: 'success',
+		INFO: 'info',
+		WARN: 'warn',
+		ERROR: 'error'
+	} as const;
+
+	type AlertType = (typeof AlertType)[keyof typeof AlertType];
 </script>
 
 <script lang="ts">
@@ -12,8 +14,12 @@
 	import InfoIcon from '~icons/solar/info-circle-bold-duotone';
 	import CheckIcon from '~icons/solar/check-circle-bold-duotone';
 
-	export let type: AlertType;
-	export let message: string;
+	interface Props {
+		type: AlertType;
+		message: string;
+	}
+
+	const { type, message }: Props = $props();
 </script>
 
 <div class="alert" data-type={type}>

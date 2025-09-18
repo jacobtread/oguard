@@ -10,11 +10,15 @@
 	import { onDestroy } from 'svelte';
 	import { fly } from 'svelte/transition';
 
-	export let index: number;
-	export let item: ListEventPipeline;
+	interface Props {
+		index: number;
+		item: ListEventPipeline;
+	}
 
-	let canToggleEnabled: boolean = true;
-	let toggleEnabledTimeout: number | null = null;
+	const { index, item }: Props = $props();
+
+	let canToggleEnabled: boolean = $state(true);
+	let toggleEnabledTimeout: number | null = $state(null);
 
 	const changeEnabledMutation = createChangeEnabledMutation();
 

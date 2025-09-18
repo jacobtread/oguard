@@ -1,9 +1,20 @@
-<div class="container__footer">
-	<slot />
+<script lang="ts">
+	import type { Snippet } from 'svelte';
 
-	{#if $$slots.actions}
+	interface Props {
+		children?: Snippet;
+		actions?: Snippet;
+	}
+
+	const { children, actions }: Props = $props();
+</script>
+
+<div class="container__footer">
+	{@render children?.()}
+
+	{#if actions}
 		<div class="container__footer__actions">
-			<slot name="actions" />
+			{@render actions()}
 		</div>
 	{/if}
 </div>

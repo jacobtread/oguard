@@ -1,21 +1,25 @@
 <script lang="ts">
 	import { ActionTypeKey } from '$lib/api/types';
 	import ActionTypeIcon from './ActionTypeIcon.svelte';
-	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
+
+	interface Props {
+		actionType: ActionTypeKey;
+		selected: boolean;
+
+		onClick: VoidFunction;
+	}
+
+	const { actionType, selected, onClick }: Props = $props();
 
 	const i18n = i18nContext.get();
-
-	export let actionType: ActionTypeKey;
-	export let selected: boolean;
-
-	export let onClick: () => void;
 </script>
 
 <button
 	class="item"
 	class:item--selected={selected}
 	data-action-type={actionType}
-	on:click={onClick}>
+	onclick={onClick}>
 	<div class="item__icon"><ActionTypeIcon {actionType} /></div>
 	<div class="item__content">
 		<p class="item__name">{i18n.f(`actions.${actionType}.label`)}</p>

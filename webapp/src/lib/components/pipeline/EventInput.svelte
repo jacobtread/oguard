@@ -1,67 +1,85 @@
 <script lang="ts">
 	import { EVENT_TYPE_DATA, EVENT_TYPES, EventType } from '$lib/api/types';
-	import { Select } from 'bits-ui';
+	import { Portal, Select } from 'bits-ui';
 	import EventLevelIcon from './EventLevelIcon.svelte';
 	import { fly } from 'svelte/transition';
-	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
 	const i18n = i18nContext.get();
 
-	export let value: EventType = EventType.ACFailure;
+	interface Props {
+		value?: EventType;
+	}
 
-	$: values = EVENT_TYPES.map((eventType) => ({
-		value: eventType,
-		label: i18n.f(`events.${eventType}.label`),
-		description: i18n.f(`events.${eventType}.description`)
-	}));
+	let { value = $bindable(EventType.ACFailure) }: Props = $props();
 
-	$: selected = values.find((otherValue) => otherValue.value === value);
+	const values = $derived(
+		EVENT_TYPES.map((eventType) => ({
+			value: eventType,
+			label: i18n.f(`events.${eventType}.label`),
+			description: i18n.f(`events.${eventType}.description`)
+		}))
+	);
+
+	const selected = $derived(values.find((otherValue) => otherValue.value === value));
 </script>
 
 <Select.Root
+	type="single"
 	items={values}
-	{selected}
-	onSelectedChange={(selected) => {
+	value={selected?.value}
+	onValueChange={(selected) => {
 		if (selected !== undefined) {
-			value = selected.value;
+			value = selected as EventType;
 		}
 	}}>
 	<Select.Trigger aria-label={i18n.f('event.select')}>
 		<div class="event-current-item">
 			<EventLevelIcon level={EVENT_TYPE_DATA[value].level} />
 
-			<Select.Value placeholder={i18n.f('event.select')} />
+			{#if selected}
+				{selected.label}
+			{:else}
+				{i18n.f('event.select')}
+			{/if}
 		</div>
 	</Select.Trigger>
-	<Select.Content
-		transition={fly}
-		transitionConfig={{ duration: 150, y: -10 }}
-		sideOffset={8}
-		sameWidth={false}>
-		{#each values as eventType}
-			{@const typeData = EVENT_TYPE_DATA[eventType.value]}
-			{#if typeData !== undefined}
-				<Select.Item value={eventType.value} label={eventType.label} let:isSelected>
-					<div class="event-item" class:event-item--selected={isSelected}>
-						<div class="event-item__icon">
-							<EventLevelIcon level={typeData.level} />
-						</div>
+	<Select.Portal>
+		<Select.Content sideOffset={8}>
+			{#snippet child({ open, props, wrapperProps })}
+				<div {...wrapperProps}>
+					{#if open}
+						<div {...props} transition:fly={{ duration: 150, y: -10 }}>
+							{#each values as eventType}
+								{@const typeData = EVENT_TYPE_DATA[eventType.value]}
+								{#if typeData !== undefined}
+									<Select.Item value={eventType.value} label={eventType.label}>
+										{#snippet children({ selected })}
+											<div class="event-item" class:event-item--selected={selected}>
+												<div class="event-item__icon">
+													<EventLevelIcon level={typeData.level} />
+												</div>
 
-						<div class="event-item__text">
-							<p class="event-item__label">{eventType.label}</p>
-							<p class="event-item__description">{eventType.description}</p>
+												<div class="event-item__text">
+													<p class="event-item__label">{eventType.label}</p>
+													<p class="event-item__description">{eventType.description}</p>
+												</div>
+
+												{#if selected}
+													<div class="ml-auto">&larr;</div>
+												{/if}
+											</div>
+										{/snippet}
+									</Select.Item>
+								{/if}
+							{:else}
+								<span>{i18n.f('no_results')}</span>
+							{/each}
 						</div>
-						<Select.ItemIndicator asChild={false}>
-							<!-- <Check /> -->
-							&larr;
-						</Select.ItemIndicator>
-					</div>
-				</Select.Item>
-			{/if}
-		{:else}
-			<span>{i18n.f('no_results')}</span>
-		{/each}
-	</Select.Content>
-	<Select.Input bind:value />
+					{/if}
+				</div>
+			{/snippet}
+		</Select.Content>
+	</Select.Portal>
 </Select.Root>
 
 <style lang="scss">

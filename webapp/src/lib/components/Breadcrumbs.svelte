@@ -1,12 +1,16 @@
 <script lang="ts">
 	import ArrowRight from '~icons/solar/alt-arrow-right-linear';
 
-	type BreadcrumbPart = {
+	interface BreadcrumbPart {
 		label: string;
 		href?: string;
-	};
+	}
 
-	export let parts: BreadcrumbPart[];
+	interface Props {
+		parts: BreadcrumbPart[];
+	}
+
+	const { parts }: Props = $props();
 </script>
 
 <div class="breadcrumbs">

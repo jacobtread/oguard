@@ -21,9 +21,13 @@
 		ActionRetryConfig
 	} from '$lib/sections/pipeline/action/config';
 	import type { Component } from 'svelte';
-	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
 
-	export let action: Action;
+	export interface Props {
+		action: Action;
+	}
+
+	let { action = $bindable() }: Props = $props();
 
 	const i18n = i18nContext.get();
 
@@ -66,7 +70,7 @@
 		return { component, config: actionType };
 	};
 
-	$: currentScreenData = getCurrentScreenData(action.ty);
+	const currentScreenData = $derived(getCurrentScreenData(action.ty));
 
 	// Adds a default repeat to the action
 	const addDelay = () => {
@@ -111,12 +115,16 @@
 				})}
 				<span data-collapsible-icon> <ExpandIcon /> </span>
 			</Collapsible.Trigger>
-			<Collapsible.Content transition={slide}>
-				<div class="section__content">
-					<svelte:component
-						this={currentScreenData.component}
-						bind:config={currentScreenData.config} />
-				</div>
+			<Collapsible.Content>
+				{#snippet child({ open, props })}
+					{#if open}
+						<div {...props} transition:slide>
+							<div class="section__content">
+								<currentScreenData.component bind:config={currentScreenData.config} />
+							</div>
+						</div>
+					{/if}
+				{/snippet}
 			</Collapsible.Content>
 		</Collapsible.Root>
 	</div>
@@ -126,7 +134,7 @@
 	{#if action.delay === null}
 		<div class="section__optional">
 			<p>This action will run immediately</p>
-			<button class="button" style="align-self: flex-start" on:click={addDelay}>Add Delay</button>
+			<button class="button" style="align-self: flex-start" onclick={addDelay}>Add Delay</button>
 		</div>
 	{:else}
 		<Collapsible.Root>
@@ -134,13 +142,19 @@
 				{i18n.f('action.delay')}
 				<div class="section__actions">
 					<span data-collapsible-icon> <ExpandIcon /> </span>
-					<button class="button" on:click={removeDelay}>Remove</button>
+					<button class="button" onclick={removeDelay}>Remove</button>
 				</div>
 			</Collapsible.Trigger>
-			<Collapsible.Content transition={slide}>
-				<div class="section__content">
-					<ActionDelayConfig bind:delay={action.delay} />
-				</div>
+			<Collapsible.Content>
+				{#snippet child({ open, props })}
+					{#if open && action.delay !== null}
+						<div {...props} transition:slide>
+							<div class="section__content">
+								<ActionDelayConfig bind:delay={action.delay} />
+							</div>
+						</div>
+					{/if}
+				{/snippet}
 			</Collapsible.Content>
 		</Collapsible.Root>
 	{/if}
@@ -149,7 +163,7 @@
 	{#if action.repeat === null}
 		<div class="section__optional">
 			<p>This action will not automatically repeat</p>
-			<button class="button" style="align-self: flex-start" on:click={addRepeat}>Add Repeat</button>
+			<button class="button" style="align-self: flex-start" onclick={addRepeat}>Add Repeat</button>
 		</div>
 	{:else}
 		<Collapsible.Root>
@@ -157,13 +171,19 @@
 				{i18n.f('action.repeat')}
 				<div class="section__actions">
 					<span data-collapsible-icon> <ExpandIcon /> </span>
-					<button class="button" on:click={removeRepeat}>Remove</button>
+					<button class="button" onclick={removeRepeat}>Remove</button>
 				</div>
 			</Collapsible.Trigger>
-			<Collapsible.Content transition={slide}>
-				<div class="section__content">
-					<ActionRepeatConfig bind:repeat={action.repeat} />
-				</div>
+			<Collapsible.Content>
+				{#snippet child({ open, props })}
+					{#if open && action.repeat !== null}
+						<div {...props} transition:slide>
+							<div class="section__content">
+								<ActionRepeatConfig bind:repeat={action.repeat} />
+							</div>
+						</div>
+					{/if}
+				{/snippet}
 			</Collapsible.Content>
 		</Collapsible.Root>
 	{/if}
@@ -172,7 +192,7 @@
 	{#if action.retry === null}
 		<div class="section__optional">
 			<p>This action will not retry on failure</p>
-			<button class="button" style="align-self: flex-start" on:click={addRetry}>Add Retry</button>
+			<button class="button" style="align-self: flex-start" onclick={addRetry}>Add Retry</button>
 		</div>
 	{:else}
 		<Collapsible.Root>
@@ -180,13 +200,19 @@
 				{i18n.f('action.retry')}
 				<div class="section__actions">
 					<span data-collapsible-icon> <ExpandIcon /> </span>
-					<button class="button" on:click={removeRetry}>Remove</button>
+					<button class="button" onclick={removeRetry}>Remove</button>
 				</div>
 			</Collapsible.Trigger>
-			<Collapsible.Content transition={slide}>
-				<div class="section__content">
-					<ActionRetryConfig bind:retry={action.retry} />
-				</div>
+			<Collapsible.Content>
+				{#snippet child({ open, props })}
+					{#if open && action.retry !== null}
+						<div {...props} transition:slide>
+							<div class="section__content">
+								<ActionRetryConfig bind:retry={action.retry} />
+							</div>
+						</div>
+					{/if}
+				{/snippet}
 			</Collapsible.Content>
 		</Collapsible.Root>
 	{/if}

@@ -1,10 +1,10 @@
 <script lang="ts">
-	import PipelineItem from '$/lib/sections/pipeline/PipelineItem.svelte';
+	import PipelineItem from '$lib/sections/pipeline/PipelineItem.svelte';
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import { Container } from '$lib/components';
-	import Spinner from '$/lib/components/Spinner.svelte';
-	import { createEventPipelinesQuery } from '$/lib/api/event-pipelines';
-	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
+	import { createEventPipelinesQuery } from '$lib/api/event-pipelines';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
 
 	const i18n = i18nContext.get();
 

@@ -1,6 +1,13 @@
 <script lang="ts">
-	export let title: string | undefined = undefined;
-	export let dark: boolean = false;
+	import type { Snippet } from 'svelte';
+
+	interface Props {
+		title?: string;
+		dark?: boolean;
+		children?: Snippet;
+	}
+
+	const { title, dark = false, children }: Props = $props();
 </script>
 
 <div class="container__header" class:container__header--dark={dark}>
@@ -8,7 +15,7 @@
 		<h2 class="container__header__title">{title}</h2>
 	{/if}
 
-	<slot />
+	{@render children?.()}
 </div>
 
 <style lang="scss">

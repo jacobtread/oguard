@@ -1,14 +1,14 @@
 <script lang="ts">
-	import DeviceBatteryCard from '$/lib/sections/overview/DeviceBatteryCard.svelte';
+	import DeviceBatteryCard from '$lib/sections/overview/DeviceBatteryCard.svelte';
 	import DeviceOutputCard from '$lib/sections/overview/DeviceOutputCard.svelte';
 	import dayjs from 'dayjs';
 
-	import Spinner from '$/lib/components/Spinner.svelte';
-	import { Container } from '$/lib/components';
-	import Alert, { AlertType } from '$/lib/components/Alert.svelte';
-	import { createBatteryInfoPollingQuery, createDeviceStatePollingQuery } from '$/lib/api/device';
-	import { createDeviceBatteryHistoryQuery } from '$/lib/api/history';
-	import BatteryCapacityChart from '$/lib/components/charts/BatteryCapacityChart.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
+	import { Container } from '$lib/components';
+	import Alert, { AlertType } from '$lib/components/Alert.svelte';
+	import { createBatteryInfoPollingQuery, createDeviceStatePollingQuery } from '$lib/api/device';
+	import { createDeviceBatteryHistoryQuery } from '$lib/api/history';
+	import BatteryCapacityChart from '$lib/components/charts/BatteryCapacityChart.svelte';
 	import { i18nContext } from '$lib/i18n/i18n.svelte';
 
 	const i18n = i18nContext.get();

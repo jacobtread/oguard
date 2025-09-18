@@ -6,16 +6,14 @@
 	import PipelineIcon from '~icons/solar/square-sort-horizontal-bold-duotone';
 	import MenuIcon from '~icons/solar/hamburger-menu-outline';
 	import { resolve } from '$app/paths';
-
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import LogoutButton from '$lib/sections/auth/LogoutButton.svelte';
 	import { createLoginStateQuery } from '$lib/api/login';
 	import { i18nContext } from '../i18n/i18n.svelte';
-	import { base } from '$app/paths';
 
 	const loginStateQuery = createLoginStateQuery();
 
-	let navVisible = false;
+	let navVisible = $state(false);
 
 	const i18n = i18nContext.get();
 </script>
@@ -31,14 +29,11 @@
 			class="nav-bg"
 			class:nav-bg--visible={navVisible}
 			aria-hidden="true"
-			on:click={() => (navVisible = false)}>
+			onclick={() => (navVisible = false)}>
 			<nav class="nav">
 				<ul class="nav-list">
 					<li class="nav-list__item">
-						<a
-							class="nav-link"
-							href={resolve('/')}
-							class:nav-link--selected={$page.route.id == '/'}>
+						<a class="nav-link" href={resolve('/')} class:nav-link--selected={page.route.id == '/'}>
 							<HomeIcon class="nav-link__item" />
 							{i18n.f('pages.home')}
 						</a>
@@ -47,7 +42,7 @@
 						<a
 							class="nav-link"
 							href={resolve('/events')}
-							class:nav-link--selected={$page.route.id == '/events'}>
+							class:nav-link--selected={page.route.id == '/events'}>
 							<EventsIcon class="nav-link__item" />
 							{i18n.f('pages.events')}
 						</a>
@@ -56,7 +51,7 @@
 						<a
 							class="nav-link"
 							href={resolve('/history')}
-							class:nav-link--selected={$page.route.id == '/history'}>
+							class:nav-link--selected={page.route.id == '/history'}>
 							<HistoryIcon class="nav-link__item" />
 							{i18n.f('pages.history')}
 						</a>
@@ -65,7 +60,7 @@
 						<a
 							class="nav-link"
 							href={resolve('/pipelines')}
-							class:nav-link--selected={$page.route.id?.startsWith('/pipelines')}>
+							class:nav-link--selected={page.route.id?.startsWith('/pipelines')}>
 							<PipelineIcon class="nav-link__item" />
 							{i18n.f('pages.pipelines')}
 						</a>
@@ -74,7 +69,7 @@
 						<a
 							class="nav-link"
 							href={resolve('/configure')}
-							class:nav-link--selected={$page.route.id == '/configure'}>
+							class:nav-link--selected={page.route.id == '/configure'}>
 							<ConfigureIcon class="nav-link__item" />
 							{i18n.f('pages.configure')}
 						</a>
@@ -83,7 +78,7 @@
 						<a
 							class="nav-link"
 							href={resolve('/realtime')}
-							class:nav-link--selected={$page.route.id == '/realtime'}>
+							class:nav-link--selected={page.route.id == '/realtime'}>
 							<ConfigureIcon class="nav-link__item" />
 							{i18n.f('pages.realtime')}
 						</a>
@@ -94,7 +89,7 @@
 	</div>
 
 	<div class="end-actions">
-		<button class="button menu-button" on:click={() => (navVisible = !navVisible)}>
+		<button class="button menu-button" onclick={() => (navVisible = !navVisible)}>
 			<MenuIcon />
 		</button>
 

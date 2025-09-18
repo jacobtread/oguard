@@ -1,17 +1,21 @@
 <script lang="ts">
-	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
 	import type { Action } from '$lib/api/types';
 	import ActionTypeIcon from '$lib/sections/pipeline/action/ActionTypeIcon.svelte';
 	import { Tooltip } from 'bits-ui';
 	import dayjs from 'dayjs';
 
+	interface Props {
+		index: number;
+		item: Action & { id: string };
+
+		onRemove: VoidFunction;
+		onEdit: VoidFunction;
+	}
+
+	const { index, item, onRemove, onEdit }: Props = $props();
+
 	const i18n = i18nContext.get();
-
-	export let index: number;
-	export let item: Action & { id: string };
-
-	export let onRemove: () => void;
-	export let onEdit: () => void;
 </script>
 
 <div class="item">
@@ -90,8 +94,8 @@
 	</div>
 
 	<div class="item__actions">
-		<button class="button" on:click={onEdit}>Edit</button>
-		<button class="button" on:click={onRemove}>Remove</button>
+		<button class="button" onclick={onEdit}>Edit</button>
+		<button class="button" onclick={onRemove}>Remove</button>
 	</div>
 </div>
 

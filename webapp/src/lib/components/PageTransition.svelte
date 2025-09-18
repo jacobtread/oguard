@@ -1,12 +1,19 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { fly } from 'svelte/transition';
-	export let url: string = '';
+
+	interface Props {
+		url?: string;
+		children?: Snippet;
+	}
+
+	const { url = '', children }: Props = $props();
 </script>
 
 <div class="transition-outer">
 	{#key url}
 		<div class="transition-inner" in:fly={{ y: -20, duration: 500 }}>
-			<slot />
+			{@render children?.()}
 		</div>
 	{/key}
 </div>

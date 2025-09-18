@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	// Consult https://kit.svelte.dev/docs/integrations#preprocessors
@@ -14,12 +15,10 @@ const config = {
 	preprocess: vitePreprocess({
 		script: true,
 		style: {
-			css: {
-				preprocessorOptions: {
-					scss: {
-						includePaths: [path.resolve('src', 'lib', 'styles')],
-						loadPaths: [path.resolve('src', 'lib', 'styles')],
-					}
+			resolve: {
+				alias: {
+					$lib: path.join(__dirname, 'src/lib'),
+					$styles: path.join(__dirname, 'src/lib/styles'),
 				}
 			}
 		}
@@ -33,9 +32,7 @@ const config = {
 			fallback: 'index.html'
 		}),
 		alias: {
-			$: path.resolve('src'),
-			$styles: path.resolve('src/lib/styles'),
-			$components: path.resolve('src/lib/components')
+			$styles: path.resolve(__dirname, 'src/lib/styles'),
 		}
 	}
 };

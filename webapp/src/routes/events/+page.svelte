@@ -24,6 +24,19 @@
 	import ManageColumns from '$lib/components/table/ManageColumns.svelte';
 	import { createEventHistoryQuery } from '$lib/api/history';
 	import { i18nContext } from '$lib/i18n/i18n.svelte';
+	import {
+		createColumnHelper,
+		getCoreRowModel,
+		getFilteredRowModel,
+		getPaginationRowModel,
+		getSortedRowModel,
+		type ColumnFiltersState,
+		type PaginationState,
+		type RowSelectionState,
+		type SortingState,
+		type VisibilityState
+	} from '@tanstack/table-core';
+	import { createSvelteTable, FlexRender, renderSnippet } from '$lib/components/data-table';
 
 	const i18n = i18nContext.get();
 
@@ -41,66 +54,130 @@
 
 	const history = $derived(eventHistory.data ?? []);
 
-	const table = createTable(
-		toStore(() => history),
-		{
-			sort: addSortBy({
-				initialSortKeys: [{ id: 'timestamp', order: 'desc' }]
-			}),
-			page: addPagination({
-				initialPageSize: 50
-			}),
-			hideColumns: addHiddenColumns()
-		}
-	);
+	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 10 });
+	let sorting = $state<SortingState>([]);
+	let columnFilters = $state<ColumnFiltersState>([]);
+	let rowSelection = $state<RowSelectionState>({});
+	let columnVisibility = $state<VisibilityState>({});
 
-	const header = ({ id }: { id: string }) =>
-		createRender(Localized, { key: `event.columns.${id}` });
+	const columnHelper = createColumnHelper<EventHistory>();
 
-	const columns = table.createColumns([
-		table.column({
+	const columns = $derived([
+		columnHelper.accessor((event) => EVENT_TYPE_DATA[event.type]?.level ?? EventLevel.Info, {
 			id: 'level',
-			header,
-			accessor: (item: EventHistory) => EVENT_TYPE_DATA[item.type]?.level ?? EventLevel.Info,
-			cell: ({ value }) => createRender(EventLevelIcon, { level: value })
+			header: (cell) => renderSnippet(headerSnippet, cell.header.id),
+			cell: ({ getValue }) => renderSnippet(eventLevelSnippet, getValue())
 		}),
-		table.column({
+		columnHelper.accessor((event) => i18n.f(`events.${event.type}.label`), {
 			id: 'type',
-			header,
-			accessor: (item: EventHistory) => item.type,
-			cell: ({ value }) => createRender(Localized, { key: `events.${value}.label` })
+			header: (cell) => renderSnippet(headerSnippet, cell.header.id)
 		}),
-		table.column({
+		columnHelper.accessor((event) => i18n.f(`events.${event.type}.description`), {
 			id: 'description',
-			header,
-			accessor: (item: EventHistory) => item.type,
-			cell: ({ value }) => createRender(Localized, { key: `events.${value}.description` }),
-
-			plugins: {
-				sort: {
-					disable: true
-				}
-			}
+			header: (cell) => renderSnippet(headerSnippet, cell.header.id),
+			enableSorting: false
 		}),
-		table.column({
+		columnHelper.accessor('created_at', {
 			id: 'timestamp',
-			header,
-			accessor: (item: EventHistory) => item.created_at,
-			cell: ({ value }) => createRender(LocalizedDateTime, { value })
+			header: (cell) => renderSnippet(headerSnippet, cell.header.id),
+			cell: ({ cell }) => dayjs(cell.getValue()).format('L LT')
 		})
 	]);
 
-	const { flatColumns, headerRows, rows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } =
-		table.createViewModel(columns);
+	const lotsOfHistory = $derived.by(() => {
+		const h = [...history];
 
-	const ids = flatColumns.map((c) => c.id);
-	const { pageIndex, pageSize } = pluginStates.page;
-	const { hiddenColumnIds } = pluginStates.hideColumns;
+		for (let i = 0; i < 10; i++) {
+			h.push(
+				...history.map((history, index) => ({
+					...history,
+					created_at: dayjs(history.created_at)
+						.add(i + index + 1, 'd')
+						.toISOString()
+				}))
+			);
+		}
+
+		return h;
+	});
+
+	const table = createSvelteTable({
+		get data() {
+			return lotsOfHistory;
+		},
+		get columns() {
+			return columns;
+		},
+		state: {
+			get pagination() {
+				return pagination;
+			},
+			get sorting() {
+				return sorting;
+			},
+			get columnVisibility() {
+				return columnVisibility;
+			},
+			get rowSelection() {
+				return rowSelection;
+			},
+			get columnFilters() {
+				return columnFilters;
+			}
+		},
+		getCoreRowModel: getCoreRowModel(),
+		getPaginationRowModel: getPaginationRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
+		onPaginationChange: (updater) => {
+			if (typeof updater === 'function') {
+				pagination = updater(pagination);
+			} else {
+				pagination = updater;
+			}
+		},
+		onSortingChange: (updater) => {
+			if (typeof updater === 'function') {
+				sorting = updater(sorting);
+			} else {
+				sorting = updater;
+			}
+		},
+		onColumnFiltersChange: (updater) => {
+			if (typeof updater === 'function') {
+				columnFilters = updater(columnFilters);
+			} else {
+				columnFilters = updater;
+			}
+		},
+		onColumnVisibilityChange: (updater) => {
+			if (typeof updater === 'function') {
+				columnVisibility = updater(columnVisibility);
+			} else {
+				columnVisibility = updater;
+			}
+		},
+		onRowSelectionChange: (updater) => {
+			if (typeof updater === 'function') {
+				rowSelection = updater(rowSelection);
+			} else {
+				rowSelection = updater;
+			}
+		}
+	});
 </script>
 
 <svelte:head>
 	<title>OGuard | {i18n.f('pages.events')}</title>
 </svelte:head>
+
+{#snippet headerSnippet(id: string)}
+	{i18n.f(`event.columns.${id}`)}
+{/snippet}
+
+{#snippet eventLevelSnippet(level: EventLevel)}
+	<EventLevelIcon {level} />
+{/snippet}
 
 <Container.Wrapper>
 	<Breadcrumbs parts={[{ label: i18n.f('pages.events') }]} />
@@ -139,59 +216,69 @@
 			<div class="history">
 				<Container.Root>
 					<div class="filters">
-						<Pagination count={$rows.length} bind:pageIndex={$pageIndex} bind:perPage={$pageSize} />
-						<ManageColumns translateKey="event.columns" columnIds={ids} {hiddenColumnIds} />
+						<Pagination
+							count={table.getFilteredRowModel().rows.length}
+							bind:pageIndex={
+								() => pagination.pageIndex, (value) => table.setPageIndex(() => value)
+							}
+							bind:perPage={() => pagination.pageSize, (value) => table.setPageSize(() => value)} />
+						<ManageColumns translateKey="event.columns" {table} />
 					</div>
 				</Container.Root>
 
-				<table {...i18n.fableAttrs}>
+				<table>
 					<thead>
-						{#each $headerRows as headerRow (headerRow.id)}
-							<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
-								<tr {...rowAttrs}>
-									{#each headerRow.cells as cell (cell.id)}
-										<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
-											<th
-												{...attrs}
-												on:click={props.sort.toggle}
-												class:sorted={props.sort.order !== undefined}
-												class:column--level={cell.id === 'level'}>
-												<Render of={cell.render()} />
-												{#if props.sort.order === 'asc'}
-													<SortAsc />
-												{:else if props.sort.order === 'desc'}
+						{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+							<tr>
+								{#each headerGroup.headers as header (header.id)}
+									<th class="[&:has([role=checkbox])]:pl-3">
+										{#if !header.isPlaceholder}
+											{@const sortingState = sorting.find((item) => item.id === header.id)}
+											<FlexRender
+												content={header.column.columnDef.header}
+												context={header.getContext()} />
+
+											{#if sortingState}
+												{#if sortingState.desc}
 													<SortDesc />
+												{:else}
+													<SortAsc />
 												{/if}
-											</th>
-										</Subscribe>
-									{/each}
-								</tr>
-							</Subscribe>
+											{/if}
+										{/if}
+									</th>
+								{/each}
+							</tr>
 						{/each}
 					</thead>
-					<tbody {...i18n.fableBodyAttrs}>
-						{#each $pageRows as row, index (row.id)}
-							<Subscribe attrs={row.attrs()} let:attrs rowProps={row.props()}>
-								<tr {...attrs} in:fly|global={{ delay: index * 25, duration: 100, x: -10 }}>
-									{#each row.cells as cell (cell.id)}
-										<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
-											<td
-												{...attrs}
-												class:sorted={props.sort.order !== undefined}
-												class:column--level={cell.id === 'level'}>
-												<Render of={cell.render()} />
-											</td>
-										</Subscribe>
-									{/each}
-								</tr>
-							</Subscribe>
+
+					<tbody>
+						{#each table.getRowModel().rows as row, index (row.id)}
+							<tr
+								data-state={row.getIsSelected() && 'selected'}
+								in:fly|global={{ delay: index * 25, duration: 100, x: -10 }}>
+								{#each row.getVisibleCells() as cell (cell.id)}
+									<td class="[&:has([role=checkbox])]:pl-3">
+										<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+									</td>
+								{/each}
+							</tr>
+						{:else}
+							<tr>
+								<td colspan={columns.length} class="h-24 text-center">No results.</td>
+							</tr>
 						{/each}
 					</tbody>
 				</table>
 
 				<Container.Root>
 					<div class="filters">
-						<Pagination count={$rows.length} bind:pageIndex={$pageIndex} bind:perPage={$pageSize} />
+						<Pagination
+							count={table.getFilteredRowModel().rows.length}
+							bind:pageIndex={
+								() => pagination.pageIndex, (value) => table.setPageIndex(() => value)
+							}
+							bind:perPage={() => pagination.pageSize, (value) => table.setPageSize(() => value)} />
 					</div>
 				</Container.Root>
 			</div>

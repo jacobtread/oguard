@@ -7,11 +7,15 @@
 	import BatteryIcon from '~icons/solar/battery-charge-bold-duotone';
 	import TerminalIcon from '~icons/solar/programming-bold-duotone';
 	import WifiIcon from '~icons/solar/wi-fi-router-minimalistic-bold-duotone';
-	import type { ComponentType } from 'svelte';
+	import type { Component } from 'svelte';
 
-	export let actionType: ActionTypeKey;
+	interface Props {
+		actionType: ActionTypeKey;
+	}
 
-	function getActionTypeIcon(actionType: ActionTypeKey): ComponentType {
+	const { actionType }: Props = $props();
+
+	function getActionTypeIcon(actionType: ActionTypeKey): Component {
 		switch (actionType) {
 			case ActionTypeKey.Notification:
 				return NotificationIcon;
@@ -32,7 +36,7 @@
 		}
 	}
 
-	const IconComponent: ComponentType = getActionTypeIcon(actionType);
+	const IconComponent: Component = $derived(getActionTypeIcon(actionType));
 </script>
 
 <IconComponent />

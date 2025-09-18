@@ -1,44 +1,54 @@
 <script lang="ts">
 	import type { Duration } from '$lib/api/types';
+	import { watch } from 'runed';
 
-	export let duration: Duration;
-
-	let hours = Math.floor(duration.secs / 3600);
-	let minutes = Math.floor((duration.secs % 3600) / 60);
-	let seconds = duration.secs % 60;
-
-	function updateDuration() {
-		duration.secs = hours * 3600 + minutes * 60 + seconds;
+	interface Props {
+		duration: Duration;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-	$: hours, minutes, seconds, updateDuration();
+	let { duration = $bindable() }: Props = $props();
+
+	let hours = $state(0);
+	let minutes = $state(0);
+	let seconds = $state(0);
+
+	// Update the parts when the duration changes
+	watch(
+		() => duration,
+		(duration) => {
+			let newHours = Math.floor(duration.secs / 3600);
+			let newMinutes = Math.floor((duration.secs % 3600) / 60);
+			let newSeconds = duration.secs % 60;
+
+			if (newHours !== hours || newMinutes !== minutes || newSeconds !== seconds) {
+				hours = newHours;
+				minutes = newMinutes;
+				seconds = newSeconds;
+			}
+		}
+	);
+
+	// Update duration when hours, minutes, or seconds change
+	watch(
+		() => ({ hours, minutes, seconds }),
+		({ hours, minutes, seconds }) => {
+			duration.secs = hours * 3600 + minutes * 60 + seconds;
+		}
+	);
 </script>
 
 <div class="parts">
 	<label class="part">
 		Hours
-		<input class="part__input" type="number" bind:value={hours} min="0" on:input={updateDuration} />
+		<input class="part__input" type="number" bind:value={hours} min="0" />
 	</label>
 	<label class="part">
 		Minutes
-		<input
-			class="part__input"
-			type="number"
-			bind:value={minutes}
-			min="0"
-			max="59"
-			on:input={updateDuration} />
+		<input class="part__input" type="number" bind:value={minutes} min="0" max="59" />
 	</label>
 	<label class="part">
 		Seconds
-		<input
-			class="part__input"
-			type="number"
-			bind:value={seconds}
-			min="0"
-			max="59"
-			on:input={updateDuration} />
+		<input class="part__input" type="number" bind:value={seconds} min="0" max="59" />
 	</label>
 </div>
 

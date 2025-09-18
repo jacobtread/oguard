@@ -1,20 +1,26 @@
 <script lang="ts">
 	import type { ActionTypeConfig, ActionTypeKey } from '$lib/api/types';
 	import DurationInput from '$lib/components/DurationInput.svelte';
+	import { watch } from 'runed';
 
-	export let config: ActionTypeConfig<ActionTypeKey.Executable>;
+	interface Props {
+		config: ActionTypeConfig<ActionTypeKey.Executable>;
+	}
+
+	let { config = $bindable() }: Props = $props();
 
 	const addTimeout = () => (config.timeout = { secs: 100, nanos: 0 });
 	const removeTimeout = () => (config.timeout = null);
 
-	let arg = config.args.join(' ');
+	let arg = $state(config.args.join(' '));
 
-	function updateArgs() {
-		config.args = arg.trim().split(' ');
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-	$: arg, updateArgs();
+	// TODO: Check this synchronizes properly
+	watch(
+		() => ({ arg }),
+		({ arg }) => {
+			config.args = arg.trim().split(' ');
+		}
+	);
 </script>
 
 <div class="field">
@@ -51,14 +57,14 @@
 	</p>
 
 	{#if config.timeout === null}
-		<button class="button" on:click={addTimeout}>Add Timeout</button>
+		<button class="button" onclick={addTimeout}>Add Timeout</button>
 	{:else}
 		<DurationInput bind:duration={config.timeout} />
-		<button class="button" on:click={removeTimeout}>Remove Timeout</button>
+		<button class="button" onclick={removeTimeout}>Remove Timeout</button>
 	{/if}
 </div>
 
-<style lang="scss">
+<style>
 	.command {
 		background-color: #333;
 		padding: 1rem;

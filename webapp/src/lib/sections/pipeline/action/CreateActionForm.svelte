@@ -11,13 +11,18 @@
 	import { Dialog } from 'bits-ui';
 	import { cloneDeep } from 'lodash';
 	import { i18nContext } from '$lib/i18n/i18n.svelte';
+	import { watch } from 'runed';
+
+	interface Props {
+		open: boolean;
+
+		onSubmit: (action: Action) => void;
+		onCancel: VoidFunction;
+	}
+
+	const { open, onSubmit, onCancel }: Props = $props();
 
 	const i18n = i18nContext.get();
-
-	export let open: boolean;
-
-	export let onSubmit: (action: Action) => void;
-	export let onCancel: () => void;
 
 	enum State {
 		// Picking action type
@@ -26,14 +31,13 @@
 		Configure
 	}
 
-	let state = State.Initial;
-
-	let action: Action = {
+	let formState = $state(State.Initial);
+	let action: Action = $state({
 		ty: getDefaultActionType(ActionTypeKey.Notification),
 		delay: null,
 		repeat: null,
 		retry: null
-	};
+	});
 
 	// Handles changing the current action type
 	const onChangeActionType = (actionType: ActionTypeKey) => {
@@ -41,7 +45,7 @@
 	};
 
 	const setDefaults = () => {
-		state = State.Initial;
+		formState = State.Initial;
 		action = {
 			ty: getDefaultActionType(ActionTypeKey.Notification),
 			delay: null,
@@ -50,8 +54,12 @@
 		};
 	};
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-	$: (open, setDefaults());
+	watch(
+		() => open,
+		() => {
+			setDefaults();
+		}
+	);
 </script>
 
 <Dialog.Root
@@ -60,56 +68,71 @@
 		if (!open) onCancel();
 	}}>
 	<Dialog.Portal>
-		<Dialog.Overlay transition={fade} transitionConfig={{ duration: 300 }} />
-		<Dialog.Content transition={scale} transitionConfig={{ duration: 300, start: 0.95 }}>
-			<div class="dialog__header"><h3>Add Action</h3></div>
-			<div class="transition-outer">
-				{#key state}
-					<div class="transition-inner" in:fly={{ duration: 100, x: -10 }}>
-						{#if state === State.Initial}
-							<div class="dialog__content">
-								<div class="items">
-									{#each ACTION_TYPE_KEYS as actionType}
-										<ActionTypeItem
-											{actionType}
-											selected={action.ty.type === actionType}
-											onClick={() => onChangeActionType(actionType)} />
-									{/each}
-								</div>
-							</div>
-							<div class="dialog__footer">
-								<div class="dialog__footer__actions">
-									<button class="button" on:click={() => (state = State.Configure)}
-										>Continue</button>
-									<div style="flex: auto;"></div>
-									<button class="button button--secondary" on:click={onCancel}>Cancel</button>
-								</div>
-							</div>
-						{:else}
-							<div class="dialog__subheader">
-								<h3>
-									{i18n.f('action.configure', {
-										values: { action: i18n.f(`actions.${action.ty.type}.label`) }
-									})}
-								</h3>
-							</div>
+		<Dialog.Overlay>
+			{#snippet child({ open, props })}
+				{#if open}
+					<div {...props} transition:fade={{ duration: 300 }}></div>
+				{/if}
+			{/snippet}
+		</Dialog.Overlay>
+		<Dialog.Content>
+			{#snippet child({ open, props })}
+				{#if open}
+					<div {...props} transition:scale={{ duration: 300, start: 0.95 }}>
+						<div class="dialog__header"><h3>Add Action</h3></div>
+						<div class="transition-outer">
+							{#key formState}
+								<div class="transition-inner" in:fly={{ duration: 100, x: -10 }}>
+									{#if formState === State.Initial}
+										<div class="dialog__content">
+											<div class="items">
+												{#each ACTION_TYPE_KEYS as actionType}
+													<ActionTypeItem
+														{actionType}
+														selected={action.ty.type === actionType}
+														onClick={() => onChangeActionType(actionType)} />
+												{/each}
+											</div>
+										</div>
+										<div class="dialog__footer">
+											<div class="dialog__footer__actions">
+												<button class="button" onclick={() => (formState = State.Configure)}
+													>Continue</button>
+												<div style="flex: auto;"></div>
+												<button class="button button--secondary" onclick={onCancel}>Cancel</button>
+											</div>
+										</div>
+									{:else}
+										<div class="dialog__subheader">
+											<h3>
+												{i18n.f('action.configure', {
+													values: { action: i18n.f(`actions.${action.ty.type}.label`) }
+												})}
+											</h3>
+										</div>
 
-							<div class="dialog__content">
-								<ConfigureActionForm bind:action />
-							</div>
-							<div class="dialog__footer">
-								<div class="dialog__footer__actions">
-									<button class="button" on:click={() => onSubmit(cloneDeep(action))}>Add</button>
-									<div style="flex: auto;"></div>
-									<button class="button button--secondary" on:click={() => (state = State.Initial)}>
-										Back
-									</button>
+										<div class="dialog__content">
+											<ConfigureActionForm bind:action />
+										</div>
+										<div class="dialog__footer">
+											<div class="dialog__footer__actions">
+												<button class="button" onclick={() => onSubmit(cloneDeep(action))}
+													>Add</button>
+												<div style="flex: auto;"></div>
+												<button
+													class="button button--secondary"
+													onclick={() => (formState = State.Initial)}>
+													Back
+												</button>
+											</div>
+										</div>
+									{/if}
 								</div>
-							</div>
-						{/if}
+							{/key}
+						</div>
 					</div>
-				{/key}
-			</div>
+				{/if}
+			{/snippet}
 		</Dialog.Content>
 	</Dialog.Portal>
 </Dialog.Root>

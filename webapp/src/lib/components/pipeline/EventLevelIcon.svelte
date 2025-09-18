@@ -5,7 +5,11 @@
 	import ErrorIcon from '~icons/solar/bug-bold-duotone';
 	import SuccessIcon from '~icons/solar/check-circle-bold-duotone';
 
-	export let level: EventLevel;
+	interface Props {
+		level: EventLevel;
+	}
+
+	const { level }: Props = $props();
 </script>
 
 {#if level === EventLevel.Info}

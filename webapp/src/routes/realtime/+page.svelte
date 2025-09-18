@@ -3,9 +3,9 @@
 		createCancelBatteryTestMutation,
 		createDeviceStatePollingQuery,
 		createStartBatteryTestMutation
-	} from '$/lib/api/device';
-	import Spinner from '$/lib/components/Spinner.svelte';
-	import { i18nContext } from '$/lib/i18n/i18n.svelte';
+	} from '$lib/api/device';
+	import Spinner from '$lib/components/Spinner.svelte';
+	import { i18nContext } from '$lib/i18n/i18n.svelte';
 	import { Container } from '$lib/components';
 
 	const i18n = i18nContext.get();
@@ -66,14 +66,14 @@
 									{#if deviceStateQuery.data.battery_self_test}
 										<button
 											class="button"
-											on:click={() => cancelBatteryTestMutation.mutate()}
+											onclick={() => cancelBatteryTestMutation.mutate()}
 											disabled={cancelBatteryTestMutation.isPending}>
 											{i18n.f('battery_self_test.cancel')}
 										</button>
 									{:else}
 										<button
 											class="button"
-											on:click={() => startBatteryTestMutation.mutate()}
+											onclick={() => startBatteryTestMutation.mutate()}
 											disabled={startBatteryTestMutation.isPending}>
 											{i18n.f('battery_self_test.start')}
 										</button>

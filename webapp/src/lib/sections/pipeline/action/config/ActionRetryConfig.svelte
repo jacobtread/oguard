@@ -12,19 +12,22 @@
 
 	const i18n = i18nContext.get();
 
-	export let retry: ActionRetry;
+	interface Props {
+		retry: ActionRetry;
+	}
 
-	$: options = ACTION_RETRY_DELAY_KEYS.map((value) => ({
-		value,
-		label: i18n.f(`action.retry_keys.${value}.label`),
-		description: i18n.f(`action.retry_keys.${value}.description`)
-	}));
+	let { retry = $bindable() }: Props = $props();
 
-	$: selected = options.find((value) => value.value === retry.delay.type);
+	const options = $derived(
+		ACTION_RETRY_DELAY_KEYS.map((value) => ({
+			value,
+			label: i18n.f(`action.retry_keys.${value}.label`),
+			description: i18n.f(`action.retry_keys.${value}.description`)
+		}))
+	);
 
-	function onChangeType(option: { value: ActionRetryDelayKey } | undefined) {
-		if (option === undefined) return;
-		const newType = option.value;
+	function onChangeType(value: string) {
+		const newType = value as ActionRetryDelayKey;
 		if (retry.delay.type !== newType) {
 			retry.delay = getDefaultActionRetryDelay(newType);
 		}
@@ -36,23 +39,28 @@
 
 	<p class="field__description">Method of delaying the next retry attempt</p>
 
-	<Select.Root items={options} onSelectedChange={onChangeType} {selected}>
+	<Select.Root type="single" items={options} value={retry.delay.type} onValueChange={onChangeType}>
 		<Select.Trigger>{i18n.f(`action.retry_keys.${retry.delay.type}.label`)}</Select.Trigger>
-		<Select.Content
-			transition={fly}
-			transitionConfig={{ duration: 150, y: -10 }}
-			sideOffset={8}
-			sameWidth={false}>
-			{#each options as option}
-				<Select.Item value={option.value} label={option.label}>
-					<div class="delay-type">
-						<p class="delay-type__label">{option.label}</p>
-						<p class="delay-type__description">{option.description}</p>
+		<Select.Portal>
+			<Select.Content sideOffset={8}>
+				{#snippet child({ open, props, wrapperProps })}
+					<div {...wrapperProps}>
+						{#if open}
+							<div {...props} transition:fly={{ duration: 150, y: -10 }}>
+								{#each options as option}
+									<Select.Item value={option.value} label={option.label}>
+										<div class="delay-type">
+											<p class="delay-type__label">{option.label}</p>
+											<p class="delay-type__description">{option.description}</p>
+										</div>
+									</Select.Item>
+								{/each}
+							</div>
+						{/if}
 					</div>
-				</Select.Item>
-			{/each}
-		</Select.Content>
-		<Select.Input value={retry.delay.type} />
+				{/snippet}
+			</Select.Content>
+		</Select.Portal>
 	</Select.Root>
 </div>
 
@@ -105,7 +113,7 @@
 	<input id="maxAttempts" class="input" type="number" bind:value={retry.max_attempts} min="1" />
 </div>
 
-<style lang="scss">
+<style>
 	.delay-type {
 		display: flex;
 		padding: 0.5rem 1rem;
@@ -113,13 +121,13 @@
 		display: flex;
 		flex-flow: column;
 		gap: 0.25rem;
+	}
 
-		&__label {
-			font-weight: bold;
-		}
+	.delay-type__label {
+		font-weight: bold;
+	}
 
-		&__description {
-			font-size: 0.9rem;
-		}
+	.delay-type__description {
+		font-size: 0.9rem;
 	}
 </style>
