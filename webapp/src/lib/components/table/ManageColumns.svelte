@@ -20,35 +20,37 @@
 	<Popover.Trigger class="button">
 		<SettingsIcon />
 	</Popover.Trigger>
-	<Popover.Content sideOffset={8}>
-		{#snippet child({ open, props, wrapperProps })}
-			<div {...wrapperProps}>
-				{#if open}
-					<div {...props} transition:fly={{ duration: 150, y: -100 }}>
-						<Popover.Arrow />
+	<Popover.Portal>
+		<Popover.Content sideOffset={8}>
+			{#snippet child({ open, props, wrapperProps })}
+				<div {...wrapperProps}>
+					{#if open}
+						<div {...props} transition:fly={{ duration: 150, y: -100 }}>
+							<Popover.Arrow />
 
-						<p class="title">Manage Columns</p>
+							<p class="title">Manage Columns</p>
 
-						<div class="columns">
-							{#each table.getAllColumns().filter((col) => col.getCanHide()) as column (column)}
-								<div class="column">
-									<Switch.Root
-										id="hide-{column.id}"
-										checked={column.getIsVisible()}
-										onCheckedChange={(value) => {
-											column.toggleVisibility(value);
-										}}>
-										<Switch.Thumb />
-									</Switch.Root>
-									<label for="hide-{column.id}">{i18n.f(`${translateKey}.${column.id}`)}</label>
-								</div>
-							{/each}
+							<div class="columns">
+								{#each table.getAllColumns().filter((col) => col.getCanHide()) as column (column)}
+									<div class="column">
+										<Switch.Root
+											id="hide-{column.id}"
+											checked={column.getIsVisible()}
+											onCheckedChange={(value) => {
+												column.toggleVisibility(value);
+											}}>
+											<Switch.Thumb />
+										</Switch.Root>
+										<label for="hide-{column.id}">{i18n.f(`${translateKey}.${column.id}`)}</label>
+									</div>
+								{/each}
+							</div>
 						</div>
-					</div>
-				{/if}
-			</div>
-		{/snippet}
-	</Popover.Content>
+					{/if}
+				</div>
+			{/snippet}
+		</Popover.Content>
+	</Popover.Portal>
 </Popover.Root>
 
 <style>

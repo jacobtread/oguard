@@ -62,24 +62,26 @@
 						value={historyType}
 						onValueChange={onChangeType}>
 						<Select.Trigger>{i18n.f(`history.types.${historyType}.label`)}</Select.Trigger>
-						<Select.Content sideOffset={8}>
-							{#snippet child({ open, wrapperProps, props })}
-								<div {...wrapperProps}>
-									{#if open}
-										<div {...props} transition:fly={{ duration: 150, y: -10 }}>
-											{#each options as option}
-												<Select.Item value={option.value} label={option.label}>
-													<div class="history-type">
-														<p class="history-type__label">{option.label}</p>
-														<p class="history-type__description">{option.description}</p>
-													</div>
-												</Select.Item>
-											{/each}
-										</div>
-									{/if}
-								</div>
-							{/snippet}
-						</Select.Content>
+						<Select.Portal>
+							<Select.Content sideOffset={8}>
+								{#snippet child({ open, wrapperProps, props })}
+									<div {...wrapperProps}>
+										{#if open}
+											<div {...props} transition:fly={{ duration: 150, y: -10 }}>
+												{#each options as option}
+													<Select.Item value={option.value} label={option.label}>
+														<div class="history-type">
+															<p class="history-type__label">{option.label}</p>
+															<p class="history-type__description">{option.description}</p>
+														</div>
+													</Select.Item>
+												{/each}
+											</div>
+										{/if}
+									</div>
+								{/snippet}
+							</Select.Content>
+						</Select.Portal>
 					</Select.Root>
 				</div>
 
