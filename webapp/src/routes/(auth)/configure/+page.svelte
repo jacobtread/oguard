@@ -24,43 +24,39 @@
 		<Container.Content>
 			<Container.Section>
 				<div class="fls">
-					<div>
-						{#if deviceStateQuery.isPending}
-							<Spinner />
-						{/if}
-						{#if deviceStateQuery.error}
-							An error has occurred:
-							{deviceStateQuery.error.message}
-						{/if}
-						{#if deviceStateQuery.isSuccess}
-							<div class="fl">
-								<div class="fl__text">
-									<h3 class="fl__name">{i18n.f('buzzer.name')}</h3>
-									<p class="fl__description">
-										{i18n.f('buzzer.description')}
-									</p>
+					{#if deviceStateQuery.isPending}
+						<Spinner />
+					{:else if deviceStateQuery.error}
+						An error has occurred:
+						{deviceStateQuery.error.message}
+					{:else if deviceStateQuery.isSuccess}
+						<div class="fl">
+							<div class="fl__text">
+								<h3 class="fl__name">{i18n.f('buzzer.name')}</h3>
+								<p class="fl__description">
+									{i18n.f('buzzer.description')}
+								</p>
 
-									<span class="toggling">
-										{#if toggleBuzzerMutation.isPending}
-											<Spinner />
-											Toggling buzzer...
-										{/if}
-									</span>
-								</div>
-
-								<div>
-									<Switch.Root
-										disabled={toggleBuzzerMutation.isPending}
-										checked={deviceStateQuery.data.buzzer_control}
-										onCheckedChange={() => {
-											toggleBuzzerMutation.mutate();
-										}}>
-										<Switch.Thumb />
-									</Switch.Root>
-								</div>
+								<span class="toggling">
+									{#if toggleBuzzerMutation.isPending}
+										<Spinner />
+										Toggling buzzer...
+									{/if}
+								</span>
 							</div>
-						{/if}
-					</div>
+
+							<div>
+								<Switch.Root
+									disabled={toggleBuzzerMutation.isPending}
+									checked={deviceStateQuery.data.buzzer_control}
+									onCheckedChange={() => {
+										toggleBuzzerMutation.mutate();
+									}}>
+									<Switch.Thumb />
+								</Switch.Root>
+							</div>
+						</div>
+					{/if}
 				</div>
 			</Container.Section>
 		</Container.Content>
