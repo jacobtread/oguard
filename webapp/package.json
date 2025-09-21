@@ -52,7 +52,7 @@
 		"dayjs": "^1.11.11",
 		"intl-messageformat": "^10.7.16",
 		"lodash": "^4.17.21",
-		"runed": "0.31.0",
+		"runed": "0.32.0",
 		"svelte-dnd-action": "^0.9.49",
 		"svelte-sonner": "1.0.5"
 	},
