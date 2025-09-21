@@ -15,7 +15,6 @@
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
 		"@eslint/js": "9.31.0",
-		"@humanspeak/svelte-headless-table": "^6.0.0",
 		"@iconify-json/solar": "1.2.2",
 		"@sveltejs/adapter-static": "3.0.8",
 		"@sveltejs/kit": "2.36.2",
@@ -44,9 +43,9 @@
 	"dependencies": {
 		"@carbon/charts-svelte": "^1.17.3",
 		"@fontsource-variable/inter": "^5.0.19",
+		"@tanstack/match-sorter-utils": "^8.15.0",
 		"@tanstack/svelte-query": "https://pkg.pr.new/@tanstack/svelte-query@746b9c5",
 		"@tanstack/svelte-query-devtools": "https://pkg.pr.new/@tanstack/svelte-query-devtools@746b9c5",
-		"@tanstack/match-sorter-utils": "^8.15.0",
 		"@tanstack/table-core": "^8.21.3",
 		"bits-ui": "2.8.11",
 		"date-picker-svelte": "^2.16.0",

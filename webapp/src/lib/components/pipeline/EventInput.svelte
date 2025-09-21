@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { EVENT_TYPE_DATA, EVENT_TYPES, EventType } from '$lib/api/types';
-	import { Portal, Select } from 'bits-ui';
+	import { Select } from 'bits-ui';
 	import EventLevelIcon from './EventLevelIcon.svelte';
 	import { fly } from 'svelte/transition';
 	import { i18nContext } from '$lib/i18n/i18n.svelte';
