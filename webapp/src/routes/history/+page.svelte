@@ -3,16 +3,12 @@
 	import { DateInput } from 'date-picker-svelte';
 	import DateIcon from '~icons/solar/calendar-date-bold-duotone';
 	import { Select } from 'bits-ui';
-
 	import { fly } from 'svelte/transition';
-
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import Container from '$lib/components/container';
-
 	import DeviceBatteryHistoryTable from '$lib/sections/history/DeviceBatteryHistoryTable.svelte';
 	import DeviceStateHistoryTable from '$lib/sections/history/DeviceStateHistoryTable.svelte';
 	import { i18nContext } from '$lib/i18n/i18n.svelte';
-	import { wrap } from 'lodash';
 
 	const i18n = i18nContext.get();
 
@@ -35,8 +31,6 @@
 			description: i18n.f(`history.types.${value}.description`)
 		}))
 	);
-
-	const selected = $derived(options.find((value) => value.value === historyType));
 
 	function onChangeType(value: string) {
 		if (value === undefined) return;

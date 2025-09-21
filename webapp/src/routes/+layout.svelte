@@ -23,6 +23,7 @@
 	import I18nProvider from '$lib/components/i18n/I18nProvider.svelte';
 	import type { LayoutProps } from './$types';
 	import PageTransition from '$lib/components/PageTransition.svelte';
+	import { Tooltip } from 'bits-ui';
 
 	const { children }: LayoutProps = $props();
 
@@ -72,26 +73,28 @@
 	<title>OGuard</title>
 </svelte:head>
 
-<I18nProvider>
-	<QueryClientProvider client={queryClient}>
-		<div class="layout">
-			<Header />
-			{#if navigating.to}
-				<LoadingScreen />
-			{:else}
-				<main class="main">
-					<PageTransition url={page.url.toString()}>
-						{@render children?.()}
-					</PageTransition>
-				</main>
-			{/if}
-		</div>
+<Tooltip.Provider>
+	<I18nProvider>
+		<QueryClientProvider client={queryClient}>
+			<div class="layout">
+				<Header />
+				{#if navigating.to}
+					<LoadingScreen />
+				{:else}
+					<main class="main">
+						<PageTransition url={page.url.toString()}>
+							{@render children?.()}
+						</PageTransition>
+					</main>
+				{/if}
+			</div>
 
-		<Toaster />
+			<Toaster />
 
-		<SvelteQueryDevtools />
-	</QueryClientProvider>
-</I18nProvider>
+			<SvelteQueryDevtools />
+		</QueryClientProvider>
+	</I18nProvider>
+</Tooltip.Provider>
 
 <style>
 	.layout {
