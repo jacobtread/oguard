@@ -18,7 +18,7 @@ use tower::Service;
 /// TODO: This may not be particularly performant with a match statement
 /// over all the public assets
 #[derive(Clone, Embedded)]
-#[folder = "src/resources/web"]
+#[folder = "webapp/build"]
 pub struct PublicContent;
 
 fn find_local_path(path: &str) -> Option<PathBuf> {
