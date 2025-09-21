@@ -3,23 +3,13 @@
 	import dayjs from 'dayjs';
 	import { DateInput } from 'date-picker-svelte';
 	import DateIcon from '~icons/solar/calendar-date-bold-duotone';
-	import { toStore } from 'svelte/store';
 	import { Container } from '$lib/components';
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import { fly } from 'svelte/transition';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import EventLevelIcon from '$lib/components/pipeline/EventLevelIcon.svelte';
-	import { createRender, createTable, Render, Subscribe } from '@humanspeak/svelte-headless-table';
-	import {
-		addHiddenColumns,
-		addPagination,
-		addSortBy
-	} from '@humanspeak/svelte-headless-table/plugins';
-
 	import SortDesc from '~icons/solar/alt-arrow-down-bold';
 	import SortAsc from '~icons/solar/alt-arrow-up-bold';
-	import Localized from '$lib/components/i18n/Localized.svelte';
-	import LocalizedDateTime from '$lib/components/i18n/LocalizedDateTime.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import ManageColumns from '$lib/components/table/ManageColumns.svelte';
 	import { createEventHistoryQuery } from '$lib/api/history';
@@ -84,26 +74,9 @@
 		})
 	]);
 
-	const lotsOfHistory = $derived.by(() => {
-		const h = [...history];
-
-		for (let i = 0; i < 10; i++) {
-			h.push(
-				...history.map((history, index) => ({
-					...history,
-					created_at: dayjs(history.created_at)
-						.add(i + index + 1, 'd')
-						.toISOString()
-				}))
-			);
-		}
-
-		return h;
-	});
-
 	const table = createSvelteTable({
 		get data() {
-			return lotsOfHistory;
+			return history;
 		},
 		get columns() {
 			return columns;
