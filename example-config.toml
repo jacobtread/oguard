@@ -1,4 +1,4 @@
-# Locale for translations (For messages by the server, webapp configured seperately)
+# Locale for translations (For messages by the server, webapp configured separately)
 locale = "en"
 
 # Logging configuration
