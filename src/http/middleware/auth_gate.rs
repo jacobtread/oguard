@@ -19,7 +19,6 @@ impl HttpError for UnauthorizedError {
     }
 }
 
-#[axum::async_trait]
 impl<S> FromRequestParts<S> for AuthGate
 where
     S: Send + Sync,

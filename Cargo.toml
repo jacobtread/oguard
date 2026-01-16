@@ -13,7 +13,7 @@ description = "OGuard"
 windows-service = "0.7"
 
 # Web framework & HTTP server libraries
-axum = "0.7"
+axum = "0.8"
 tower-http = { version = "0.5.2", features = ["cors"] }
 tower = "0.4.13"
 hyper = "1.4.1"
@@ -29,7 +29,7 @@ native-dialog = "0.7"
 log = { version = "0.4", features = ["serde"] }
 log-panics = { version = "2", features = ["with-backtrace"] }
 
-# USB HID 
+# USB HID
 hidapi = "2.6.1"
 
 # Serialization
@@ -55,7 +55,7 @@ strum = { version = "0.26.3", features = ["derive"] }
 reqwest = "0.12"
 
 # HTTP sessions for authentication
-axum_session = "0.14"
+axum_session = "0.17.1"
 
 # System shutdown logic
 system_shutdown = "4.0.1"
@@ -80,15 +80,16 @@ mime = "0.3.17"
 mime_guess = "2.0.5"
 
 # Request validation
-garde = { version = "0.20.0", features = ["derive", "full"] }
-axum-valid = { version = "0.20.0", default-features = false, features = [
+garde = { version = "0.22.0", features = ["derive", "full"] }
+axum-valid = { version = "0.24.0", default-features = false, features = [
     "garde",
     "basic",
     "full_garde",
 ] }
 compact_str = "0.8.0"
+async-trait = "0.1.89"
 
-# SeaORM 
+# SeaORM
 [dependencies.sea-orm]
 version = "^1"
 default-features = false
@@ -100,13 +101,13 @@ features = [
     "with-json",
 ]
 
-# SeaORM Migration 
+# SeaORM Migration
 [dependencies.sea-orm-migration]
 version = "^1"
 default-features = false
 features = ["runtime-tokio-rustls", "sqlx-sqlite"]
 
-# Logging provider 
+# Logging provider
 [dependencies.log4rs]
 version = "1.3.0"
 default-features = false
