@@ -13,3 +13,6 @@ minimumReleaseAgeExclude:
     - "@tanstack/svelte-query@6.1.35"
     - svelte-check@4.7.0
     - svelte@5.56.4
+    - cookie@0.7.0
+overrides:
+    cookie@<0.7.0: ^0.7.0
