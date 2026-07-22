@@ -1,18 +1,9 @@
 allowBuilds:
-    "@carbon/charts": false
-    "@carbon/charts-svelte": false
-    "@carbon/colors": false
-    "@carbon/utils-position": false
-    esbuild: false
-minimumReleaseAgeExclude:
-    - "@sveltejs/kit@2.67.0"
-    - "@sveltejs/load-config@0.2.0"
-    - "@tanstack/query-core@5.101.1"
-    - "@tanstack/query-devtools@5.101.1"
-    - "@tanstack/svelte-query-devtools@6.1.35"
-    - "@tanstack/svelte-query@6.1.35"
-    - svelte-check@4.7.0
-    - svelte@5.56.4
-    - cookie@0.7.0
+  '@carbon/charts': true
+  '@carbon/charts-svelte': true
+  '@carbon/colors': true
+  '@carbon/utils-position': true
+  '@parcel/watcher': true
+  esbuild: true
 overrides:
-    cookie@<0.7.0: ^0.7.0
+  cookie@<0.7.0: ^0.7.0
